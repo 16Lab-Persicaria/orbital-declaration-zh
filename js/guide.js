@@ -9,7 +9,7 @@
   const fmt = U.fmt;
   // v15: a touch screen taps, and a phone has no ship list beside the map.
   const touch = () => { if (typeof window === 'undefined') return false; try { if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true; } catch (e) { /* no media queries */ } return window.innerWidth < 900; };
-  const tap = () => (touch() ? 'Tap' : 'Click');
+  const tap = () => '点击';
   const narrow = () => typeof window !== 'undefined' && window.innerWidth < 900;
 
   const HORIZON = 4 * 3600;   // s of look-ahead
@@ -156,24 +156,24 @@
 
   function summary(p) {
     if (!p || !p.active) return '';
-    if (p.crash) return 'ends on the ground';
-    if (!p.feasible) return 'needs ' + fmt.dv(p.dv) + ' · not enough';
+    if (p.crash) return '会撞上地面';
+    if (!p.feasible) return '需要 ' + fmt.dv(p.dv) + ' · 不够';
     return '≈ ' + fmt.time(p.time) + ' · ' + fmt.dv(p.dv);
   }
 
   // ---- navigator: one plain sentence about what the ship is doing, and one about what comes next -------------
   function narrate(sim, ship) {
     const L = (phase, text, sub) => ({ phase, text, sub: sub || '' });
-    if (ship.destroyed) return L('lost', 'Lost with all hands.');
-    if (ship.captured) return L('captured', 'Prize crew aboard. She flies for the ' + OD.Ships.FACTIONS[ship.faction].short + ' now.');
-    if (ship.disabled) return L('disabled', 'Disabled. No drive, and no way off this trajectory.');
-    if (ship.role === 'station') return L('station', 'No drive. The station holds its orbit.', 'Everything else has to manoeuvre around it.');
+    if (ship.destroyed) return L('lost', '全员阵亡。');
+    if (ship.captured) return L('captured', '俘获班组已登舰。她现在为' + OD.Ships.FACTIONS[ship.faction].short + '飞。');
+    if (ship.disabled) return L('disabled', '已失能。没有推进器，也离不开这条轨迹。');
+    if (ship.role === 'station') return L('station', '没有推进器。空间站留在轨道上。', '其他船只能绕着它机动。');
     const order = ship.order || { type: 'hold' };
     const target = order.target ? sim.byId(order.target) : ship.target ? sim.byId(ship.target) : null;
-    const tname = target ? target.name : 'the target';
-    const pre = ship.overheated ? 'Sink full: drive held to a quarter, every mount stopped. ' : '';
-    if (ship.flagsGround && sim.body) return L('avoid', 'Terrain avoidance. Burning prograde to raise the low point above ' + sim.body.name + '.', 'The autopilot will not fly a coast that ends on the ground.');
-    if (ship.propMass <= 0) return L('dry', 'Tanks dry. Coasting on this trajectory for good.', 'Only a port or a depot puts propellant back aboard.');
+    const tname = target ? target.name : '目标';
+    const pre = ship.overheated ? '热沉已满：推进器只剩四分之一，所有炮位停火。' : '';
+    if (ship.flagsGround && sim.body) return L('avoid', '避障。正顺行点火，把最低点抬到 ' + sim.body.name + ' 之上。', '自动驾驶不会飞一段会撞地的滑行。');
+    if (ship.propMass <= 0) return L('dry', '推进剂见底。只能沿这条轨迹一直滑下去。', '只有港口或补给站能把推进剂补回船上。');
     const burning = ship.throttle > 0.01;
     const err = Math.abs(U.angleDiff(ship.cmdHeading != null ? ship.cmdHeading : ship.heading, ship.heading));
     const turning = !burning && err > AP.ALIGN_TOL && !!ship.plannedAccel;
@@ -187,40 +187,40 @@
       case 'intercept':
       case 'evade':
       case 'keeprange': {
-        if (!target) return L('idle', pre + 'No target for this order. ' + tap() + ' a contact to pick one.');
+        if (!target) return L('idle', pre + '这条指令没有目标。' + tap() + '一个接触来指定。');
         const holding = order.type !== 'intercept';
-        const want = holding ? 'holding ' + fmt.dist(order.range || 200e3) + ' from ' + tname : 'alongside ' + tname;
-        if (turning) return L('turn', pre + 'Turning ' + fmt.deg(err).replace('°', '') + '° to point the nose along the burn.', 'Thrust only goes out the tail, so every burn starts with a turn. This hull needs about ' + fmt.time(AP.turnTimeFor(ship, err)) + '.');
-        if (burning && ship.throttle < 0.35 && atGoal(ship, target, order)) return L('trim', pre + 'Trimming ' + (holding ? 'the standoff from ' : 'alongside ') + tname + '.', 'Small correction burns keep the drift near zero.');
-        if (burning && phaseNow === 'burn') return L('burn', pre + 'Accelerating toward ' + tname + ' at ' + g(ship.accel() * ship.throttle) + '.', tFlip != null ? 'Flip in ' + fmt.time(tFlip) + ', then braking tail-first.' : tArr != null ? 'Arrive in ' + fmt.time(tArr) + '.' : '');
-        if (burning && phaseNow === 'brake') return L('brake', pre + 'Braking tail-first, ' + fmt.speed(rel) + ' still to shed.', tArr != null ? 'Arrive ' + want + ' in ' + fmt.time(tArr) + ', ' + fmt.dv(Math.max(0, ship.deltaV() - p.dv)) + ' left after.' : 'Braking turns the tail to the target, and the tail armour is the thinnest on the ship.');
-        if (burning) return L('burn', pre + 'Burning toward ' + want + '.', tArr != null ? 'Arrive in ' + fmt.time(tArr) + '.' : '');
-        if (p.arrive && p.arrive.t <= 4) return holding ? L('hold', pre + 'Holding ' + fmt.dist(order.range || 200e3) + ' from ' + tname + '. Coasting nose-on, spending nothing.', 'The autopilot only burns when the drift would take the ship out of the band.') : L('arrived', pre + 'Alongside ' + tname + ', velocity matched.', rel > 5 ? fmt.speed(rel) + ' of drift.' : 'Ready to board or take in tow.');
-        if (p.crash) return L('warn', pre + 'This plan ends on ' + (sim.body ? sim.body.name : 'the ground') + '.', 'The autopilot will break off to raise the orbit, so the arrival slips.');
-        if (!p.feasible) return L('warn', pre + 'This transfer needs ' + fmt.dv(p.dv) + '. There is ' + fmt.dv(ship.deltaV()) + ' left.', 'Cap the cruise speed or pick a nearer standoff.');
-        return L('coast', pre + 'Coasting toward ' + tname + (order.vmax ? ' at the cruise cap' : '') + ', ' + fmt.speed(rel) + ' relative.', tBrake != null ? 'Braking starts in ' + fmt.time(tBrake) + '.' : tArr != null ? 'Arrive in ' + fmt.time(tArr) + '.' : '');
+        const want = holding ? '在距 ' + tname + ' ' + fmt.dist(order.range || 200e3) + ' 处保持' : '靠上 ' + tname;
+        if (turning) return L('turn', pre + '转向 ' + fmt.deg(err).replace('°', '') + '°，把舰首对准点火方向。', '推力只从舰尾喷出，所以每次点火都先转向。这型舰体大约要 ' + fmt.time(AP.turnTimeFor(ship, err)) + '。');
+        if (burning && ship.throttle < 0.35 && atGoal(ship, target, order)) return L('trim', pre + (holding ? '微调与 ' + tname + ' 的距离。' : '微调靠泊 ' + tname + '。'), '小幅修正点火把漂移压在零附近。');
+        if (burning && phaseNow === 'burn') return L('burn', pre + '正加速飞向 ' + tname + '，' + g(ship.accel() * ship.throttle) + '。', tFlip != null ? fmt.time(tFlip) + ' 后掉头，然后反推减速。' : tArr != null ? fmt.time(tArr) + ' 后到达。' : '');
+        if (burning && phaseNow === 'brake') return L('brake', pre + '掉头反推，还要消掉 ' + fmt.speed(rel) + '。', tArr != null ? fmt.time(tArr) + ' 后' + want + '，之后还剩 ' + fmt.dv(Math.max(0, ship.deltaV() - p.dv)) + '。' : '反推会把舰尾对着目标，而舰尾装甲是全舰最薄的。');
+        if (burning) return L('burn', pre + '正点火飞向' + want + '。', tArr != null ? fmt.time(tArr) + ' 后到达。' : '');
+        if (p.arrive && p.arrive.t <= 4) return holding ? L('hold', pre + '在距 ' + tname + ' ' + fmt.dist(order.range || 200e3) + ' 处保持。舰首朝前滑行，不消耗推进剂。', '只有漂移会把舰带出允许范围时，自动驾驶才点火。') : L('arrived', pre + '已靠上 ' + tname + '，速度匹配。', rel > 5 ? '还有 ' + fmt.speed(rel) + ' 的漂移。' : '可以接舷或拖带了。');
+        if (p.crash) return L('warn', pre + '这个计划最后会撞上 ' + (sim.body ? sim.body.name : '地面') + '。', '自动驾驶会中断计划去抬高轨道，到达时间会往后拖。');
+        if (!p.feasible) return L('warn', pre + '这次转移需要 ' + fmt.dv(p.dv) + '，船上只剩 ' + fmt.dv(ship.deltaV()) + '。', '压低巡航速度，或者选一个更近的保持距离。');
+        return L('coast', pre + '正滑向 ' + tname + (order.vmax ? '，压着巡航上限' : '') + '，相对速度 ' + fmt.speed(rel) + '。', tBrake != null ? fmt.time(tBrake) + ' 后开始反推。' : tArr != null ? fmt.time(tArr) + ' 后到达。' : '');
       }
       case 'matchv':
-        if (!target) return L('idle', pre + 'No target to match. ' + tap() + ' a contact.');
-        if (turning) return L('turn', pre + 'Turning to point the nose against the drift.', 'About ' + fmt.time(AP.turnTimeFor(ship, err)) + '.');
-        if (burning) return L('brake', pre + 'Killing the relative motion to ' + tname + ', ' + fmt.speed(rel) + ' left.', 'At zero relative speed the range stops changing.');
-        return L('hold', pre + 'Velocity matched with ' + tname + '.', 'Range stays ' + fmt.dist(U.dist(ship.pos, target.pos)) + ' until one of you burns.');
+        if (!target) return L('idle', pre + '没有可匹配的目标。' + tap() + '一个接触。');
+        if (turning) return L('turn', pre + '转向，把舰首对准漂移的反方向。', '大约 ' + fmt.time(AP.turnTimeFor(ship, err)) + '。');
+        if (burning) return L('brake', pre + '正在消除与 ' + tname + ' 的相对运动，还剩 ' + fmt.speed(rel) + '。', '相对速度归零后，距离就不再变化。');
+        return L('hold', pre + '已与 ' + tname + ' 速度匹配。', '在任一方点火之前，距离保持在 ' + fmt.dist(U.dist(ship.pos, target.pos)) + '。');
       case 'retreat': {
         const threat = target || sim.nearestHostile(ship);
-        if (!threat) return L('coast', pre + 'Nothing to run from. Coasting.');
-        if (turning) return L('turn', pre + 'Turning to put the tail toward ' + threat.name + '.', 'A retreat burn points the drive at the enemy.');
-        return L('burn', pre + 'Running from ' + threat.name + ' at full burn.', 'The tail faces her, and it carries the thinnest armour. Range opens at ' + fmt.speed(Math.max(0, -U.dot(U.sub(threat.vel, ship.vel), U.norm(U.sub(threat.pos, ship.pos))))) + '.');
+        if (!threat) return L('coast', pre + '没有可逃的目标。滑行。');
+        if (turning) return L('turn', pre + '转向，把舰尾朝向 ' + threat.name + '。', '撤退点火会把推进器对着敌人。');
+        return L('burn', pre + '正全力背离 ' + threat.name + '。', '舰尾对着她，而那里装甲最薄。距离正以 ' + fmt.speed(Math.max(0, -U.dot(U.sub(threat.vel, ship.vel), U.norm(U.sub(threat.pos, ship.pos))))) + ' 拉开。');
       }
       case 'manual':
-        if (turning) return L('turn', pre + 'Turning to heading ' + fmt.deg(order.heading || 0) + '.');
-        return L(burning ? 'burn' : 'coast', pre + 'Manual: heading ' + fmt.deg(order.heading || 0) + ', throttle ' + Math.round((order.throttle || 0) * 100) + '%.', burning ? 'Spending ' + fmt.speed(ship.accel() * ship.throttle * 60) + ' of delta-v per minute.' : 'Set a throttle to burn.');
+        if (turning) return L('turn', pre + '转向航向 ' + fmt.deg(order.heading || 0) + '。');
+        return L(burning ? 'burn' : 'coast', pre + '手动：航向 ' + fmt.deg(order.heading || 0) + '，推力 ' + Math.round((order.throttle || 0) * 100) + '%。', burning ? '每分钟花掉 ' + fmt.speed(ship.accel() * ship.throttle * 60) + ' 速度增量。' : '设一个推力档位才能点火。');
       case 'hold':
       default: {
-        if (burning) return L('burn', pre + 'Burning.');
+        if (burning) return L('burn', pre + '正在点火。');
         const orb = sim.body ? P.orbitalElements(sim.body.mu, ship.pos, ship.vel) : null;
         const lo = orb && orb.bound ? fmt.dist(orb.periapsis - sim.body.radius) : '', hi = orb && orb.bound ? fmt.dist(orb.apoapsis - sim.body.radius) : '';
-        const sub = orb && orb.bound ? 'Altitude ' + (lo === hi ? lo + ', circular' : lo + ' to ' + hi) + '.' + (orb.periapsis < sim.body.radius ? ' The low point is below the surface.' : '') : target ? 'Nose kept toward ' + tname + '.' : '';
-        return L('coast', pre + 'Coasting' + (sim.body ? ' around ' + sim.body.name : '') + '. Nothing is spent until you give an order.', sub);
+        const sub = orb && orb.bound ? '高度 ' + (lo === hi ? lo + '，圆轨道' : lo + ' 至 ' + hi) + '。' + (orb.periapsis < sim.body.radius ? ' 最低点已在表面以下。' : '') : target ? '舰首保持朝向 ' + tname + '。' : '';
+        return L('coast', pre + '正在' + (sim.body ? '绕 ' + sim.body.name : '') + '滑行。不下指令就不消耗任何东西。', sub);
       }
     }
   }
@@ -235,16 +235,16 @@
     const load = ship.thermalLoad();
     if (sim.body) {
       const el = P.orbitalElements(sim.body.mu, ship.pos, ship.vel);
-      if (el.bound && el.periapsis < sim.body.radius && order.type === 'hold') return 'This coast ends on ' + sim.body.name + '. Any burn along your motion raises the low point.';
+      if (el.bound && el.periapsis < sim.body.radius && order.type === 'hold') return '这段滑行最后会撞上 ' + sim.body.name + '。朝当前运动方向点火可以把最低点抬起来。';
     }
-    if (load > 0.7 && !ship.radiators.deployed && (!hostile || U.dist(hostile.pos, ship.pos) > 600e3)) return 'Sink at ' + Math.round(load * 100) + ' %. Extend the radiators. Nothing hostile is inside 600 km to shoot them off.';
+    if (load > 0.7 && !ship.radiators.deployed && (!hostile || U.dist(hostile.pos, ship.pos) > 600e3)) return '热沉在 ' + Math.round(load * 100) + ' %。把散热板展开。600 公里内没有敌舰能打掉它们。';
     if (order.type === 'hold') {
-      if (!target && hostile) return 'Pick a target. ' + tap() + ' a contact on the map' + (narrow() ? '.' : ' or in the list.');
-      if (target && sim.isHostile(target, ship)) return 'Keep range at ' + fmt.dist(cls.doctrine.range || 200e3) + ' to fight at this hull\'s doctrine range. Intercept closes to boarding range instead.';
-      if (target && !sim.isHostile(target, ship)) return 'Intercept to rendezvous. The autopilot burns, flips halfway and brakes alongside her.';
-      if (!target && !hostile) return 'No target yet. ' + tap() + ' a ship to make it the target.';
+      if (!target && hostile) return '先选目标。' + tap() + '地图上的一个接触' + (narrow() ? '。' : '，或者列表里的。');
+      if (target && sim.isHostile(target, ship)) return '保持 ' + fmt.dist(cls.doctrine.range || 200e3) + ' 的距离，就是在这型舰体的条令射程上打。拦截则会一直靠近到接舷距离。';
+      if (target && !sim.isHostile(target, ship)) return '拦截就是去交会。自动驾驶会点火，半路掉头，再反推停在她旁边。';
+      if (!target && !hostile) return '还没有目标。' + tap() + '一艘舰船，把它设为目标。';
     }
-    if (ship.deltaV() / ship.deltaVFull() < 0.2 && order.type === 'intercept' && !order.vmax) return 'Delta-v is down to ' + Math.round((ship.deltaV() / ship.deltaVFull()) * 100) + ' % of full. A cruise cap makes the transfer slower and much cheaper.';
+    if (ship.deltaV() / ship.deltaVFull() < 0.2 && order.type === 'intercept' && !order.vmax) return '速度增量只剩满箱的 ' + Math.round((ship.deltaV() / ship.deltaVFull()) * 100) + ' %。压住巡航速度能让转移更慢，但便宜得多。';
     return null;
   }
 

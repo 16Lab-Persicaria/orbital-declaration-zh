@@ -48,7 +48,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
   check('no point-defence mounts means no point-defence reach', bare.reach.pd === 0, String(bare.reach.pd));
   check('no mounts offers no actions', bare.acts.length === 0, bare.acts.join(','));
   check('the readout still answers', bare.rows.length > 0, bare.rows.join(' · '));
-  check('the advisory reads clear', bare.board.level === 'none' && /Nothing inbound/.test(bare.board.text), bare.board.text);
+  check('the advisory reads clear', bare.board.level === 'none' && /没有来袭/.test(bare.board.text), bare.board.text);
   check('a salvo with no bays launches nothing', bare.salvo === 0 && bare.targeted && /bays are empty/.test(bare.salvoLog), bare.salvo + ' away · ' + bare.salvoLog);
   check('no threats aimed at her', bare.threats === 0, String(bare.threats));
 
@@ -71,7 +71,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     E.setFireMode(s, 'sustained');
     s.radiators.auto = false; s.radiators.deployed = false; s.radiators.state = 0;
     out.coldGain = E.shared.beamGain(s);
-    out.coldRow = (E.shipReadout(s) || []).find((r) => r.label === 'Fire mode');
+    out.coldRow = (E.shipReadout(s) || []).find((r) => r.label === '开火模式');
     out.coldStatus = ((E.shipReadout(s) || []).find((r) => r.label === 'Status') || {}).value;
     s.radiators.state = 1; s.radiators.deployed = true;
     out.warmGain = E.shared.beamGain(s);
@@ -262,7 +262,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     return { dmg, warm, after: E.threats(sim, foe).length, text: E.threatSummary(sim, foe).text };
   });
   check('each bearing burns the facet it crossed for', bearings.dmg.nose > 0 && bearings.dmg.flank > 0, JSON.stringify(bearings.dmg));
-  check('a salvo is on the board the moment it leaves the rails', bearings.after === bearings.warm + 4 && !/Nothing inbound/.test(bearings.text),
+  check('a salvo is on the board the moment it leaves the rails', bearings.after === bearings.warm + 4 && !/没有来袭/.test(bearings.text),
     bearings.warm + ' → ' + bearings.after + ' · ' + bearings.text);
 
   console.log('scenario: the event ring does not grow without end');
@@ -470,7 +470,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     const soak = E.tuning.armourWatts * E.shared.armourCm(foe, 'nose');
     const read = () => {
       const R = OD.U.dist(me.pos, foe.pos);
-      const note = (E.physicsNotes(me, foe) || []).find((n) => n.title === 'Track quality');
+      const note = (E.physicsNotes(me, foe) || []).find((n) => n.title === '跟踪质量');
       return {
         R, spot: E.shared.beamShot(me, mount, R, 1, 1, foe).spot,
         through: E.shared.assess(sim, me).through,
@@ -531,8 +531,8 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
         // the aim point carried out to arrival, which is the place the lead actually names
         if (!first && sim.eng.slugs.length) { const s = sim.eng.slugs[0]; first = { x: s.aim.x + s.aim.vx * s.t, y: s.aim.y + s.aim.vy * s.t, t: s.t }; }
       }
-      const row = (E.shipReadout(me) || []).find((r) => r.label === 'Slugs left');
-      const note = (E.physicsNotes(me, foe) || []).find((n) => n.title === 'Track quality');
+      const row = (E.shipReadout(me) || []).find((r) => r.label === '剩余弹丸');
+      const note = (E.physicsNotes(me, foe) || []).find((n) => n.title === '跟踪质量');
       return { fired: sim.eng.stats.slugsFired, row: row ? row.value : '', reason: E.shared.slugReason(sim, me, foe), first, note: note ? note.body : '' };
     };
     const solution = run(3), just = run(2.8), under = run(2.4), contact = run(1), off = run(null);
@@ -540,12 +540,12 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     OD.Sensors = before;
     return { solution, just, under, contact, off, wide, q: OD.Engagement.tuning.slugSolutionQ };
   });
-  check('a solution puts rounds in the air', slugs.solution.fired > 0 && !/no solution/.test(slugs.solution.row), slugs.solution.fired + ' fired · ' + slugs.solution.row);
+  check('a solution puts rounds in the air', slugs.solution.fired > 0 && !/无解算/.test(slugs.solution.row), slugs.solution.fired + ' fired · ' + slugs.solution.row);
   check('and a track just above the threshold still does', slugs.just.fired === slugs.solution.fired, slugs.just.fired + ' fired at q 2.8');
   check('below ' + slugs.q + ' the coilguns hold', slugs.under.fired === 0 && slugs.contact.fired === 0, 'q 2.4 ' + slugs.under.fired + ' fired, q 1 ' + slugs.contact.fired + ' fired');
-  check('and the readout says no solution', /no solution/.test(slugs.under.row) && slugs.under.reason === 'no solution', slugs.under.row);
+  check('and the readout says no solution', /无解算/.test(slugs.under.row) && slugs.under.reason === '无解算', slugs.under.row);
   check('the physics panel says what it would take', /below q 2\.7/.test(slugs.under.note), (slugs.under.note || '—').split('\n').pop());
-  check('with no sensors module the rounds fly as before', slugs.off.fired === slugs.solution.fired && !/no solution/.test(slugs.off.row), slugs.off.fired + ' fired · ' + slugs.off.row);
+  check('with no sensors module the rounds fly as before', slugs.off.fired === slugs.solution.fired && !/无解算/.test(slugs.off.row), slugs.off.fired + ' fired · ' + slugs.off.row);
   check('the aim point follows the track’s velocity, not the truth',
     slugs.wide.first && slugs.solution.first && Math.abs(Math.hypot(slugs.wide.first.x - slugs.solution.first.x, slugs.wide.first.y - slugs.solution.first.y) - 200 * slugs.wide.first.t) < 0.25 * 200 * slugs.wide.first.t,
     slugs.wide.first ? Math.round(Math.hypot(slugs.wide.first.x - slugs.solution.first.x, slugs.wide.first.y - slugs.solution.first.y) / 1000) + ' km of lead error on a 200 m/s estimate over ' + Math.round(slugs.wide.first.t) + ' s' : 'no round in the air');
@@ -576,7 +576,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
       const rows = E.shipReadout(me) || [];
       const row = rows.find((r) => r.label === 'Status');
       return { drawn, firing: st.firing, heat: me.heat, hull: foe.hull, reason: st.reason,
-        status: row ? row.value : '', onTarget: rows.some((r) => r.label === 'On target') };
+        status: row ? row.value : '', onTarget: rows.some((r) => r.label === '命中') };
     };
     const solution = run(3), held = run(2), tight = run(2, true);
     OD.Sensors = before;
@@ -592,7 +592,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     'hull ' + beams.held.hull.toFixed(3) + ' held, ' + beams.solution.hull.toFixed(3) + ' on a solution');
   check('while drawing no power and adding no heat', Math.abs(beams.held.heat - beams.tight.heat) < 1,
     'sink ' + (beams.held.heat / 1e9).toFixed(4) + ' GJ against ' + (beams.tight.heat / 1e9).toFixed(4) + ' GJ with gunnery tight');
-  check('and the readout says no solution', beams.held.reason === 'no solution' && beams.held.status === 'no solution' && !beams.held.onTarget,
+  check('and the readout says no solution', beams.held.reason === '无解算' && beams.held.status === '无解算' && !beams.held.onTarget,
     beams.held.status + (beams.held.onTarget ? ' · but an On target row is still shown' : ''));
 
   console.log('scenario: out of burn-through range, the beams hold');
@@ -625,7 +625,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
       return {
         reason: st.reason, drawn, firing: st.firing, heat: me.heat - heat0, through: st.through,
         range: U.dist(me.pos, foe.pos), ladder: r.beams[OD.Render.facetShown(me, foe)],
-        status: row('Status').value, statusTip: row('Status').tip || '', onTargetTip: row('On target').tip || '',
+        status: row('状态').value, statusTip: row('状态').tip || '', onTargetTip: row('命中').tip || '',
         aimUsed: E.shared.aimEffective(me, foe),
         foeRads: (foe.components || []).filter((c) => c.kind === 'radiator').map((c) => +c.hp.toFixed(3)),
         foeHull: foe.hull,
@@ -693,7 +693,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     sim.setTarget(me.id, foe.id); me.weaponsFree = true; me.activeSensor = true;
     me.radiators.auto = false; me.radiators.deployed = true; me.radiators.state = 1;
     E.setFireMode(me, 'full');
-    const row = () => ((E.shipReadout(me) || []).find((x) => x.label === 'Fire mode') || {}).value || '';
+    const row = () => ((E.shipReadout(me) || []).find((x) => x.label === '开火模式') || {}).value || '';
     const forecast = () => {
       const drive = me.throttle > 0 ? me.driveHeat * me.throttle * me.systems.drive : 0;
       const pin = me.idleHeat + drive + (me.lastExtraHeat || 0);
@@ -754,8 +754,8 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     return out;
   });
   check('below a track of 2 the bays hold', bays.under.launched === 0 && bays.under.darts === 0, bays.under.launched + ' away, ' + bays.under.darts + ' in the sky');
-  check('and the estimate says why', bays.under.reason === 'no track' && bays.under.flight > 0, bays.under.reason + ', ' + Math.round(bays.under.flight || 0) + ' s of flight');
-  check('the panel button carries the reason', /no track/.test(bays.under.tip), bays.under.tip.slice(0, 90));
+  check('and the estimate says why', bays.under.reason === '无跟踪' && bays.under.flight > 0, bays.under.reason + ', ' + Math.round(bays.under.flight || 0) + ' s of flight');
+  check('the panel button carries the reason', /无跟踪/.test(bays.under.tip), bays.under.tip.slice(0, 90));
   check('a track of 2 launches', bays.at.launched === 2 && bays.at.darts === 2 && bays.at.reason === '', bays.at.launched + ' away');
   check('with no sensors module the bays launch as before', bays.off.launched === 2 && bays.off.reason === '', bays.off.launched + ' away');
   check('the computer launches on a solution', bays.aiSolution > 0, bays.aiSolution + ' launched');
@@ -843,7 +843,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     const sim = OD.Game.sim, E = OD.Engagement;
     const me = sim.playerShips()[0];
     me.target = null;
-    const row = (s) => ((E.shipReadout(s) || []).find((r) => r.label === 'Beams in arc') || {}).value || '';
+    const row = (s) => ((E.shipReadout(s) || []).find((r) => r.label === '射界内光束') || {}).value || '';
     const clean = row(me);
     // and the same row on a hull that really has lost the mount
     const bi = me.mounts.findIndex((m) => m.kind === 'beam');
@@ -1134,7 +1134,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     beams.pinned = { wobble: E.shared.trackWobble(sim, me, foe), spot: E.shared.beamShot(me, mount, R, 1, 1, foe).spot, ladder: E.reach(sim, me, foe).beams.nose };
     hold(2.7, 0); OD.harness.step(0.5);
     beams.just = { wobble: E.shared.trackWobble(sim, me, foe), spot: E.shared.beamShot(me, mount, R, 1, 1, foe).spot, ladder: E.reach(sim, me, foe).beams.nose };
-    const note = (E.physicsNotes(me, foe) || []).find((n) => n.title === 'Track quality');
+    const note = (E.physicsNotes(me, foe) || []).find((n) => n.title === '跟踪质量');
     const noteBody = note ? note.body : '';
     // the coilguns: the same track, and what it does to where the round is sent
     const rounds = (velErr) => {

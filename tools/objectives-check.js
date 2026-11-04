@@ -33,7 +33,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     const sim = OD.Game.sim, h = sim.byId('coriolis');
     const o = sim.objectives.find((x) => x.id === 'n');
     return { t: Math.round(sim.time), drivenOff: !!h.drivenOff, at: h.drivenOffAt, since: h.drivenOffSince, done: !!o.done, progress: o.progress, outcome: sim.outcome,
-      line: (sim.log.find((l) => /is driven off/.test(l.text)) || {}).text || '', retreating: !!(h.aiState && h.aiState.retreating), order: h.order && h.order.type };
+      line: (sim.log.find((l) => /被驱离/.test(l.text)) || {}).text || '', retreating: !!(h.aiState && h.aiState.retreating), order: h.order && h.order.type };
   });
 
   console.log('scenario: Coriolis breaks off hurt and runs past 1 500 km');
@@ -46,21 +46,21 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
   await page.evaluate(() => OD.harness.step(40));
   st = await state();
   check('driven off inside 140 s', st.drivenOff && st.at >= 120 && st.at <= 135, JSON.stringify(st));
-  check('the log says so in plain words', /^ISV Coriolis is driven off: she broke off with her hull at 30 %, is past 1[\s\u00a0\u202f]500 km and still opening\. She is out of this fight\.$/.test(st.line), st.line);
+  check('the log says so in plain words', /^ISV Coriolis 被驱离：她脱离 舰体只剩 30 %，已在 1[\s\u00a0\u202f]500 km 外，还在拉开。她退出了这场战斗。$/.test(st.line), st.line);
   check('the neutralise objective counts her', st.done && st.progress === 1, JSON.stringify({ done: st.done, progress: st.progress }));
   check('and the chapter ends in victory', st.outcome === 'victory', st.outcome);
   // the debrief tells the truth about how she ended (story.js reads the hull; main.js prints chapter.victory)
   const deb = await page.evaluate(() => { const c = OD.Story.chapters[3]; const v = c.victory, w = OD.Story.warSoFar(4, 'victory'); OD.Game.endScenario(); return { v, w, body: OD.Bridge.model.body || '', warLine: OD.Bridge.model.warLine || '' }; });
-  check('the victory text says she broke off and ran, not adrift', /broke off with her hull at 30 %/.test(deb.v) && /out of this fight/.test(deb.v) && !/adrift/.test(deb.v), deb.v);
-  check('the war line says the same', /broke off/.test(deb.w) && !/adrift/.test(deb.w), deb.w);
+  check('the victory text says she broke off and ran, not adrift', /脱离，舰体只剩 30 %/.test(deb.v) && /她退出了这场战斗/.test(deb.v) && !/失控漂流/.test(deb.v), deb.v);
+  check('the war line says the same', /脱离/.test(deb.w) && !/失控漂流/.test(deb.w), deb.w);
   check('and the debrief screen prints that text', deb.body === deb.v && deb.warLine === deb.w, JSON.stringify({ body: deb.body, warLine: deb.warLine }));
-  const mt = await page.evaluate(() => { const sim = OD.Game.sim; const row = (OD.Bridge.model.stats || []).find((r) => /Mission time/.test(r.k)); return { n: row ? row.n : null, v: row ? row.v : null, outcomeTime: sim.outcomeTime, time: sim.time }; });
+  const mt = await page.evaluate(() => { const sim = OD.Game.sim; const row = (OD.Bridge.model.stats || []).find((r) => /任务用时/.test(r.k)); return { n: row ? row.n : null, v: row ? row.v : null, outcomeTime: sim.outcomeTime, time: sim.time }; });
   check('the debrief mission time is the sim time at the outcome', mt.n != null && Math.abs(mt.n - mt.outcomeTime) <= 1.5, JSON.stringify(mt));
 
   console.log('scenario: Coriolis disabled reads adrift');
   await page.evaluate(() => OD.harness.start(3));
   const deb2 = await page.evaluate(() => { const sim = OD.Game.sim, h = sim.byId('coriolis'); h.disabled = true; h.hull = 0.12; OD.harness.step(2); return { outcome: sim.outcome, v: OD.Story.chapters[3].victory }; });
-  check('disabled at 12 % reads adrift, not driven off', deb2.outcome === 'victory' && /adrift at 12 % hull integrity/.test(deb2.v) && !/broke off/.test(deb2.v), JSON.stringify(deb2));
+  check('disabled at 12 % reads adrift, not driven off', deb2.outcome === 'victory' && /失控漂流，舰体完整度 12 %/.test(deb2.v) && !/脱离/.test(deb2.v), JSON.stringify(deb2));
 
   console.log('scenario: breaking off inside 1 500 km is not driven off');
   await page.evaluate(() => OD.harness.start(3));
@@ -103,9 +103,9 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
       for (const x of sim.ships) { x.weaponsFree = false; x.cmdThrottle = 0; x.order = { type: 'hold' }; if (!x.player) { x.ai = false; x.target = null; } }
       const d = me.components.find((c) => c.id === 'drive'); d.hp = 0; OD.Damage.aggregate(me); me.disabled = true;
       OD.harness.step(30);
-      const out = { held: !sim.outcome, holdLine: sim.log.some((l) => /goes on while that repair can land/.test(l.text)) };
+      const out = { held: !sim.outcome, holdLine: sim.log.some((l) => /只要这次修理还能落地/.test(l.text)) };
       for (let i = 0; i < 9; i++) OD.harness.step(60);
-      out.back = !me.disabled && me.systems.drive > 0.25; out.backLine = sim.log.some((l) => /has thrust again/.test(l.text)); out.outcome = sim.outcome;
+      out.back = !me.disabled && me.systems.drive > 0.25; out.backLine = sim.log.some((l) => /重新有了推力/.test(l.text)); out.outcome = sim.outcome;
       // a hull disabled for her hull, not her drive, stays disabled and the engagement is lost
       OD.harness.start(OD.Skirmish.build({ player: 'JC', env: 'deep', range: 900, seed: 5, playerShips: { corvette: 1 }, enemyShips: { corvette: 1 } }));
       const s3 = OD.Game.sim, m3 = s3.ships.find((x) => x.player); m3.hull = 0.1; m3.disabled = true; OD.harness.step(5);
@@ -130,9 +130,9 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
       sim.objectives.push({ id: 'guard', type: 'protect', ship: fr.id, text: fr.name + ' survives' });
       const d = fr.components.find((c) => c.id === 'drive'); d.hp = 0; OD.Damage.aggregate(fr); fr.disabled = true;
       OD.harness.step(30);
-      const out = { held: !sim.outcome, holdLine: sim.log.filter((l) => /cannot move, but a party is on her drive/.test(l.text)).length };
+      const out = { held: !sim.outcome, holdLine: sim.log.filter((l) => /动不了，但有一个班组正在修她的主推进器/.test(l.text)).length };
       for (let i = 0; i < 9; i++) OD.harness.step(60);
-      out.back = !fr.disabled && fr.systems.drive > 0.25; out.outcome = sim.outcome; out.holdLines = sim.log.filter((l) => /cannot move, but a party is on her drive/.test(l.text)).length;
+      out.back = !fr.disabled && fr.systems.drive > 0.25; out.outcome = sim.outcome; out.holdLines = sim.log.filter((l) => /动不了，但有一个班组正在修她的主推进器/.test(l.text)).length;
       // the same hull with no crew to mend her: the guard fails at once
       OD.harness.start(OD.Skirmish.build({ player: 'JC', env: 'deep', range: 900, seed: 5, playerShips: { corvette: 1, frigate: 1 }, enemyShips: { corvette: 1 } }));
       const s2 = OD.Game.sim, f2 = s2.ships.find((x) => x.player && x.cls === 'frigate');

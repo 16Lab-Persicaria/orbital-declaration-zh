@@ -29,7 +29,7 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
   await page.keyboard.press('Tab'); await page.keyboard.press('Enter'); await page.waitForTimeout(100);
   const ends = await page.evaluate(() => window.__ends);
   check('onEnd fired exactly once', ends === 1, String(ends));
-  const owner = await page.evaluate(() => { const s = OD.Campaign.load(); return { owner: s.nodes.thebe.owner, dup: s.log.filter((l) => /Thebe/.test(l) && /control/.test(l)).length }; });
+  const owner = await page.evaluate(() => { const s = OD.Campaign.load(); return { owner: s.nodes.thebe.owner, dup: s.log.filter((l) => /Thebe/.test(l) && /控制/.test(l)).length }; });
   check('the battle was applied to the save once', owner.owner === 'JC' && owner.dup === 1, JSON.stringify(owner));
 
   console.log('skirmish board: Enter with the cursor on a hull row still launches');
@@ -57,7 +57,7 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
   await page.evaluate(() => OD.Game.setWarp(16)); await page.waitForTimeout(150);
   await page.evaluate(() => { OD.Game.setWarp(16); OD.Game.pauseMenu(); }); await page.waitForTimeout(80);
   const skPause = await page.evaluate(() => (OD.Bridge.model.entries || []).map((e) => e.label));
-  check('a skirmish pause has no Situation entry', !skPause.includes('Situation') && skPause[1] === 'How to play', JSON.stringify(skPause));
+  check('a skirmish pause has no Situation entry', !skPause.includes('局势') && skPause[1] === '玩法说明', JSON.stringify(skPause));
   await page.keyboard.press('2'); await page.waitForTimeout(150);
   st = await cur();
   check('How to play opens as a DOM screen', st.dom === 'help', JSON.stringify(st));
@@ -73,14 +73,14 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
   await page.evaluate(() => OD.Game.setWarp(4)); await page.waitForTimeout(120);
   await page.evaluate(() => { OD.Game.setWarp(4); OD.Game.pauseMenu(); }); await page.waitForTimeout(80);
   const stPause = await page.evaluate(() => ({ entries: (OD.Bridge.model.entries || []).map((e) => e.label), sub: OD.Bridge.model.entries[0].sub }));
-  check('a story pause offers Situation as entry 2', stPause.entries[0] === 'Resume' && stPause.entries[1] === 'Situation' && stPause.entries.length === 4, JSON.stringify(stPause.entries));
+  check('a story pause offers Situation as entry 2', stPause.entries[0] === '继续' && stPause.entries[1] === '局势' && stPause.entries.length === 4, JSON.stringify(stPause.entries));
   check('Resume names the warp it gives back', /4/.test(stPause.sub || ''), stPause.sub);
   await page.keyboard.press('2'); await page.waitForTimeout(150);
   st = await cur();
   check('Situation opens the console screen over the paused fight', st.screen === 'situation' && st.sim, JSON.stringify(st));
   const war = await page.evaluate(() => ({ paras: OD.Bridge.model.paragraphs.length, keys: OD.Bridge.model.keys.map((k) => k.label) }));
   // v12 round 2: from the pause menu the one key says where it goes back to; Continue only leads into chapter 1
-  check('the screen carries the situation text and a key back to where it came from', war.paras >= 2 && /Continue|Back to the/.test(war.keys.join('|')), JSON.stringify(war));
+  check('the screen carries the situation text and a key back to where it came from', war.paras >= 2 && /继续|返回/.test(war.keys.join('|')), JSON.stringify(war));
   await page.keyboard.press('Escape'); await page.waitForTimeout(150);
   st = await cur();
   check('Esc goes back to the pause screen', st.screen === 'pause', st.screen);
@@ -111,12 +111,12 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
   st = await cur();
   const model = await page.evaluate(() => ({ ok: window.__ok, note: OD.Bridge.model && OD.Bridge.model.note, refit: !!OD.Bridge.state.hits.find((x) => x.id === 'k:refit'), back: !!OD.Bridge.state.hits.find((x) => x.id === 'k:launch'), ships: OD.Bridge.model && OD.Bridge.model.ships.length }));
   check('refitFleet opens the hangar on the fleet', model.ok && st.screen === 'hangar' && model.ships > 0, JSON.stringify(model));
-  check('a Refit key is on offer at an owned port', !hasCfg || (model.refit && /RP available/.test(model.note || '')), JSON.stringify(model));
+  check('a Refit key is on offer at an owned port', !hasCfg || (model.refit && /点征用点/.test(model.note || '')), JSON.stringify(model));
   await page.evaluate(() => { OD.Game._refits = [{ id: OD.Campaign.load().fleet[0].id, cls: 'frigate', cost: 30 }]; }); // a refit as the yard would ledger it
   await page.keyboard.press('Enter'); await page.waitForTimeout(150);
   st = await cur();
   const saved = await page.evaluate(() => { const s = OD.Campaign.load(); return { rp: s.rp, cls: s.fleet[0].cls, log: s.log[s.log.length - 1] }; });
-  check('Back to the map commits the refit to the save and opens the map', st.dom === 'campaign' && st.screen === null && saved.rp === 470 && saved.cls === 'frigate' && /Refit paid/.test(saved.log), JSON.stringify([st.dom, saved]));
+  check('Back to the map commits the refit to the save and opens the map', st.dom === 'campaign' && st.screen === null && saved.rp === 470 && saved.cls === 'frigate' && /改装已付款/.test(saved.log), JSON.stringify([st.dom, saved]));
   await page.evaluate(() => OD.Campaign.clear());
   st = await cur();
   check('no game errors', st.errors.length === 0, st.errors.join(' | '));
@@ -135,10 +135,10 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
   await p2.keyboard.press('1'); await p2.waitForTimeout(150);
   s2 = await nb();
   const sitText = await p2.evaluate(() => document.querySelector('#screens') ? document.querySelector('#screens').textContent : '');
-  check('chapter 1 opens the situation screen first', s2.dom === 'situation' && /Halvorsen/.test(sitText) && /Inner Systems Authority/.test(sitText), s2.dom);
-  await p2.evaluate(() => Array.from(document.querySelectorAll('#screens .actions button')).find((x) => /Continue/.test(x.textContent)).click()); await p2.waitForTimeout(150);
+  check('chapter 1 opens the situation screen first', s2.dom === 'situation' && /Halvorsen/.test(sitText) && /内星系管理局/.test(sitText), s2.dom);
+  await p2.evaluate(() => Array.from(document.querySelectorAll('#screens .actions button')).find((x) => /继续/.test(x.textContent)).click()); await p2.waitForTimeout(150);
   s2 = await nb();
-  const launch = await p2.evaluate(() => { const b = Array.from(document.querySelectorAll('#screens .actions button')).find((x) => /Launch/.test(x.textContent)); return !!b; });
+  const launch = await p2.evaluate(() => { const b = Array.from(document.querySelectorAll('#screens .actions button')).find((x) => /出击/.test(x.textContent)); return !!b; });
   check('Continue reaches chapter 1\'s briefing with a Launch key', s2.dom === 'briefing' && launch, JSON.stringify(s2));
   await p2.keyboard.press('Escape'); await p2.waitForTimeout(100);
   s2 = await nb();

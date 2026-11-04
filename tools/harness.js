@@ -67,7 +67,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
   await page.hover('[data-tip="dv"]');
   await page.waitForTimeout(100);
   const tip = await page.evaluate(() => ({ hidden: document.getElementById('tooltip').hidden, text: document.getElementById('tooltip').textContent.slice(0, 40) }));
-  check('tooltip appears on hover', !tip.hidden && /Delta-v/.test(tip.text), tip.text);
+  check('tooltip appears on hover', !tip.hidden && /速度增量/.test(tip.text), tip.text);
   for (let i = 0; i < 8; i++) { await page.evaluate(() => OD.harness.step(600)); }
   st = await page.evaluate(() => OD.harness.state());
   check('chapter 2 progresses without errors', st.errors.length === 0 && st.ships.every((s) => s.finite), st.errors.join(' | '));
@@ -156,7 +156,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
   check('all values finite', st.ships.every((s) => s.finite));
   check('coilguns fired slugs', kin.stats.slugsFired > 0, JSON.stringify(kin.stats));
   check('interceptors were launched', kin.stats.interceptorsLaunched > 0, JSON.stringify(kin.stats));
-  check('slug flight-time note reaches the physics panel', kin.notes.some((t) => /slug/i.test(t)), kin.notes.join(' | '));
+  check('slug flight-time note reaches the physics panel', kin.notes.some((t) => /弹丸/.test(t)), kin.notes.join(' | '));
   check('kinetics decided something', st.outcome !== null || st.ships.some((s) => s.hull < 1), st.ships.map((s) => s.name + ' hull ' + s.hull.toFixed(2) + (s.destroyed ? ' destroyed' : s.disabled ? ' disabled' : '')).join(', '));
   console.log('    kinetics after ' + st.time + ' s: outcome ' + st.outcome + ', ' + JSON.stringify(kin.stats) + ', ' + kin.flying + ' still in flight');
   console.log('    readout: ' + kin.readout.join(' · '));
@@ -296,7 +296,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
             const rec = (cur.options || []).find((o) => o.recommended) || cur.options[0];
             const took = OD.UI.decisionKey(rec.key);
             out.chosen.push(cur.kind + ' → ' + rec.label + ' (' + took + ')');
-            out.afterChoice = { open: (sim.decisions || []).some((d) => d.id === cur.id), bandHidden: document.getElementById('decision').hidden, logged: sim.log.some((l) => /^Decision:/.test(l.text)) };
+            out.afterChoice = { open: (sim.decisions || []).some((d) => d.id === cur.id), bandHidden: document.getElementById('decision').hidden, logged: sim.log.some((l) => /^决策：/.test(l.text)) };
           } else if (cur && first && cur.id !== first.id && out.chosen.length < 3) {
             const rec = (cur.options || []).find((o) => o.recommended) || cur.options[0];
             OD.UI.decisionKey(rec.key); out.chosen.push(cur.kind + ' → ' + rec.label);

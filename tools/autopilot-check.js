@@ -260,7 +260,7 @@ const km = (m) => (m == null ? '—' : Math.round(m / 1000) + ' km');
       brakeAt, coastBurns, corrections: run.corrections || 0, arrivedAt,
       cold: coastN ? coastCold / coastN : 0, coastN,
       range: U.dist(me.pos, her.pos), rel: U.len(U.sub(me.vel, her.vel)),
-      lines: sim.log.filter((l) => l.speaker === 'Autopilot' && /correction burn/.test(l.text)).map((l) => l.text),
+      lines: sim.log.filter((l) => l.speaker === 'Autopilot' && /修正点火/.test(l.text)).map((l) => l.text),
       errors: OD.errors.slice(),
     };
   });
@@ -306,7 +306,7 @@ const km = (m) => (m == null ? '—' : Math.round(m / 1000) + ' km');
   check('the order drops to hold within 5 s', dead.droppedAt != null && dead.droppedAt <= 5,
     dead.droppedAt == null ? 'never dropped (order ' + dead.order + ')' : dead.droppedAt + ' s');
   check('the ship lets go of her as a target', dead.target == null, String(dead.target));
-  check('one Autopilot line says why', dead.lines.length === 1 && /ISV Tenacity is out of the fight\. JCS Test switches to Hold\./.test(dead.lines[0]),
+  check('one Autopilot line says why', dead.lines.length === 1 && /ISV Tenacity 已退出战斗。JCS Test 切回待命。/.test(dead.lines[0]),
     dead.lines.join(' | '));
   check('no errors when the target dies', dead.errors.length === 0, dead.errors.join(' | '));
   // v15: three of our hulls on one target used to print the same line three times ('ISV Concordance is
@@ -329,7 +329,7 @@ const km = (m) => (m == null ? '—' : Math.round(m / 1000) + ' km');
     return { lines: sim.log.filter((l) => l.speaker === 'Autopilot').map((l) => l.text), orders: ['a', 'b', 'c'].map((id) => sim.byId(id).order.type) };
   });
   check('three hulls on one dead target: one line names all three, and all three hold',
-    many.lines.length === 1 && /ISV Tenacity is out of the fight\. JCS \w+, JCS \w+ and JCS \w+ switch to Hold\./.test(many.lines[0]) && many.orders.every((o) => o === 'hold'),
+    many.lines.length === 1 && /ISV Tenacity 已退出战斗。JCS \w+、JCS \w+ 和 JCS \w+ 都切回待命。/.test(many.lines[0]) && many.orders.every((o) => o === 'hold'),
     many.lines.join(' | ') + ' · ' + many.orders.join(','));
 
   // ---------------------------------------------------------------- 7. an even build is even

@@ -104,7 +104,10 @@
   const SYSTEMS = ['drive', 'radiators', 'sensors', 'weapons'];
   // A beam spot is metres wide, where U.fmt.dist rounds to the nearest metre. Keep the decimals.
   const spotFmt = (m) => (m < 1000 ? U.fmt.num(m, 3) + ' m' : U.fmt.dist(m));
-  const plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's');
+  const CN_WORD = { slug: '发弹丸', interceptor: '枚拦截弹', kill: '次击落' };
+  const plural = (n, word) => (CN_WORD[word] ? n + ' ' + CN_WORD[word] : n + ' ' + word + (n === 1 ? '' : 's'));
+  const FACET_ZH = { nose: '舰首', flank: '舷侧', tail: '舰尾', armour: '装甲', hull: '舰体' };
+  const facetZh = (f) => FACET_ZH[f] || f;
   const colorOf = (ship) => (OD.Ships.FACTIONS[ship.faction] || OD.Ships.FACTIONS.CIV).color;
 
   // The sim the module is currently attached to. The panel calls shipReadout(ship) and
@@ -284,7 +287,7 @@
   // in, which it sees for itself, not at the hull that sent them.
   function solutionReason(sim, shooter, target) {
     if (!shooter || !target) return '';
-    return trackQuality(sim, shooter, target) < T.slugSolutionQ ? 'no solution' : '';
+    return trackQuality(sim, shooter, target) < T.slugSolutionQ ? '无解算' : '';
   }
   const slugReason = solutionReason;   // the coilguns' name for it, kept for the panel and the checks
 
@@ -317,7 +320,7 @@
   function fireWords(ship) {
     const f = fireFactor(ship);
     if (!(f > 0) || Math.abs(f - 1) < 1e-9) return '';
-    return 'Fire control at ' + U.fmt.pct(f) + ': ' + fireWhy(ship, f) + cycleWords(ship, f);
+    return '火控 ' + U.fmt.pct(f) + ': ' + fireWhy(ship, f) + cycleWords(ship, f);
   }
   // Seconds as this line reads them: one decimal while the number is small enough for one to
   // matter, whole seconds past ten, and no trailing zero on a mount that cycles in a round number.
@@ -337,7 +340,7 @@
     if (!m || !(f > 0)) return '';
     // The mount's own name, as the rack has it, with the capital taken off for mid-sentence.
     const name = typeof m.name === 'string' && m.name ? m.name.charAt(0).toLowerCase() + m.name.slice(1) : (m.kind || 'mount');
-    return ' The ' + name + ' cycles every ' + cycleSecs(m.cycle / f) + ', not ' + cycleSecs(m.cycle) + '.';
+    return ' The ' + name + ' 每 ' + cycleSecs(m.cycle / f) + ' 一发，不是 ' + cycleSecs(m.cycle) + '.';
   }
   // Why it is off 1. The crew record names the reason where there is one; a factor with no record
   // behind it says what it costs the mounts and stops there.
@@ -347,11 +350,11 @@
     // Fire control takes its 0.85 above the couch limit, not from the working limit: a crew
     // strapped in at 1.5 g still shoots. A record with no overCouch flag falls back to strapped.
     const overCouch = c ? (c.overCouch == null ? !!c.strapped : !!c.overCouch) : false;
-    if (parties && !parties.some((p) => p && p.task === 'fire')) return 'no party on it.';
-    if (c && c.total > 0 && c.fit * 3 < c.total) return 'fewer than a third of the crew are fit.';
-    if (overCouch) return 'the crew is over the couch limit.';
-    if (f > 1) return 'a veteran crew.';
-    return 'the mounts are short-handed.';
+    if (parties && !parties.some((p) => p && p.task === 'fire')) return '没有班组负责。';
+    if (c && c.total > 0 && c.fit * 3 < c.total) return '船员里能干活的不剩三分之一。';
+    if (overCouch) return '船员已经超过抗荷上限。';
+    if (f > 1) return '老兵船员。';
+    return '炮位人手不够。';
   }
 
   // Pointing wobble, in radians. It buys the target nothing directly: it widens the spot,
@@ -425,7 +428,7 @@
   // its beams held still has a burn-through range, which is the whole point of reading the ladder.
   // Sustained is discipline too, and a costly thing to read as capability: a hostile who throttles
   // her beams to her radiators — or stows the panels altogether, which is exactly what she does
-  // once our beams reach them — was reading as 'never, armour too thick' on a hull she could open
+  // once our beams reach them — was reading as '永远打不穿：装甲太厚' on a hull she could open
   // at any moment by going to full fire and taking the cool-down afterwards. She is one button from
   // her rated power, so the rated power is what the ladder shows. The reactor's cap is not a choice
   // and stays in: a mount that has lost its power has lost its reach.
@@ -493,7 +496,7 @@
   // and only an order names the exception: ship.finishTarget carries the hull the bridge said to
   // finish, which is what the cripple decision's 'finish' writes. The target is kept either way,
   // so the panel goes on naming her and can say why the mounts are quiet.
-  const OUT_OF_FIGHT = 'holding: she is out of the fight';
+  const OUT_OF_FIGHT = '按住：她已退出战斗';
   function ourSide(ship) {
     if (!ship) return false;
     return simRef ? ship.faction === simRef.playerFaction : !ship.ai;
@@ -510,7 +513,7 @@
   // One line per hull we stop shooting at, and one only: the bridge hears why the mounts went
   // quiet without the log filling with it. What the beams put through her in the minute before
   // that goes out first: a roll-up that arrives after the cease-fire reads as the mounts ignoring
-  // the order. 'ISV Sabre is out of the fight. Holding fire.' at 1 850 s, then 'JCS Larkspur put
+  // the order. 'ISV Sabre 退出了战斗。按住不打。' at 1 850 s, then 'JCS Larkspur put
   // 26.6 MJ through ISV Sabre's flank this minute.' at 1 870 s.
   function noteHold(sim, ship, target) {
     const st = stateOf(ship);
@@ -519,7 +522,7 @@
     st.heldSaid[target.id] = true;
     flushDealtOn(sim, ship, target);
     if (sim && typeof sim.addLog === 'function') {
-      sim.addLog(ship.name + ': ' + target.name + ' is out of the fight. Holding fire.', 'Gunnery', 'info');
+      sim.addLog(ship.name + ': ' + target.name + ' 退出了战斗。按住不打。', 'Gunnery', 'info');
     }
   }
   // One hull's pending minute of joules, said now instead of at the end of its window. Called
@@ -531,8 +534,8 @@
     if (rec) {
       d.to.delete(target.id);
       if (rec.j > 0 && !sim.outcome && typeof sim.addLog === 'function') {
-        sim.addLog(ship.name + ' put ' + U.fmt.energy(rec.j) + ' through ' + rec.name + '’s ' + rec.facet +
-          ' this minute.', 'Gunnery', 'info');
+        sim.addLog(ship.name + ' 这一分钟打穿了 ' + rec.name + ' 的' + rec.facet +
+          '，输出 ' + U.fmt.energy(rec.j) + '。', 'Gunnery', 'info');
       }
     }
     if (!d.to.size) d.since = -1;
@@ -548,14 +551,14 @@
   // and the rails ask with `skipSink`, and so does full fire — filling the sink and taking the
   // cool-down afterwards is what that mode is for.
   function fireReason(ship, target, skipSink) {
-    if (ship.destroyed) return 'destroyed';
-    if (ship.disabled) return 'adrift';
-    if (!target) return 'no target';
-    if (!ship.weaponsFree) return 'weapons tight';
+    if (ship.destroyed) return '已击毁';
+    if (ship.disabled) return '失控漂流';
+    if (!target) return '无目标';
+    if (!ship.weaponsFree) return '火控锁定';
     if (holdingWreck(ship, target)) return OUT_OF_FIGHT;
-    if (ship.weaponsInhibited) return 'the sink is full';
-    if (ship.systems.weapons <= 0) return 'mounts wrecked';
-    if (!skipSink && stateOf(ship).fireMode !== 'full' && !sinkMargin(ship)) return 'the sink would fill';
+    if (ship.weaponsInhibited) return '热沉满了';
+    if (ship.systems.weapons <= 0) return '炮位报废';
+    if (!skipSink && stateOf(ship).fireMode !== 'full' && !sinkMargin(ship)) return '热沉会满';
     return '';
   }
   // The beams' hold of their own. Outside the burn-through range for the facet she is showing,
@@ -571,7 +574,7 @@
   function burnHold(sim, ship, target) {
     const s = sim || simRef;
     if (!s || !ship || !target) return '';
-    // A hull with no beam left to hold is not holding: 'mounts wrecked' and 'none fitted' are
+    // A hull with no beam left to hold is not holding: '炮位报废' and 'none fitted' are
     // other rows' business, and the ladder reads nought for both.
     const n = countKind(ship, 'beam');
     const rack = ship.mounts || [];
@@ -585,8 +588,8 @@
     const range = reachOne(s, ship, target).beams[facet] || 0;
     if (range > 0 && U.dist(target.pos, ship.pos) <= range) return '';
     return range > 0
-      ? 'holding: out of burn-through range (' + U.fmt.dist(range) + ')'
-      : 'holding: her ' + facet + ' armour is too thick at any range';
+      ? '按住：已超出烧穿距离（' + U.fmt.dist(range) + '）'
+      : '按住：她的' + facet + '装甲在任何距离都太厚';
   }
   // Fire discipline costs the beams nothing but heat, and a magazine is not a heat problem, so
   // held beams leave the coilguns and the bays working. The track is not one of those: short of a
@@ -594,8 +597,8 @@
   // readout. Out of burn-through range they hold for a reason of their own, above.
   function holdReason(ship, target, sim) {
     const st = stateOf(ship);
-    if (st.fireMode === 'hold') return fireReason(ship, target) || 'beams held';
-    if (st.fireMode === 'sustained' && beamGain(ship) <= 0) return fireReason(ship, target) || 'sustained, radiators stowed';
+    if (st.fireMode === 'hold') return fireReason(ship, target) || '光束待机';
+    if (st.fireMode === 'sustained' && beamGain(ship) <= 0) return fireReason(ship, target) || '持续，散热板收起';
     return fireReason(ship, target) || solutionReason(sim, ship, target) || burnHold(sim, ship, target);
   }
 
@@ -624,7 +627,7 @@
   // What the sink is about to do, in the words the fire mode row prints. The panel's own Forecast
   // row runs the same stepped forecast (P.sinkForecast, with the radiator law's knee in it), so the
   // two lines beside each other say one thing. They did not: the row carried the fixed label
-  // 'full · sink fills' while the forecast beside it read 'settles near 17%', tFull null.
+  // '全力 · 热沉会满' while the forecast beside it read 'settles near 17%', tFull null.
   function sinkWords(ship) {
     if (!ship || !(ship.sinkCapacity > 0)) return '';
     const drive = driveHeatNow(ship);
@@ -637,15 +640,15 @@
     if (f) {
       // A sink that is already full reads 'fills in 0 s', which says nothing. What it does next is
       // where it settles, and while the mounts are inhibited it is full and nothing else.
-      if (f.tFull === 0 || ship.overheated) return 'the sink is full';
-      if (f.tFull != null && isFinite(f.tFull)) return 'the sink fills in ' + U.fmt.time(f.tFull);
-      if (f.tEmpty != null && isFinite(f.tEmpty) && f.tEmpty > 0 && ship.heat > 0.05 * ship.sinkCapacity) return 'the sink drains in ' + U.fmt.time(f.tEmpty);
-      if (f.settle != null && isFinite(f.settle) && f.settle < 0.999 && rating > 0) return 'the sink settles at ' + U.fmt.pct(f.settle);
+      if (f.tFull === 0 || ship.overheated) return '热沉满了';
+      if (f.tFull != null && isFinite(f.tFull)) return '热沉还有 ' + U.fmt.time(f.tFull);
+      if (f.tEmpty != null && isFinite(f.tEmpty) && f.tEmpty > 0 && ship.heat > 0.05 * ship.sinkCapacity) return '热沉排空还要 ' + U.fmt.time(f.tEmpty);
+      if (f.settle != null && isFinite(f.settle) && f.settle < 0.999 && rating > 0) return '热沉会稳定在 ' + U.fmt.pct(f.settle);
     }
     const net = heatIn - ship.radiatorPower();
-    if (net > 1e3) return 'the sink fills in ' + U.fmt.time((ship.sinkCapacity - ship.heat) / net);
-    if (net < -1e3 && ship.heat > 0) return 'the sink drains in ' + U.fmt.time(ship.heat / -net);
-    return 'the sink holds where it is';
+    if (net > 1e3) return '热沉还有 ' + U.fmt.time((ship.sinkCapacity - ship.heat) / net);
+    if (net < -1e3 && ship.heat > 0) return '热沉排空还要 ' + U.fmt.time(ship.heat / -net);
+    return '热沉保持不变';
   }
 
   // ------------------------------------------------------------------ shared effects
@@ -693,19 +696,19 @@
       // What our beams put through her, before the line that says there is nothing left to put it
       // through: the roll-up is the minute that killed her, and it reads as fire after the fact.
       flushDealtAt(sim, target);
-      sim.addLog(target.name + ' has come apart. Hull integrity 0 %.', 'Sensors', 'alert');
-      emit(sim, 'destroyed', target.pos, target.id, shooter ? shooter.id : null, target.name + ' has come apart.');
+      sim.addLog(target.name + ' 解体了。舰体完整度 0 %。', 'Sensors', 'alert');
+      emit(sim, 'destroyed', target.pos, target.id, shooter ? shooter.id : null, target.name + ' 解体了。');
       return;
     }
     if (!target.destroyed && !target.disabled && (target.hull < T.disableHull || target.systems.drive <= 0)) {
       target.disabled = true;
       target.throttle = 0; target.cmdThrottle = 0; target.jink = false;
       burst(sim, target.pos, 14, '#ff9f5d', 45);
-      const why = target.systems.drive <= 0 ? 'Her drive is wrecked and she is adrift.'
-        : 'Her hull is under ' + Math.round(T.disableHull * 100) + ' % and she has stopped manoeuvring.';
+      const why = target.systems.drive <= 0 ? '她的主推进器报废，正在失控漂流。'
+        : '她的舰体只剩 ' + Math.round(T.disableHull * 100) + ' %，她已经停止机动。';
       flushDealtAt(sim, target);
-      sim.addLog(target.name + ' is out of the fight. ' + why, 'Sensors', 'warn');
-      emit(sim, 'wreck', target.pos, target.id, shooter ? shooter.id : null, target.name + ' is out of the fight.');
+      sim.addLog(target.name + ' 退出了战斗。' + why, 'Sensors', 'warn');
+      emit(sim, 'wreck', target.pos, target.id, shooter ? shooter.id : null, target.name + ' 退出了战斗。');
     }
   }
 
@@ -718,7 +721,7 @@
     if (!sim || !shooter || !target) return;
     // Beams are left out of this window on either side. They land every substep for as long as the
     // mirror holds, so what they do is a minute of joules, not a count of events: ours go in the
-    // roll-up (noteUnderFire → flushDealt), theirs in the 'under beam fire' line. Counting them
+    // roll-up (noteUnderFire → flushDealt), theirs in the '正被光束射击' line. Counting them
     // here as well put two lines about the same beams in the log on two windows — 'JCS Larkspur
     // put 62.5 MJ through ISV Sabre's flank this minute' at 758 s, then 'JCS Larkspur: beams
     // through ISV Sabre's nose' at 764 s, six seconds apart, on two facets, the second with no
@@ -782,13 +785,13 @@
       if (decided) { h.slug = h.slugHeld = h.dart = h.pd = 0; continue; }
       if (sim.time - h.t < T.hitLogGap) continue;
       const parts = [];
-      const hull = h.name + '’s ' + h.facet;
+      const hull = h.name + ' 的' + facetZh(h.facet);
       // Slugs, interceptors and point-defence kills only: each one is an event with a count. What
       // the beams did this minute is the joules roll-up (flushDealt), which has the figure in it.
-      if (h.slug) parts.push(plural(h.slug, 'slug') + ' through ' + hull);
-      if (h.slugHeld) parts.push(plural(h.slugHeld, 'slug') + ' on ' + h.name + ', her armour held');
-      if (h.dart) parts.push(plural(h.dart, 'interceptor') + ' aboard ' + h.name);
-      if (h.pd) parts.push('point defence stopped ' + plural(h.pd, 'interceptor'));
+      if (h.slug) parts.push(plural(h.slug, 'slug') + '打穿了 ' + hull);
+      if (h.slugHeld) parts.push(plural(h.slugHeld, 'slug') + '打在 ' + h.name + '，她的装甲撑住了');
+      if (h.dart) parts.push(plural(h.dart, 'interceptor') + '命中了 ' + h.name);
+      if (h.pd) parts.push('点防御拦掉 ' + plural(h.pd, 'interceptor'));
       h.slug = h.slugHeld = h.dart = h.pd = 0;
       if (!parts.length) continue;
       h.t = sim.time;
@@ -805,11 +808,11 @@
       if (sim.time - h.t < T.hitLogGap) continue;
       h.t = sim.time;
       const parts = [];
-      if (h.slug) parts.push(plural(h.slug, 'slug') + ' through her ' + (h.facet || 'armour'));
-      if (h.slugHeld) parts.push(plural(h.slugHeld, 'slug') + ' stopped by her armour');
-      if (h.dart) parts.push(plural(h.dart, 'interceptor') + ' aboard');
+      if (h.slug) parts.push(plural(h.slug, 'slug') + '打穿了她的' + facetZh(h.facet || 'armour'));
+      if (h.slugHeld) parts.push(plural(h.slugHeld, 'slug') + ' 被她的装甲挡住');
+      if (h.dart) parts.push(plural(h.dart, 'interceptor') + '命中');
       h.slug = h.slugHeld = h.dart = 0;
-      sim.addLog(ship.name + ' has taken ' + parts.join(', ') + (h.name ? ' from ' + h.name : '') + '.', 'Gunnery', 'warn');
+      sim.addLog(ship.name + ' 承受了 ' + parts.join('、') + (h.name ? '，来自 ' + h.name : '') + '。', 'Gunnery', 'warn');
     }
   }
   // One line a minute for a hull under beams, and none at all for a hull nobody is burning. The
@@ -830,12 +833,12 @@
       if (!top || !(total > 0)) continue;
       // The hull is named because a squadron has more than one of ours taking fire at once, and
       // 'our flank' on its own tells a three-a-side bridge nothing about whose flank it is.
-      sim.addLog(ship.name + ' is under beam fire on her ' + top.facet + '. ' + top.name +
-        ' put ' + U.fmt.energy(total) + ' through this minute.', 'Gunnery', 'warn');
+      sim.addLog(ship.name + ' 的舰体正被光束打 ' + top.facet + '。' + top.name +
+        ' 这一分钟打出了 ' + U.fmt.energy(total) + '。', 'Gunnery', 'warn');
     }
   }
 
-  // What our beams put through her, on the same minute. 'Beams through her flank' says the mirror
+  // What our beams put through her, on the same minute. '光束打穿她的舷侧' says the mirror
   // is holding; this says what it came to, so the bridge can tell a burn that is working from one
   // that is not.
   function flushDealt(sim) {
@@ -849,8 +852,8 @@
       if (!d.to) continue;
       for (const rec of d.to.values()) {
         if (!(rec.j > 0)) continue;
-        sim.addLog(ship.name + ' put ' + U.fmt.energy(rec.j) + ' through ' + rec.name + '’s ' + rec.facet +
-          ' this minute.', 'Gunnery', 'info');
+        sim.addLog(ship.name + ' 这一分钟打穿了 ' + rec.name + ' 的' + rec.facet +
+          '，输出 ' + U.fmt.energy(rec.j) + '。', 'Gunnery', 'info');
       }
       d.to.clear();
     }
@@ -919,7 +922,7 @@
       if (joules > 0 && sim.time - st.lastBeamEvent >= T.beamEventGap) {
         st.lastBeamEvent = sim.time;
         emit(sim, 'through', target.pos, target.id, rec.shooter ? rec.shooter.id : null,
-          (rec.shooter ? rec.shooter.name + ' is burning through ' : 'Something is burning through ') + target.name + '’s ' + rec.facet + '.');
+          (rec.shooter ? rec.shooter.name + ' 正在烧穿 ' : '有什么正在烧穿 ') + target.name + '’s ' + rec.facet + '.');
         noteLanding(sim, rec.shooter, target, 'beam', rec.facet, true);
       }
       noteUnderFire(sim, rec.shooter, target, rec.facet, joules);
@@ -1047,7 +1050,7 @@
     // Sustained with the panels in is not discipline, it is silence: there is nothing for the beams
     // to fit under, the throttle goes to zero and the mounts never fire again — which is how a
     // corvette that stowed her radiators because our beams were on them spent the rest of a fight
-    // reading 'never, armour too thick' and never touching us. A computer that has put its panels
+    // reading '永远打不穿：装甲太厚' and never touching us. A computer that has put its panels
     // away and still wants the target dead shoots at full and takes the cool-down afterwards,
     // which is the whole point of full fire.
     st.fireMode = tight && sustainedScale(ship) > 0 ? 'sustained' : 'full';
@@ -1337,30 +1340,30 @@
     const eng = sim && sim.eng;
     const st = assess(sim, ship);
     const rows = [];
-    if (!st.mounts) rows.push({ label: 'Beams', value: 'none fitted', tip: 'This hull carries no laser mounts.' });
+    if (!st.mounts) rows.push({ label: '光束', value: '未安装', tip: '这型舰体没有激光炮位。' });
     else {
       // Nothing bears on nothing: with no target there is no bearing to be in the arc of, and the
       // row says so rather than printing a nought that reads as a fault. Wrecked is only ever the
       // mounts that are actually wrecked.
       const out = st.mounts - st.live;
       rows.push({
-        label: 'Beams in arc',
-        value: (st.hasTarget ? st.inArc + ' / ' + st.mounts : 'no target · ' + plural(st.mounts, 'mount')) + (out > 0 ? ' · ' + out + ' wrecked' : ''),
-        tip: 'A spinal mount bears only within 10° of the nose. A turret bears on any bearing.',
+        label: '射界内光束',
+        value: (st.hasTarget ? st.inArc + ' / ' + st.mounts : '无目标 · ' + st.mounts + ' 座炮位') + (out > 0 ? ' · 报废 ' + out + ' 座' : ''),
+        tip: '轴射炮位只能打舰首正负 10° 以内。炮塔可以打任意方位。',
       });
       if (st.reason) rows.push({
-        label: 'Status',
+        label: '状态',
         value: st.reason,
-        tip: st.reason === 'no solution'
-          ? 'The beams need a track quality of ' + T.slugSolutionQ + ' to hold their spot on one patch of her hull. Below that the mounts hold, drawing no power and making no heat. Point defence still fires.'
+        tip: st.reason === '无解算'
+          ? '光束需要 ' + T.slugSolutionQ + ' 的跟踪质量才能把光斑压在她舰体的同一块上。低于这个值炮位就按住不打，不耗电也不产热。点防御照常开火。'
           : /burn-through range|armour is too thick/.test(st.reason)
-            ? 'Why the beams are not firing. ' + THROTTLE_TIP
-            : 'Why the beams are not firing.',
+            ? '光束为什么没开火。' + THROTTLE_TIP
+            : '光束为什么没开火。',
       });
-      else if (!st.inArc) rows.push({ label: 'Status', value: 'nothing bears', tip: 'Swing the nose onto the target bearing.' });
+      else if (!st.inArc) rows.push({ label: '状态', value: '没有炮位对得上', tip: '把舰首转到目标的方位上。' });
       else {
-        rows.push({ label: 'On target', value: U.fmt.power(st.onTarget) + ' at ' + U.fmt.dist(st.range), tip: 'The power the beams land inside a ' + T.cell + ' m² patch of her hull at this range. ' + THROTTLE_TIP });
-        rows.push({ label: 'Through armour', value: st.through > 0 ? U.fmt.power(st.through) + ' · her ' + st.facet : 'nothing · her ' + st.facet, tip: 'What gets past her armour. The facet she shows us soaks the rest.' });
+        rows.push({ label: '命中', value: U.fmt.power(st.onTarget) + '，距离 ' + U.fmt.dist(st.range), tip: '在这个距离上，光束落进她舰体 ' + T.cell + ' 平方米一块区域内的功率。' + THROTTLE_TIP });
+        rows.push({ label: '穿甲', value: st.through > 0 ? U.fmt.power(st.through) + ' · 她的' + st.facet : '打不穿 · 她的' + st.facet, tip: '能穿过她装甲的功率。其余都被她朝我们的那一面吸收掉。' });
       }
     }
     const coils = countKind(ship, 'coilgun');
@@ -1368,17 +1371,17 @@
       const rounds = magazine(ship);
       const why = st.slugReason;
       rows.push({
-        label: 'Slugs left',
-        value: (rounds ? plural(rounds, 'round') + ' in ' + plural(coils, 'magazine') : 'magazines empty') + (why ? ' · ' + why : ''),
+        label: '剩余弹丸',
+        value: (rounds ? rounds + ' 发 · ' + coils + ' 个弹仓' : '弹仓已空') + (why ? ' · ' + why : ''),
         tip: why
-          ? 'A coilgun aims at where the track says she will be when the round arrives. Below a track quality of ' + T.slugSolutionQ + ' there is no such place, so the mounts hold.'
-          : 'Rounds left in the magazines. The coilguns fire on their own cycle whenever the beams may fire.',
+          ? '线圈炮是朝“跟踪所说的、弹丸到达时她会在的位置”打的。跟踪质量低于 ' + T.slugSolutionQ + ' 就没有这个位置，炮位只能按住。'
+          : '弹仓里剩下的弹丸。只要光束能打，线圈炮就按自己的节奏开火。',
       });
     }
     const bays = countKind(ship, 'launcher');
     if (bays) {
       const left = bayCount(ship);
-      rows.push({ label: 'Interceptors left', value: left ? left + ' in ' + plural(bays, 'bay') : 'bays empty', tip: 'A bay goes out in one salvo. Nothing reloads a launch rail in a fight.' });
+      rows.push({ label: '剩余拦截弹', value: left ? left + ' 枚 · ' + bays + ' 个发射舱' : '发射舱已空', tip: '一个发射舱一次齐射就打空。战斗中没有任何东西会给发射导轨装填。' });
     }
     // Fire discipline and aim, in the same two rows whatever the hull carries.
     if (st.mounts) {
@@ -1388,27 +1391,27 @@
       // live forecast instead of a label: what this ship's sink does at the heat it is making now.
       const sink = sinkWords(ship);
       rows.push({
-        label: 'Fire mode',
-        value: mode === 'full' ? 'full' + (sink ? ' · ' + sink : '') : mode === 'hold' ? 'held · beams cold' : 'sustained · beams at ' + Math.round(g * 100) + ' %',
-        tip: 'Full fires every beam and fills the heat sink. Sustained holds the beams at what the radiators shed, so the sink stays where it is. Held keeps the beams cold, and the coilguns and the bays still fire.',
+        label: '开火模式',
+        value: mode === 'full' ? '全力' + (sink ? ' · ' + sink : '') : mode === 'hold' ? '待机 · 光束冷却' : '持续 · 光束 ' + Math.round(g * 100) + ' %',
+        tip: '全力让每门光束都开火，热沉很快灌满。持续把光束压到散热板排得掉的程度，热沉就稳在原地。待机让光束冷着，线圈炮和发射舱照常开火。',
       });
       const target = sim ? engagementTarget(sim, ship) : null;
-      rows.push({ label: 'Aim', value: aimLabel(ship, target), tip: 'A smaller aim point catches less of the beam spot. Aiming at one part puts less energy into her than aiming at the whole hull.' });
+      rows.push({ label: '瞄准', value: aimLabel(ship, target), tip: '瞄准部位越小，接住的光斑就越少。打一个部件打进她的能量，比打整个舰体少。' });
     }
     const pdr = pdReport(ship);
     if (pdr.mounts) {
       rows.push({
-        label: 'Point defence',
-        value: pdr.live + ' / ' + pdr.mounts + ' live · engaging ' + pdr.engaging + ' · ' + plural(pdr.kills, 'kill'),
-        tip: 'Point-defence mounts fire at interceptors inside ' + U.fmt.dist(T.pdRange) + ' and stop about ' + U.fmt.num(pdr.ratePerMin, 2) + ' a minute.',
+        label: '点防御',
+        value: pdr.live + ' / ' + pdr.mounts + ' 门可用 · 正在打 ' + pdr.engaging + ' · 击落 ' + plural(pdr.kills, 'kill'),
+        tip: '点防御炮位会打 ' + U.fmt.dist(T.pdRange) + ' 内飞来的拦截弹，每分钟大约拦掉 ' + U.fmt.num(pdr.ratePerMin, 2) + ' 枚。',
       });
     }
     const board = threatSummary(sim, ship);
     const near = inbound(sim, ship);
-    rows.push({ label: 'Incoming', value: near || board.slugs ? board.text : 'nothing inbound', tip: 'What is flying at this ship, and how much of it point defence can stop.' });
+    rows.push({ label: '来袭', value: near || board.slugs ? board.text : '没有来袭', tip: '朝这艘舰飞来的东西，以及点防御能拦掉多少。' });
     const slugs = eng ? eng.slugs.length : 0;
     const darts = eng ? eng.interceptors.length : 0;
-    rows.push({ label: 'Effects', value: plural(eng ? eng.beams.length : 0, 'beam') + ' · ' + plural(slugs, 'slug') + ' · ' + plural(darts, 'interceptor'), tip: 'Beams firing now, and slugs and interceptors in flight now, counting both sides.' });
+    rows.push({ label: '效果', value: (eng ? eng.beams.length : 0) + ' 道光束 · ' + slugs + ' 发弹丸 · ' + darts + ' 枚拦截弹', tip: '此刻正在开火的光束，以及正在飞行的弹丸和拦截弹，双方都算在内。' });
     return rows;
   }
 
@@ -1421,16 +1424,16 @@
     const st = stateOf(ship);
     if (countKind(ship, 'beam')) {
       const g = sustainedScale(ship);
-      acts.push({ id: 'fire_full', label: 'Full', tip: 'Every beam at full power. The sink fills. A full sink holds the drive to a quarter and stops every mount, point defence included, until it drains.', active: st.fireMode === 'full' });
-      acts.push({ id: 'fire_sustained', label: 'Sustained', tip: g > 0 ? 'Beams at ' + Math.round(g * 100) + ' % of rated power. The radiators shed that much waste heat, so the sink does not fill.' : 'The radiators are stowed, so there is nothing to shed heat. Sustained keeps the beams cold until they are extended.', active: st.fireMode === 'sustained' });
-      acts.push({ id: 'fire_hold', label: 'Hold beams', tip: 'Beams cold, without going weapons tight. The coilguns and the bays still fire.', active: st.fireMode === 'hold' });
+      acts.push({ id: 'fire_full', label: '全力', tip: '每门光束都是满功率，热沉会灌满。热沉满了，推进器只剩四分之一，所有炮位停火——包括点防御——直到它排空。', active: st.fireMode === 'full' });
+      acts.push({ id: 'fire_sustained', label: '持续', tip: g > 0 ? '光束压到额定功率的 ' + Math.round(g * 100) + ' %。散热板正好能排掉这些废热，热沉就不会满。' : '散热板收着，没有东西排热。持续模式会让光束一直冷着，直到把板子展开。', active: st.fireMode === 'sustained' });
+      acts.push({ id: 'fire_hold', label: '光束待机', tip: '光束冷着，但没有进入火控锁定。线圈炮和发射舱照常开火。', active: st.fireMode === 'hold' });
       const target = simRef ? engagementTarget(simRef, ship) : null;
       const rads = !!(target && target.radiators && target.radiators.state > 0.5);
       const tail = !!(target && facetSeen(ship, target) === 'tail');
-      acts.push({ id: 'aim_hull', label: 'Aim hull', tip: 'The whole hull. This is the widest aim point, at 100 % of the energy on target.', active: st.aim === 'hull' });
-      acts.push({ id: 'aim_radiators', label: 'Aim radiators', tip: rads ? 'Her radiators are extended. Wreck them and she cannot shed her heat, at ' + Math.round(T.aimShare.radiators * 100) + ' % of the energy on target. That narrower aim point burns through at a shorter range, so close in before you take it.' : 'Her radiators are stowed. With nothing out to hit, the beams fall back to the hull.', active: st.aim === 'radiators' });
-      acts.push({ id: 'aim_drive', label: 'Aim drive', tip: tail ? 'She is showing us her tail. Wreck the drive and she cannot manoeuvre, at ' + Math.round(T.aimShare.drive * 100) + ' % of the energy on target.' : 'The drive is exposed only from the tail. From any other facet the beams fall back to the hull.', active: st.aim === 'drive' });
-      acts.push({ id: 'aim_mounts', label: 'Aim mounts', tip: 'Wreck her mounts one at a time, at ' + Math.round(T.aimShare.mounts * 100) + ' % of the energy on target.', active: st.aim === 'mounts' });
+      acts.push({ id: 'aim_hull', label: '瞄准舰体', tip: '整个舰体。这是最大的瞄准面，100 % 的能量都打在目标上。', active: st.aim === 'hull' });
+      acts.push({ id: 'aim_radiators', label: '瞄准散热板', tip: rads ? '她的散热板展开着。打掉它们，她就排不出热；代价是只有 ' + Math.round(T.aimShare.radiators * 100) + ' % 的能量落在目标上。这么小的瞄准面，烧穿距离更短，靠近了再选。' : '她的散热板收着。外面没有东西可打，光束会落回舰体。', active: st.aim === 'radiators' });
+      acts.push({ id: 'aim_drive', label: '瞄准推进器', tip: tail ? '她把舰尾对着我们。打掉推进器，她就没法机动；代价是只有 ' + Math.round(T.aimShare.drive * 100) + ' % 的能量落在目标上。' : '推进器只有从舰尾才露出来。从其他任何一面看，光束都会落回舰体。', active: st.aim === 'drive' });
+      acts.push({ id: 'aim_mounts', label: '瞄准炮位', tip: '一个一个打掉她的炮位；只有 ' + Math.round(T.aimShare.mounts * 100) + ' % 的能量落在目标上。', active: st.aim === 'mounts' });
     }
     // Offered only when there is something to launch and something to launch it at.
     const left = bayCount(ship);
@@ -1438,18 +1441,18 @@
     // Nothing goes out of a wreck, an adrift hull, a ship gone weapons tight or a saturated sink.
     if (left > 0 && target && !fireReason(ship, target, true)) {
       for (const s of SALVOS) if (left >= s[1]) acts.push({ id: s[0], label: s[2], tip: salvoTip(ship, target, s[1]), active: false });
-      acts.push({ id: 'launchAll', label: 'Launch all (' + left + ')', tip: salvoTip(ship, target, left), active: false });
+      acts.push({ id: 'launchAll', label: '全部发射（' + left + ')', tip: salvoTip(ship, target, left), active: false });
       // The old single button, kept so anything still asking for 'launch' empties the rails.
-      acts.push({ id: 'launch', label: 'Launch interceptors', tip: salvoTip(ship, target, left), alias: 'launchAll', hidden: true, active: false });
+      acts.push({ id: 'launch', label: '发射拦截弹', tip: salvoTip(ship, target, left), alias: 'launchAll', hidden: true, active: false });
     }
     return acts;
   }
   function salvoTip(ship, target, n) {
     const e = salvoEstimate(simRef, ship, target, n);
-    if (e.reason === 'no track') return plural(n, 'interceptor') + ' at ' + target.name + '. A bay launches on a track quality of ' + T.salvoTrackQ + ', and we have no track on her yet.';
-    if (!e.flightTime) return plural(n, 'interceptor') + ' at ' + target.name + '. She is opening faster than they could close, so none would reach her.';
-    return plural(n, 'interceptor') + ' at ' + target.name + ', ' + U.fmt.time(e.flightTime) + ' of flight. She is ' +
-      (e.reach ? 'inside their reach' : 'beyond their reach') + '. Her point defence stops about ' + e.theirPdCanStop + ', so ' + e.through + ' would arrive.';
+    if (e.reason === '无跟踪') return n + ' 枚拦截弹打 ' + target.name + '。发射舱要求跟踪质量 ' + T.salvoTrackQ + '，而我们对她还只有接触。';
+    if (!e.flightTime) return n + ' 枚拦截弹打 ' + target.name + '。她拉开的速度比拦截弹能追的还快，一枚都到不了。';
+    return n + ' 枚拦截弹打 ' + target.name + '，飞行 ' + U.fmt.time(e.flightTime) + '。她现在' +
+      (e.reach ? '在拦截弹射程内' : '在拦截弹射程外') + '。她的点防御大约能拦掉 ' + e.theirPdCanStop + ' 枚，所以能到 ' + e.through + ' 枚。';
   }
 
   const FIRE_IDS = { fire_full: 'full', fire_sustained: 'sustained', fire_hold: 'hold' };
@@ -1459,21 +1462,21 @@
     const st = stateOf(ship);
     if (id === 'holdbeams') { // the old toggle, kept working
       setFireMode(ship, st.fireMode === 'hold' ? 'full' : 'hold');
-      sim.addLog(ship.name + (st.fireMode === 'hold' ? ': beams held.' : ': beams released.'), 'Gunnery', 'info');
+      sim.addLog(ship.name + (st.fireMode === 'hold' ? '：光束待机。' : '：光束已放开。'), 'Gunnery', 'info');
       return;
     }
     if (FIRE_IDS[id]) {
       setFireMode(ship, FIRE_IDS[id]);
-      const say = st.fireMode === 'full' ? ': beams to full. The sink will fill.'
-        : st.fireMode === 'sustained' ? ': beams to sustained, ' + Math.round(beamGain(ship) * 100) + ' % of rated power.'
-          : ': beams held. The coilguns and the bays still fire.';
+      const say = st.fireMode === 'full' ? '：光束全力。热沉会满。'
+        : st.fireMode === 'sustained' ? '：光束持续，额定功率的 ' + Math.round(beamGain(ship) * 100) + ' %。'
+          : '：光束待机。线圈炮和发射舱照常开火。';
       sim.addLog(ship.name + say, 'Gunnery', 'info');
       return;
     }
     if (AIM_IDS[id]) {
       setAimPoint(ship, AIM_IDS[id]);
       const target = engagementTarget(sim, ship);
-      sim.addLog(ship.name + ': aiming for the ' + aimLabel(ship, target) + '.', 'Gunnery', 'info');
+      sim.addLog(ship.name + '：瞄准' + aimLabel(ship, target) + '。', 'Gunnery', 'info');
       return;
     }
     if (id === 'launch' || id === 'launchAll') { salvo(sim, ship, 'all'); return; }
@@ -1516,16 +1519,16 @@
   function trackNote(ship, target, mount, R) {
     const q = trackQuality(simRef, ship, target);
     const f = 1 + T.trackJitter * (3 - q);
-    const word = q < 1.8 ? 'a contact' : q < 2.7 ? 'a track' : 'a solution';
-    let body = (target ? target.name + ' is ' + word + ': q = ' + U.fmt.num(q, 3) : 'no target: a solution is assumed, q = 3') + '\n' +
-      'wobble = 1 + ' + T.trackJitter + '·(3 − q) = ×' + U.fmt.num(f, 3) + ' on the pointing error';
+    const word = q < 1.8 ? '接触' : q < 2.7 ? '跟踪' : '解算';
+    let body = (target ? target.name + '：' + word + '，q = ' + U.fmt.num(q, 3) : '无目标：按已有解算算，q = 3') + '\n' +
+      '晃动 = 1 + ' + T.trackJitter + '·(3 − q) = 瞄准误差 ×' + U.fmt.num(f, 3);
     if (mount) {
       const diff = P.beamSpotDiameter(mount.wavelength, R, mount.aperture);
       const spot = diff + 2 * pointingJitter(ship, target) * R;
       const solid = diff + 2 * pointingJitter(ship) * R;
-      body += '\n' + mount.name + ' at ' + U.fmt.dist(R) + ': spot ' + spotFmt(spot) + ' across, against ' + spotFmt(solid) + ' on a solution';
+      body += '\n' + mount.name + ' 在 ' + U.fmt.dist(R) + '：光斑 ' + spotFmt(spot) + '，有解算时是 ' + spotFmt(solid);
     } else {
-      body += '\npointing alone spreads ' + spotFmt(2 * pointingJitter(ship, target) * R) + ' across at ' + U.fmt.dist(R);
+      body += '\n仅瞄准误差在 ' + U.fmt.dist(R) + ' 上就摊开到 ' + spotFmt(2 * pointingJitter(ship, target) * R);
     }
     // What the track costs the coilguns, which is a different currency from what it costs the beams.
     // A beam pays in spot area; a round pays in where it is sent, and the error in her velocity is
@@ -1535,12 +1538,12 @@
       const vErr = trackVelErr(simRef, ship, target);
       const flight = P.slugFlightTime(R, coil.muzzleVelocity);
       const window = T.slugHullLengths * Math.max(20, (target && target.length) || ship.length || 100);
-      body += '\nthe lead is only as good as her velocity: \u00b1' + U.fmt.speed(vErr) + ' over ' + U.fmt.time(flight) +
-        ' of flight sends a round ' + U.fmt.dist(vErr * flight) + ' from the aim point, and a round counts as a hit only inside ' + U.fmt.dist(window) +
-        (vErr > 0 ? '. Each round draws its own error.' : '. She is pinned, so every round is aimed at the same place.');
+      body += '\n提前量取决于她的速度：±' + U.fmt.speed(vErr) + ' 的误差，在 ' + U.fmt.time(flight) +
+        ' 的飞行时间里会把弹丸送出 ' + U.fmt.dist(vErr * flight) + '，而只有落在 ' + U.fmt.dist(window) + ' 以内才算命中' +
+        (vErr > 0 ? '。每一发各有各的误差。' : '。她被钉住了，每一发都打向同一个点。');
     }
-    body += '\nbelow q ' + T.slugSolutionQ + ' the beams and the coilguns have no solution and hold. Below q ' + T.salvoTrackQ + ' the bays will not launch.';
-    return { title: 'Track quality', body };
+    body += '\nq 低于 ' + T.slugSolutionQ + ' 时，光束和线圈炮没有解算，按住不打。低于 ' + T.salvoTrackQ + ' 时发射舱不发射。';
+    return { title: '跟踪质量', body };
   }
 
   function beamNote(ship, target, mount, R) {
@@ -1551,13 +1554,13 @@
     const soak = target ? T.armourWatts * armourCm(target, facet) : 0;
     const through = Math.max(0, shot.onTarget - soak);
     const body =
-      mount.name + ': ' + U.fmt.power(mount.power) + ' at ' + Math.round(mount.efficiency * 100) + '% into the beam, ' + mount.aperture + ' m mirror, ' + U.fmt.si(mount.wavelength, 'm') + '\n' +
-      'spot = 2.44·λ·R/D + pointing = ' + spotFmt(diff) + ' + ' + spotFmt(jit) + ' = ' + spotFmt(shot.spot) + ' across (' + U.fmt.num(shot.area, 3) + ' m²) at R = ' + U.fmt.dist(R) + '\n' +
+      mount.name + '：' + U.fmt.power(mount.power) + '，光束利用效率 ' + Math.round(mount.efficiency * 100) + ' %，反射镜口径 ' + mount.aperture + ' 米，波长 ' + U.fmt.si(mount.wavelength, 'm') + '\n' +
+      'spot = 2.44·λ·R/D + 瞄准 = ' + spotFmt(diff) + ' + ' + spotFmt(jit) + ' = ' + spotFmt(shot.spot) + '（' + U.fmt.num(shot.area, 3) + ' 平方米），R = ' + U.fmt.dist(R) + '\n' +
       'on target = ' + U.fmt.power(shot.emitted) + ' × min(1, ' + T.cell + ' m² / spot) = ' + U.fmt.power(shot.onTarget) +
       (target
-        ? '\n' + target.name + ' shows her ' + facet + ': ' + armourCm(target, facet) + ' cm soaks ' + U.fmt.power(soak) + ' → ' + (through > 0 ? U.fmt.power(through) + ' into the hull' : 'nothing gets through')
-        : '\n(no target: shown at this hull’s doctrine range)');
-    return { title: 'What the beam does at this range', body };
+        ? '\n' + target.name + ' 露出的是' + facet + '：' + armourCm(target, facet) + ' 厘米吸收 ' + U.fmt.power(soak) + ' → ' + (through > 0 ? U.fmt.power(through) + ' 打进舰体' : '一点都穿不过去')
+        : '\n（无目标：按这型舰体的条令距离显示）');
+    return { title: '此距离光束效果', body };
   }
 
   // The ladder. For every pair of beams and facet there is a range inside which the beams put
@@ -1588,31 +1591,31 @@
   // number moves while nothing else on the screen has changed. A third to a half is the measured
   // span, not a hedge: the spot is diffraction plus pointing, so a hull held at a solution loses
   // about half its reach (nose 650 km to 347 km) and one held at a bare contact nearer two thirds.
-  const THROTTLE_TIP = 'The drive shakes the mirror. At full throttle the pointing error is ' + (1 + T.jitterBurn) +
-    ' times as wide, so the beams burn through at a third to a half of the range they reach with the drive cold. Cut the throttle before you shoot.';
+const THROTTLE_TIP = '推进器会让反射镜抖。满推力时瞄准误差是冷车时的 ' + (1 + T.jitterBurn) +
+  ' 倍，所以烧穿距离只有冷车时的三分之一到一半。开火前先把推力收回来。';
   function ladderNote(ship, target, R) {
     const r = reach(simRef, ship, target);
     if (!r) return null;
     const ours = target ? facetSeen(ship, target) : 'flank';
     let body =
-      'burn-through = √(4·emitted·cell / π·k²·soak), k = 2.44λ/D + 2·jitter. Inside that range the beams open that facet, outside it nothing gets through\n' +
-      'ours against their ' + facetLine(r.beams);
+      'burn-through = √(4·emitted·cell / π·k²·soak)，k = 2.44λ/D + 2·jitter。在这个距离内光束能打开那一面装甲，出了这个距离一点都穿不过去\n' +
+      '我方对她的' + facetLine(r.beams);
     // The line above is at the throttle this hull is holding now, so only the other end of the
     // throttle is worth printing: two identical ladders one under the other teach nothing.
     // a hull with no drive (a station) has no throttle to cut, so she gets no throttle lines
     const th = ship.thrust > 0 ? throttleFacets(ship, target) : null;
     if (th) {
-      if (ship.throttle > 0.01) body += '\nwith our drive cold: ' + facetLine(th.cold);
-      if (ship.throttle < 0.99) body += '\nat full throttle: ' + facetLine(th.full);
-      body += '\nthe drive shakes the mirror, so the pointing error is ×' + (1 + T.jitterBurn) +
-        ' at full throttle and every range above falls with it. Cut the throttle before you shoot.';
+      if (ship.throttle > 0.01) body += '\n我方冷车时：' + facetLine(th.cold);
+      if (ship.throttle < 0.99) body += '\n满推力时：' + facetLine(th.full);
+      body += '\n推进器让反射镜抖，满推力时瞄准误差 ×' + (1 + T.jitterBurn) +
+        '，上面每个距离都跟着缩。开火前先把推力收回来。';
     }
     if (target) {
-      body += '\ntheirs against our ' + facetLine(r.their.beams) +
-        '\nat ' + U.fmt.dist(R) + ' she shows us her ' + ours + ' and we show her our ' + r.their.facet +
-        '\n' + (r.beams[ours] >= R ? 'our beams are through her ' + ours : 'her ' + ours + ' armour holds') + ', ' + (r.their.beams[r.their.facet] >= R ? 'and hers are through our ' + r.their.facet : 'and our ' + r.their.facet + ' armour holds');
-    } else body += '\n(no target: shown against a hull of this class)';
-    return { title: 'Burn-through ranges', body };
+      body += '\n她对我方的' + facetLine(r.their.beams) +
+        '\n在 ' + U.fmt.dist(R) + ' 上，她把' + ours + '对着我们，我们把' + r.their.facet + '对着她' +
+        '\n' + (r.beams[ours] >= R ? '我方光束能烧穿她的' + ours : '她的' + ours + '装甲撑得住') + '，' + (r.their.beams[r.their.facet] >= R ? '她的光束也能烧穿我方的' + r.their.facet : '我方' + r.their.facet + '装甲撑得住');
+    } else body += '\n（无目标：按同型舰体显示）';
+    return { title: '烧穿距离', body };
   }
 
   // What a bay can still reach, and what waits for it at the other end.
@@ -1623,21 +1626,21 @@
     if (!sol) return null;
     const left = bayCount(ship);
     let body =
-      'interceptor: ' + U.fmt.dv(sol.dv) + ' of its own delta-v (Tsiolkovsky, ' + rec.dryMass + ' kg dry, ' + rec.propMass + ' kg of propellant, ' + (rec.dryMass + rec.propMass) + ' kg off the rail) at ' + U.fmt.num(rec.accel, 3) + ' m/s² off the rail and ' + U.fmt.num(sol.brakeAccel, 3) + ' m/s² on the brake, by which time it is nearly dry\n' +
-      'it builds ' + U.fmt.speed(sol.closing) + ' of closing, then brakes for ' + U.fmt.time(sol.tBrake) + ' over the last ' + U.fmt.dist(sol.dBrake) + ' and arrives at ' + U.fmt.speed(sol.terminal) + '\n' +
-      'launch reach = burn + coast + brake inside ' + U.fmt.time(T.dartLife) + ' of endurance = ' + rangeWord(sol.reach) + ' (' + plural(left, 'interceptor') + ' aboard)\n' +
-      'what it does on arrival is ½·m·v², and the m is its mass at contact, propellant included: ' +
-        U.fmt.energy(0.5 * rec.dryMass * sol.terminal * sol.terminal) + ' arriving dry at ' + U.fmt.speed(sol.terminal) + ', ' +
-        U.fmt.energy(0.5 * terminalMass(rec, sol) * sol.terminal * sol.terminal) + ' with the ' + Math.round(terminalMass(rec, sol) - rec.dryMass) + ' kg it still holds back, before armour\n' +
-      'An interceptor that runs dry before it brakes arrives at whatever closing speed it has left. A quarter more closing is half again the energy on arrival.';
+      '拦截弹：自带 ' + U.fmt.dv(sol.dv) + ' 的速度增量（齐奥尔科夫斯基公式，干重 ' + rec.dryMass + ' 公斤，推进剂 ' + rec.propMass + ' 公斤，离轨总重 ' + (rec.dryMass + rec.propMass) + ' 公斤），离轨加速度 ' + U.fmt.num(rec.accel, 3) + ' 米/秒²，反推加速度 ' + U.fmt.num(sol.brakeAccel, 3) + ' 米/秒²，到那时它几乎已经烧干\n' +
+      '它先积累 ' + U.fmt.speed(sol.closing) + ' 的接近速度，然后在最后 ' + U.fmt.dist(sol.dBrake) + ' 内反推 ' + U.fmt.time(sol.tBrake) + '，到达时速度 ' + U.fmt.speed(sol.terminal) + '\n' +
+      '发射射程 = 在 ' + U.fmt.time(T.dartLife) + ' 续航内完成点火 + 滑行 + 反推 = ' + rangeWord(sol.reach) + '（舰上 ' + left + ' 枚）\n' +
+      '到达时的能量是 ½·m·v²，这里的 m 是接触瞬间的质量，含剩余推进剂：' +
+        U.fmt.energy(0.5 * rec.dryMass * sol.terminal * sol.terminal) + '（烧干到达时速度 ' + U.fmt.speed(sol.terminal) + '），' +
+        U.fmt.energy(0.5 * terminalMass(rec, sol) * sol.terminal * sol.terminal) + '（还留着 ' + Math.round(terminalMass(rec, sol) - rec.dryMass) + ' 公斤推进剂），装甲另算\n' +
+      '拦截弹如果在反推前就烧干了，就会带着剩下的相对速度撞上去。相对速度多四分之一，到达能量就多一半。';
     if (target) {
       const d = U.dist(ship.pos, target.pos);
       const e = salvoEstimate(simRef, ship, target, left);
-      body += '\n' + target.name + ' at ' + U.fmt.dist(d) + ': ' + (e.reach ? 'inside the reach' : 'outside the reach') +
-        (e.flightTime ? ', ' + U.fmt.time(e.flightTime) + ' of flight' : '') +
-        '\nher point defence works inside ' + U.fmt.dist(T.pdRange) + ' at about ' + U.fmt.num(pdRate(target) * 60, 2) + ' interceptors a minute, so about ' + e.theirPdCanStop + ' are stopped and ' + e.through + ' arrive';
+      body += '\n' + target.name + ' 在 ' + U.fmt.dist(d) + '：' + (e.reach ? '在射程内' : '在射程外') +
+        (e.flightTime ? '，飞行 ' + U.fmt.time(e.flightTime) : '') +
+        '\n她的点防御在 ' + U.fmt.dist(T.pdRange) + ' 内每分钟大约拦掉 ' + U.fmt.num(pdRate(target) * 60, 2) + ' 枚，所以大概拦下 ' + e.theirPdCanStop + ' 枚，到 ' + e.through + ' 枚';
     }
-    return { title: 'How far the interceptors reach', body };
+    return { title: '拦截弹射程', body };
   }
 
   // The coilgun's whole case, and the whole case against it: the round is honest about where it is
@@ -1661,18 +1664,18 @@
     const gHere = g ? U.len(g) : 0;
     const fall = 0.5 * gHere * flight * flight;
     const body =
-      mount.name + ': ' + U.fmt.num(mount.slugMass, 3) + ' kg at ' + U.fmt.speed(mount.muzzleVelocity) + ' = ' + U.fmt.energy(slugEnergy(mount)) + ' of kinetic energy, one round every ' + mount.cycle + ' s (' + magazine(ship) + ' left)\n' +
-      'flight time = R / v = ' + U.fmt.dist(R) + ' / ' + U.fmt.speed(mount.muzzleVelocity) + ' = ' + U.fmt.time(flight) + '. The gun aims at where she will be by then\n' +
+      mount.name + '：' + U.fmt.num(mount.slugMass, 3) + ' 公斤弹丸，初速 ' + U.fmt.speed(mount.muzzleVelocity) + '，动能 ' + U.fmt.energy(slugEnergy(mount)) + '，每 ' + mount.cycle + ' 秒一发（弹仓还剩 ' + magazine(ship) + ' 发）\n' +
+      '飞行时间 = R / v = ' + U.fmt.dist(R) + ' / ' + U.fmt.speed(mount.muzzleVelocity) + ' = ' + U.fmt.time(flight) + '。炮是朝她那时会在的位置打的\n' +
       (target
-        ? 'We measure muzzle energy in our own frame. ' + target.name + ' is moving too, so the hit is ½·m·|v_slug − v_target|² = ' + U.fmt.energy(hit.energy) +
-          ', against the ' + U.fmt.energy(slugEnergy(mount)) + ' it left the rail with. The round arrives at ' + U.fmt.speed(hit.speed) + ' relative to her\n'
-        : 'We measure muzzle energy in our own frame. The target is moving too, so the hit is ½·m·|v_slug − v_target|², against the energy it left the rail with\n') +
-      (fall > 0 ? 'the round and the ship both fall while it flies: ½·g·t² = ' + U.fmt.dist(fall) + ' at ' + U.fmt.num(gHere, 2) + ' m/s², and the lead is worked out against that\n' : '') +
-      'a 2 s jink at ' + U.fmt.num(jinkA, 3) + ' m/s² throws her ' + U.fmt.dist(drift) + ' off the aim point by then. A round counts as a hit only inside ' + U.fmt.dist(window) +
+        ? '炮口能量是在我们自己的参考系里算的。' + target.name + ' 也在动，所以命中能量是 ½·m·|v_slug − v_target|² = ' + U.fmt.energy(hit.energy) +
+          '，而它离开导轨时是 ' + U.fmt.energy(slugEnergy(mount)) + '。弹丸到达时相对她的速度是 ' + U.fmt.speed(hit.speed) + '\n'
+        : '炮口能量是在我们自己的参考系里算的。目标也在动，所以命中能量是 ½·m·|v_slug − v_target|²，对比它离开导轨时的能量\n') +
+      (fall > 0 ? '弹丸飞行时弹和舰都在下坠：½·g·t² = ' + U.fmt.dist(fall) + '，此处 g = ' + U.fmt.num(gHere, 2) + ' 米/秒²，提前量就是按这个算的\n' : '') +
+      '以 ' + U.fmt.num(jinkA, 3) + ' 米/秒² 规避 2 秒，到那时她已离开瞄准点 ' + U.fmt.dist(drift) + '。只有落在 ' + U.fmt.dist(window) + ' 以内才算命中' +
       (target
-        ? '\n' + target.name + ' shows her ' + facet + ': ' + armourCm(target, facet) + ' cm soaks ' + U.fmt.energy(T.armourJoules * armourCm(target, facet)) + ' → ' + (through > 0 ? U.fmt.energy(through) + ' into the hull on a hit' : 'her armour stops it')
-        : '\n(no target: shown at this hull’s doctrine range)');
-    return { title: 'What a slug does at this range', body };
+        ? '\n' + target.name + ' 露出的是' + facet + '：' + armourCm(target, facet) + ' 厘米吸收 ' + U.fmt.power(soak) + ' → ' + (through > 0 ? U.fmt.power(through) + ' 打进舰体' : '一点都穿不过去')
+        : '\n（无目标：按这型舰体的条令距离显示）');
+    return { title: '此距离弹丸效果', body };
   }
 
   // ------------------------------------------------------------------ kinetics
@@ -1862,7 +1865,7 @@
       burst(sim, s.to.pos, 7, '#ffd9a0', 70);
       const past = kineticThrough(slugArrivalEnergy(s), s.to, facet);
       emit(sim, past > 0 ? 'through' : 'hit', s.to.pos, s.to.id, s.from ? s.from.id : null,
-        s.to.name + ' has taken a slug on the ' + facet + (past > 0 ? '.' : '. Her armour held.'));
+        s.to.name + ' 的' + facetZh(facet) + '挨了一发弹丸' + (past > 0 ? '。' : '。她的装甲撑住了。'));
       noteLanding(sim, s.from, s.to, 'slug', facet, past > 0);
       landEnergy(sim, s.from, s.to, past, facet, 'hull', 'slug');
     }
@@ -1921,17 +1924,17 @@
       // Throttled like the other Gunnery lines from a hull.
       const byComputer = !!auto && ship.faction === sim.playerFaction;
       if (!byComputer) {
-        sim.addLog(ship.name + ' has launched ' + plural(launched, 'interceptor') + ' at ' + target.name + (launched === 1 ? '. It closes under its own drive.' : '. They close under their own drives.'), 'Gunnery', 'warn');
+        sim.addLog(ship.name + ' 向 ' + target.name + ' 发射了 ' + launched + ' 枚拦截弹。它们靠自己的推进器飞过去。', 'Gunnery', 'warn');
       } else if (sim.time - (st.lastAutoSaid == null ? -1e9 : st.lastAutoSaid) >= T.hitLogGap) {
         st.lastAutoSaid = sim.time;
-        sim.addLog(ship.name + ': the computer launched ' + plural(launched, 'interceptor') + ' at ' + target.name + '.', 'Gunnery', 'warn');
+        sim.addLog(ship.name + '：火控计算机向 ' + target.name + ' 发射了 ' + launched + ' 枚拦截弹。', 'Gunnery', 'warn');
       }
-      emit(sim, 'launch', ship.pos, ship.id, ship.id, ship.name + ': ' + plural(launched, 'interceptor') + ' away at ' + target.name + '.');
+      emit(sim, 'launch', ship.pos, ship.id, ship.id, ship.name + '：' + launched + ' 枚拦截弹飞向 ' + target.name + '。');
       // The salvo is on the board the moment it leaves the rails, not when it is close enough to hurt.
       if (target.faction === sim.playerFaction) {
         const s = salvoEstimate(sim, ship, target, launched);
         emit(sim, 'incoming', target.pos, target.id, ship.id,
-          plural(launched, 'interceptor') + ' inbound on ' + target.name + (s.flightTime ? ', ' + U.fmt.time(s.flightTime) + ' out.' : '.'));
+          launched + ' 枚拦截弹来袭，目标 ' + target.name + (s.flightTime ? '，' + U.fmt.time(s.flightTime) + ' 后到' : '。'));
       }
     }
     return launched;
@@ -2089,7 +2092,7 @@
       // What it arrives with, and nothing else: its mass at contact against the speed it met her at.
       const past = kineticThrough(relEnergy(dartMass(it), it.vel.x, it.vel.y, target), target, facet);
       emit(sim, past > 0 ? 'through' : 'hit', target.pos, target.id, it.from ? it.from.id : null,
-        target.name + ' has taken an interceptor on the ' + facet + (past > 0 ? '.' : '. Her armour held.'));
+        target.name + ' 的' + facetZh(facet) + '挨了一枚拦截弹' + (past > 0 ? '。' : '。她的装甲撑住了。'));
       noteLanding(sim, it.from, target, 'interceptor', facet, past > 0);
       landEnergy(sim, it.from, target, past, facet, it.aim || 'hull', 'interceptor');
     }
@@ -2143,7 +2146,7 @@
           st.pdKills++;
           burst(sim, best.pos, 8, '#ffe6b0', 55);
           eng.flashes.push({ x: best.pos.x, y: best.pos.y, life: T.flashLife, maxLife: T.flashLife, color: colorOf(ship) });
-          emit(sim, 'pdkill', best.pos, ship.id, best.from ? best.from.id : null, ship.name + ': point defence stopped an interceptor.');
+          emit(sim, 'pdkill', best.pos, ship.id, best.from ? best.from.id : null, ship.name + '：点防御拦掉了一枚拦截弹。');
           notePdKill(ship);
         }
       }
@@ -2655,7 +2658,7 @@
       const m = rack[mi];
       if (m.kind !== 'beam') continue;
       // The arc is not part of the question: the ladder is the range a mount bites at, and the
-      // readout's 'Beams in arc' row is where a spinal mount off the bearing is reported.
+      // readout's '射界内光束' row is where a spinal mount off the bearing is reported.
       if (!mountLive(ship, bi++, n, mi)) continue;
       for (let f = 0; f < FACETS.length; f++) {
         const facet = FACETS[f];
@@ -2751,7 +2754,7 @@
     const s = sim || simRef;
     if (!s || !ship) return 0;
     const target = engagementTarget(s, ship);
-    if (!target) { s.addLog(ship.name + ': no target for the bays.', 'Gunnery', 'warn'); return 0; }
+    if (!target) { s.addLog(ship.name + '：发射舱没有目标。', 'Gunnery', 'warn'); return 0; }
     // The bays are under the same fire control as the mounts. Heat is not their problem, so the
     // beams' sink reserve is not asked of them, but everything else is.
     const why = fireReason(ship, target, true);
@@ -2760,12 +2763,12 @@
     // A dart finds the last few kilometres itself, but something has to point it at the right
     // patch of sky first. On anything less than a track the bays stay shut.
     if (trackQuality(s, ship, target) < T.salvoTrackQ) {
-      s.addLog(ship.name + ': no track on ' + target.name + '. The bays need a track quality of ' + T.salvoTrackQ + ' to launch.', 'Gunnery', 'warn');
+      s.addLog(ship.name + '：对 ' + target.name + ' 没有跟踪。发射舱要求跟踪质量 ' + T.salvoTrackQ + ' 才能发射。', 'Gunnery', 'warn');
       return 0;
     }
     const max = n === 'all' || n === undefined ? undefined : Math.max(1, Math.floor(n));
     const out = launchSalvo(s, ship, target, engOf(s), max);
-    if (!out) s.addLog(ship.name + ': the bays are empty.', 'Gunnery', 'warn');
+    if (!out) s.addLog(ship.name + '：发射舱已经空了。', 'Gunnery', 'warn');
     return out;
   }
   // What a salvo of this size buys, before it leaves the rails: how long it flies, whether it can
@@ -2784,7 +2787,7 @@
     if (!sol || !tgt) return out;
     // The numbers still stand — this is what the salvo would buy — but nothing leaves the rails
     // until the track is good enough to point the darts at her.
-    if (trackQuality(s, ship, tgt) < T.salvoTrackQ) out.reason = 'no track';
+    if (trackQuality(s, ship, tgt) < T.salvoTrackQ) out.reason = '无跟踪';
     const d = U.dist(ship.pos, tgt.pos);
     out.reach = sol.reach >= d && sol.closing > 0;
     // The burn covers ground too: charging the whole range at the post-burn speed on top of the
@@ -2807,7 +2810,7 @@
   // One sentence a bridge officer would actually say, and a level the console can colour by.
   function threatSummary(sim, ship) {
     const s = sim || simRef;
-    const out = { incoming: 0, slugs: 0, firstEta: null, pdMounts: 0, pdRatePerMin: 0, pdCanStop: 0, level: 'none', text: 'Nothing inbound.' };
+    const out = { incoming: 0, slugs: 0, firstEta: null, pdMounts: 0, pdRatePerMin: 0, pdCanStop: 0, level: 'none', text: '没有来袭。' };
     if (!s || !ship) return out;
     const list = threats(s, ship);
     const rate = pdRate(ship);
@@ -2832,22 +2835,22 @@
     out.pdRatePerMin = rate * 60;
     out.pdCanStop = Math.min(out.incoming, Math.floor(rate * window));
     const through = Math.max(0, out.incoming - out.pdCanStop) + out.slugs;
-    if (!out.incoming && !out.slugs) { out.level = 'none'; out.text = 'Nothing inbound.'; return out; }
+    if (!out.incoming && !out.slugs) { out.level = 'none'; out.text = '没有来袭。'; return out; }
     // Nothing gets past the mounts: watch it. Something does: warn, and alert once it is close.
     const soon = out.firstEta !== null && out.firstEta < T.etaWarn;
     const close = out.firstEta !== null && out.firstEta < T.etaAlert;
     out.level = through === 0 ? (soon ? 'warn' : 'watch') : close ? 'alert' : 'warn';
     const parts = [];
-    if (out.incoming) parts.push(plural(out.incoming, 'interceptor') + ' inbound');
-    if (out.slugs) parts.push(plural(out.slugs, 'slug') + ' still on us');
-    let text = parts.join(' and ');
-    if (out.firstEta !== null) text += ', first in ' + U.fmt.time(out.firstEta);
+    if (out.incoming) parts.push(plural(out.incoming, 'interceptor') + '来袭');
+    if (out.slugs) parts.push(plural(out.slugs, 'slug') + '还在打过来');
+    let text = parts.join('，');
+    if (out.firstEta !== null) text += '，最近的一枚 ' + U.fmt.time(out.firstEta) + ' 后到';
     if (out.incoming) {
-      // Mounts fitted but not answering — a saturated sink, an adrift hull — is 'out', not 'gone'.
-      text += out.pdMounts ? '. Point defence can stop about ' + out.pdCanStop + ' of them.'
-        : countKind(ship, 'pd') ? '. Point defence is not answering.' : '. This hull has no point defence.';
-    } else text += '.';
-    out.text = text.charAt(0).toUpperCase() + text.slice(1);
+      // Mounts fitted but not answering — a saturated sink, an adrift hull — is 'out' 一发，不是 'gone'.
+      text += out.pdMounts ? '。点防御大约能拦掉 ' + out.pdCanStop + ' 枚。'
+        : countKind(ship, 'pd') ? '。点防御没有回应。' : '。这型舰体没有点防御。';
+    } else text += '。';
+    out.text = text;
     return out;
   }
 
@@ -2869,9 +2872,9 @@
     const want = st.aim || 'hull';
     const used = aimEffective(ship, target);
     if (used === want) return want;
-    if (want === 'radiators') return 'hull (radiators stowed)';
-    if (want === 'drive') return 'hull (not on her tail)';
-    return 'hull';
+    if (want === 'radiators') return '舰体（散热板收着）';
+    if (want === 'drive') return '舰体（不在她舰尾方向）';
+    return '舰体';
   }
 
   // ------------------------------------------------------------------ what the ship art draws

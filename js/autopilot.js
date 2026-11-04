@@ -409,7 +409,7 @@
       ship.avoidT = sim.time;
       if (!coastHits(sim, ship.pos, ship.vel, horizonFor(aMax), floor)) return null;
       ship.flagsGround = true;
-      sim.addLog(ship.name + ': terrain avoidance. Burning prograde to raise the low point of the orbit.', 'Autopilot', 'warn');
+      sim.addLog(ship.name + '：避障。正顺行点火，把轨道最低点抬起来。', 'Autopilot', 'warn');
     }
     const h = U.cross(ship.pos, ship.vel);
     const tangent = U.norm(U.perp(ship.pos));
@@ -512,8 +512,8 @@
   const deadNews = new WeakMap();  // sim → { target id: the log line that named our hulls holding }
   function holdWords(t, names) {
     const who = names.length === 1 ? names[0]
-      : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
-    return t.name + ' is out of the fight. ' + who + (names.length === 1 ? ' switches to Hold.' : ' switch to Hold.');
+      : names.slice(0, -1).join('、') + ' 和 ' + names[names.length - 1];
+    return t.name + ' 已退出战斗。' + who + (names.length === 1 ? ' 切回待命。' : ' 都切回待命。');
   }
   const NEEDS_TARGET = ['intercept', 'approach', 'keeprange', 'matchv', 'evade'];
   function outOfFight(s) {
@@ -659,7 +659,7 @@
     const secs = st.announce;
     st.announce = 0;
     if (!sim || typeof sim.addLog !== 'function' || ship.faction !== sim.playerFaction) return;
-    sim.addLog(ship.name + ': one correction burn of ' + secs + ' s, then the drive goes cold again.', 'Autopilot', 'info');
+    sim.addLog(ship.name + '：一次 ' + secs + ' 秒的修正点火，之后推进器重新冷却。', 'Autopilot', 'info');
   }
 
   // What the cold approach is doing right now, for the panel and for the checks: which of the

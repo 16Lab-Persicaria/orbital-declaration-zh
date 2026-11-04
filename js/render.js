@@ -105,12 +105,12 @@
     if (!sim || !ship) return null;
     let fx = null;
     if (OD.Engagement && typeof OD.Engagement.artFx === 'function') {
-      try { fx = OD.Engagement.artFx(ship, sim); } catch (e) { Render.lastError = 'ship art fx: ' + (e && e.message); fx = null; }
+      try { fx = OD.Engagement.artFx(ship, sim); } catch (e) { Render.lastError = '舰船特效：' + (e && e.message); fx = null; }
     }
     // The crew's parties on the hull (v13): merged in so the overlay draws them beside the fire.
     // Only our own hulls show their parties: a hostile's damage control is hers to know.
     if (OD.Crew && typeof OD.Crew.artFx === 'function' && ship.faction === sim.playerFaction) {
-      try { const c = OD.Crew.artFx(ship); if (c && c.parties && c.parties.length) { fx = fx || { t: sim.time, aim: null, mounts: [], launches: [], pd: [], vents: [] }; fx.parties = c.parties; fx.strapped = !!c.strapped; } } catch (e) { Render.lastError = 'crew art fx: ' + (e && e.message); }
+      try { const c = OD.Crew.artFx(ship); if (c && c.parties && c.parties.length) { fx = fx || { t: sim.time, aim: null, mounts: [], launches: [], pd: [], vents: [] }; fx.parties = c.parties; fx.strapped = !!c.strapped; } } catch (e) { Render.lastError = '船员特效：' + (e && e.message); }
     }
     return fx;
   }
@@ -498,7 +498,7 @@
     // she is named once her class is known.
     const live = (s) => (s && !s.destroyed ? s : null);
     const f = live(cam.follow ? sim.byId(cam.follow) : null) || live(sel);
-    let who = 'map centre', name = null, alt = '';
+    let who = '地图中心', name = null, alt = '';
     if (f) {
       const v = viewOf(sim, f);
       const h = Math.hypot(v.pos.x, v.pos.y) - body.radius;
@@ -506,7 +506,7 @@
         const step = Math.max(1e4, Math.pow(10, Math.floor(Math.log10(v.posErr))));
         alt = km(Math.round(h / step) * step) + ' ±' + km(v.posErr);
       } else alt = U.fmt.dist(h);
-      if (v.ghost && (v.q < TQ() || !v.classKnown)) who = 'the contact';
+      if (v.ghost && (v.q < TQ() || !v.classKnown)) who = '接触';
       else who = name = f.name;
     } else { const w = cam.toWorld(mx, my); alt = U.fmt.dist(Math.hypot(w.x, w.y) - body.radius); }
     const phone = cam.w < 700, inset = phone ? 18 : 26;
@@ -1297,7 +1297,7 @@
     } else {
       ctx.strokeStyle = 'rgba(215,224,234,0.7)'; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.arc(s.x, s.y, 5, 0, U.TAU); ctx.stroke();
-      label('low point · ' + U.fmt.dist(m.alt) + ' · in ' + U.fmt.time(left), s.x + 9, s.y - 8, { color: 'rgba(215,224,234,0.85)', prio: PRIO.mark });
+      label('最低点 · ' + U.fmt.dist(m.alt) + ' · ' + U.fmt.time(left) + ' 后', s.x + 9, s.y - 8, { color: 'rgba(215,224,234,0.85)', prio: PRIO.mark });
     }
   }
 
@@ -1347,12 +1347,12 @@
       const s = cam.toScreen(plan.crash);
       ctx.strokeStyle = COLORS.crit; ctx.lineWidth = 1.6;
       ctx.beginPath(); ctx.moveTo(s.x - 5, s.y - 5); ctx.lineTo(s.x + 5, s.y + 5); ctx.moveTo(s.x + 5, s.y - 5); ctx.lineTo(s.x - 5, s.y + 5); ctx.stroke();
-      label('hits the surface · in ' + U.fmt.time(planEta(sim, plan, plan.crash)), s.x + 9, s.y + 10, { color: COLORS.crit, font: F12B, prio: PRIO.mark });
+      label('撞击表面 · ' + U.fmt.time(planEta(sim, plan, plan.crash)), s.x + 9, s.y + 10, { color: COLORS.crit, font: F12B, prio: PRIO.mark });
     }
     if (!ok) {
       const e = cam.toScreen(pts[pts.length - 1]);
       const ex = U.clamp(e.x, 80, cam.w - 120), ey = U.clamp(e.y, 30, cam.h - 30);
-      label('not enough Δv', ex, ey + (plan.crash ? 26 : 12), { color: COLORS.crit, font: F12B, align: 'center', prio: PRIO.mark });
+      label('速度增量不够', ex, ey + (plan.crash ? 26 : 12), { color: COLORS.crit, font: F12B, align: 'center', prio: PRIO.mark });
     }
   }
   // Keep-range orders draw their ring around the target; intercepts mark the standoff.
@@ -1539,7 +1539,7 @@
         if (OD.ShipArt.draw(ctx, artId(ship), o) === false) { useArt = false; drawFins(); }
         else if (typeof OD.ShipArt.overlay === 'function') OD.ShipArt.overlay(ctx, artId(ship), o);
       }
-      catch (e) { artBroken = true; Render.lastError = 'ship art: ' + (e && e.message); }
+      catch (e) { artBroken = true; Render.lastError = '舰船绘制：' + (e && e.message); }
       ctx.restore();
     }
     ctx.save(); ctx.rotate(ang);
@@ -1669,14 +1669,14 @@
       if (!b.corner) { b.ax = s.x; b.ay = s.y; b.R0 = R0; }
       b.head = [
         { text: ship.name, font: F13B, color: ship.captured ? COLORS.good : col },
-        { text: ship.disabled ? (ship.captured ? 'captured' : 'disabled') : OD.Ships.CLASSES[ship.cls].role, color: COLORS.dim },
+        { text: ship.disabled ? (ship.captured ? '被俘' : '失能') : OD.Ships.roleName(OD.Ships.CLASSES[ship.cls]), color: COLORS.dim },
       ];
       // Damage control on the label at any zoom (v13): the party at work on one of our hulls, and the hurt part,
       // since the ring on the hull only draws when she is 70 px or larger on screen.
       if (ship.faction === sim.playerFaction && ship.crew && ship.crew.parties) {
         const at = ship.crew.parties.filter((q) => q.task === 'repair' && q.part);
         const p = at[0] || ship.crew.parties.find((q) => q.task === 'medical');
-        if (p && p.task === 'medical') b.head.push({ text: 'party ' + String(p.id).replace(/\D/g, '') + ' · sick bay', color: PARTY_AMBER });
+        if (p && p.task === 'medical') b.head.push({ text: 'party ' + String(p.id).replace(/\D/g, '') + ' · 医务室', color: PARTY_AMBER });
         else if (p) {
           const more = at.length > 1 ? ' · +' + (at.length - 1) : '';
           const eta = p.eta > 0 ? (p.eta >= 90 ? Math.round(p.eta / 60) + ' min' : Math.round(p.eta) + ' s') : '';
@@ -1748,7 +1748,7 @@
       ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(ts.x, ts.y); ctx.stroke(); ctx.setLineDash([]);
       const range = U.dist(ship.pos, target.pos);
       const mid = { x: (s.x + ts.x) / 2, y: (s.y + ts.y) / 2 };
-      stack([{ text: U.fmt.dist(range), color: hexA(COLORS.target, 0.9) }, { text: 'light lag ' + U.fmt.si(P.lightLag(range), 's'), color: COLORS.dim }],
+      stack([{ text: U.fmt.dist(range), color: hexA(COLORS.target, 0.9) }, { text: '光行时 ' + U.fmt.si(P.lightLag(range), 's'), color: COLORS.dim }],
         mid.x, mid.y - 9, { align: 'center', prio: PRIO.tele + 4 });
     }
     // where the autopilot wants to push
@@ -1806,7 +1806,9 @@
   // ---- v8: reach rings, the burn-through ladder and the threat display. Every number comes from OD.Engagement
   // (reach(), threats()); when the module or a method is missing nothing here draws, so the map degrades cleanly.
   const v8 = { reach: null, reachKey: '', reachFrame: -99, threats: [], threatsFrame: -99, threatsSim: null };
-  const FACET_WORD = { nose: 'nose', flank: 'flank', tail: 'tail' };
+  const FACET_WORD = { nose: '舰首', flank: '舷侧', tail: '舰尾' };
+  const SENSOR_WORD_ZH = { contact: '接触', track: '跟踪', solution: '解算', burning: '点火中', active: '主动', radiating: '辐射中', warm: '偏热', cold: '冷' };
+  const sensorWordZh = (w) => SENSOR_WORD_ZH[w] || w;
   function engReach(sim, ship, target) {
     const E = OD.Engagement; if (!E || typeof E.reach !== 'function') return null;
     const key = sim.time.toFixed(0) + '|' + ship.id + '|' + (target ? target.id : '');
@@ -1852,17 +1854,17 @@
     };
     // the colour says whose reach it is, as the map key has it: ours teal and blue, theirs red
     if (!ours) {
-      one(c, r.pd, hexA(COLORS.crit, 0.6), 'their point defence · ' + U.fmt.dist(r.pd));
-      one(c, r.launch, hexA(COLORS.crit, 0.45), 'their interceptor reach · ' + U.fmt.dist(r.launch));
+      one(c, r.pd, hexA(COLORS.crit, 0.6), '对方点防御 · ' + U.fmt.dist(r.pd));
+      one(c, r.launch, hexA(COLORS.crit, 0.45), '对方拦截弹射程 · ' + U.fmt.dist(r.launch));
       return;
     }
-    one(c, r.pd, hexA(COLORS.accent, 0.75), 'point defence · ' + U.fmt.dist(r.pd));
-    one(c, r.launch, hexA(COLORS.blue, 0.7), 'interceptor reach · ' + U.fmt.dist(r.launch));
+    one(c, r.pd, hexA(COLORS.accent, 0.75), '点防御 · ' + U.fmt.dist(r.pd));
+    one(c, r.launch, hexA(COLORS.blue, 0.7), '拦截弹射程 · ' + U.fmt.dist(r.launch));
     const hostile = target && !target.destroyed && (typeof sim.isHostile === 'function' ? sim.isHostile(target, sel) : target.faction !== sel.faction);
     if (hostile && r.their) {
       const tc = cam.toScreen(viewOf(sim, target).pos);
-      one(tc, r.their.pd, hexA(COLORS.crit, 0.6), 'their point defence · ' + U.fmt.dist(r.their.pd));
-      one(tc, r.their.launch, hexA(COLORS.crit, 0.45), 'their interceptor reach · ' + U.fmt.dist(r.their.launch));
+      one(tc, r.their.pd, hexA(COLORS.crit, 0.6), '对方点防御 · ' + U.fmt.dist(r.their.pd));
+      one(tc, r.their.launch, hexA(COLORS.crit, 0.45), '对方拦截弹射程 · ' + U.fmt.dist(r.their.launch));
     }
   }
   // Burn-through ladder: tick marks on the bearing line at the ranges where each side's beams start to put
@@ -1886,11 +1888,11 @@
     const theirs = facetShown(sel, target), ours = (r.their && r.their.facet) || facetShown(target, sel);
     const marks = [];
     const ourBeam = r.beams && r.beams[theirs];
-    if (ourBeam > 0) marks.push({ d: ourBeam, side: 1, color: COLORS.accent, text: 'our beams burn through their ' + FACET_WORD[theirs] + ' · ' + U.fmt.dist(ourBeam) });
-    if (r.slug > 0) marks.push({ d: r.slug, side: 1, color: hexA(COLORS.accent, 0.8), text: 'our slugs land on a still ship · ' + U.fmt.dist(r.slug) });
+    if (ourBeam > 0) marks.push({ d: ourBeam, side: 1, color: COLORS.accent, text: '我方光束能烧穿对方的' + FACET_WORD[theirs] + ' · ' + U.fmt.dist(ourBeam) });
+    if (r.slug > 0) marks.push({ d: r.slug, side: 1, color: hexA(COLORS.accent, 0.8), text: '我方弹丸打中静止的敌舰 · ' + U.fmt.dist(r.slug) });
     const theirBeam = r.their && r.their.beams && r.their.beams[ours];
-    if (theirBeam > 0) marks.push({ d: theirBeam, side: -1, color: COLORS.crit, text: 'their beams burn through our ' + FACET_WORD[ours] + ' · ' + U.fmt.dist(theirBeam) });
-    if (r.their && r.their.slug > 0) marks.push({ d: r.their.slug, side: -1, color: hexA(COLORS.crit, 0.8), text: 'their slugs land if we hold still · ' + U.fmt.dist(r.their.slug) });
+    if (theirBeam > 0) marks.push({ d: theirBeam, side: -1, color: COLORS.crit, text: '对方光束能烧穿我方的' + FACET_WORD[ours] + ' · ' + U.fmt.dist(theirBeam) });
+    if (r.their && r.their.slug > 0) marks.push({ d: r.their.slug, side: -1, color: hexA(COLORS.crit, 0.8), text: '我方不动时对方弹丸会打中 · ' + U.fmt.dist(r.their.slug) });
     if (!marks.length) return;
     const far = Math.max(range, ...marks.map((m) => m.d)) * cam.zoom;
     // extend the bearing line past the target when a mark lies beyond it
@@ -1948,12 +1950,12 @@
       // on the map means on the part the HUD leaves clear: a salvo under a panel gets an edge marker too
       const on = g.x > safe.x0 - 4 && g.x < safe.x1 + 4 && g.y > safe.y0 - 4 && g.y < safe.y1 + 4;
       const color = g.atOurs ? COLORS.crit : hexA(COLORS.blue, 0.85);
-      const word = g.kind === 'slug' ? 'slug' : 'interceptor';
+      const word = g.kind === 'slug' ? '弹丸' : '拦截弹';
       let text;
-      if (g.kind === 'slug' && !g.willHit) text = (g.n > 1 ? g.n + ' slugs' : 'slug') + ' · will miss';
+      if (g.kind === 'slug' && !g.willHit) text = (g.n > 1 ? g.n + ' 发弹丸' : '弹丸') + ' · 将落空';
       else if (isFinite(g.eta)) text = (g.n > 1 ? g.n + ' × ' : '') + word + ' · ' + U.fmt.time(g.eta);
-      else text = (g.n > 1 ? g.n + ' × ' : '') + word + ' · no reach';
-      if (g.engaged && g.atOurs) text += ' · under fire';
+      else text = (g.n > 1 ? g.n + ' × ' : '') + word + ' · 追不上';
+      if (g.engaged && g.atOurs) text += ' · 正在挨打';
       if (on) {
         const cands = [];
         for (const dy of [-9, 9, -24, 24, -39, 39, -54, 54]) { cands.push([8, dy - LH / 2, 'left']); cands.push([-8, dy - LH / 2, 'right']); }
@@ -2159,8 +2161,8 @@
     const b = blockOf(sim, cam, ship);
     if (!b.corner) { b.ax = s.x; b.ay = s.y; b.R0 = R0; }
     b.head = contact
-      ? [{ text: 'contact', font: F13B, color: col }, { text: from ? 'bearing ' + U.fmt.deg(U.angleOf(U.sub(v.pos, from.pos))) + ' · ~' + km(range) : 'class unknown', color: COLORS.dim }]
-      : [{ text: ship.name, font: F13B, color: hexA(col, 0.85) }, { text: 'track · ' + OD.Ships.CLASSES[ship.cls].role + (from ? ' · ~' + km(range) : '') + ' ±' + km(v.posErr), color: COLORS.dim }];
+      ? [{ text: '接触', font: F13B, color: col }, { text: from ? '方位 ' + U.fmt.deg(U.angleOf(U.sub(v.pos, from.pos))) + ' · 约 ' + km(range) : '舰级未知', color: COLORS.dim }]
+      : [{ text: ship.name, font: F13B, color: hexA(col, 0.85) }, { text: '跟踪 · ' + OD.Ships.roleName(OD.Ships.CLASSES[ship.cls]) + (from ? ' · 约 ' + km(range) : '') + ' ±' + km(v.posErr), color: COLORS.dim }];
     b.prio = hint ? PRIO.hint : PRIO.name + (isSel ? 6 : isTarget ? 4 : 0);
     b.keep = !!(isSel || hint);
   }
@@ -2188,15 +2190,15 @@
     if (sf && showR > 0 && isFinite(showR)) {
       const rpx = showR * cam.zoom;
       const text = heldR > (sf.solution || 0)
-        ? 'held as a solution from ' + km(heldR) + (sf.heldBy ? ' · by ' + sf.heldBy : '') + (sf.word ? ' · ' + sf.word : '')
-        : 'a solution on ' + whom + ' from ' + km(sf.solution) + (sf.by ? ' · by ' + sf.by : '') + (sf.word ? ' · ' + sf.word : '');
+        ? '从 ' + km(heldR) + ' 起一直保持解算' + (sf.heldBy ? ' · 来自 ' + sf.heldBy : '') + (sf.word ? ' · ' + sensorWordZh(sf.word) : '')
+        : '从 ' + km(sf.solution) + ' 起对 ' + whom + ' 有解算' + (sf.by ? ' · 来自 ' + sf.by : '') + (sf.word ? ' · ' + sensorWordZh(sf.word) : '');
       if (rpx >= 9 && ringSeen(c, rpx, safe)) {
         ring(c, rpx, hexA(COLORS.blue, 0.55), RING.signature);
         ringCaption(cam, c, rpx, text, { color: hexA(COLORS.blue, 0.9), font: F12 });
       } else if (rpx > 9) {
         // the ring is off every edge: the line joins the ship's own block instead, worded as the ring's caption is
         // (a solution, not a sighting: a track held from farther out is not contradicted by it)
-        tele(sim, cam, sel, (heldR > (sf.solution || 0) ? 'held as a solution from ' : 'a solution from ') + km(showR), hexA(COLORS.blue, 0.85));
+        tele(sim, cam, sel, (heldR > (sf.solution || 0) ? '从 ' : '解算距离 ') + km(showR), hexA(COLORS.blue, 0.85));
       }
     }
     // pinned: a hostile holds a solution on us (seenFrom's `held` when the module reports it, else the live track)
@@ -2208,7 +2210,7 @@
     if (pinnedBy) {
       let sig = null; try { sig = S.signature(sel); } catch (e) { sig = null; }
       const blink = reduced ? 1 : 0.7 + 0.3 * Math.sin(t * 5);
-      tele(sim, cam, sel, (typeof pinnedBy === 'string' ? pinnedBy + ' has a solution on ' + whom : 'a solution on ' + whom) + (sig && sig.word ? ' · ' + sig.word : ''), hexA(COLORS.crit, blink), F12B);
+      tele(sim, cam, sel, (typeof pinnedBy === 'string' ? pinnedBy + ' 对 ' + whom + ' 有解算' : '对 ' + whom + ' 有解算') + (sig && sig.word ? ' · ' + sensorWordZh(sig.word) : ''), hexA(COLORS.crit, blink), F12B);
     }
     // active sensor: a slow sweep out to its reach
     if (sel.activeSensor && sel.activeRange > 0) {
@@ -2224,8 +2226,8 @@
         // the reach itself is a reach ring like any other; off the map, the number joins the ship's block
         if (sel.activeRange * cam.zoom <= maxR && ringSeen(c, rpx, safe)) {
           ring(c, rpx, hexA(COLORS.accent, 0.35), RING.reach);
-          ringCaption(cam, c, rpx, 'active sensor · ' + km(sel.activeRange), { color: hexA(COLORS.accent, 0.85), font: F12 });
-        } else tele(sim, cam, sel, 'active sensor · ' + km(sel.activeRange), hexA(COLORS.accent, 0.85));
+          ringCaption(cam, c, rpx, '主动传感器 · ' + km(sel.activeRange), { color: hexA(COLORS.accent, 0.85), font: F12 });
+        } else tele(sim, cam, sel, '主动传感器 · ' + km(sel.activeRange), hexA(COLORS.accent, 0.85));
       }
     }
   }

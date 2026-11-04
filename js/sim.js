@@ -41,14 +41,14 @@
 
   function makeShip(spec) {
     const cls = OD.Ships.CLASSES[spec.cls];
-    if (!cls) throw new Error('Unknown class ' + spec.cls);
+    if (!cls) throw new Error('未知舰级 ' + spec.cls);
     const fac = OD.Ships.FACTIONS[spec.faction] || OD.Ships.FACTIONS.CIV;
     // Sensor fit: a custom design carries its base hull's suite unless it names its own.
     const baseCls = cls.base ? OD.Ships.CLASSES[cls.base] : null;
     const fit = (key, dflt) => (cls[key] != null ? cls[key] : baseCls && baseCls[key] != null ? baseCls[key] : dflt);
     const ship = {
       id: spec.id || U.uid('s'),
-      name: spec.name || fac.prefix + ' ' + cls.name.split('-')[0],
+      name: spec.name || fac.prefix + ' ' + (cls.hull || cls.name.split('-')[0]),
       cls: cls.id, faction: fac.id, role: cls.role,
       pos: { x: spec.pos ? spec.pos.x : 0, y: spec.pos ? spec.pos.y : 0 },
       vel: { x: spec.vel ? spec.vel.x : 0, y: spec.vel ? spec.vel.y : 0 },
@@ -250,10 +250,10 @@
           if (h.drivenOffSince == null) h.drivenOffSince = this.time;
           if (this.time - h.drivenOffSince >= DRIVEN_OFF_HOLD) {
             h.drivenOff = true; h.drivenOffAt = this.time;
-            const why = h.hull < 0.35 ? 'with her hull at ' + Math.round(h.hull * 100) + ' %'
-              : (h.systems && h.systems.drive < 0.3) ? 'with her drive at ' + Math.round(h.systems.drive * 100) + ' %'
-              : 'with her tanks near dry';
-            this.addLog(h.name + ' is driven off: she broke off ' + why + ', is past ' + U.fmt.dist(DRIVEN_OFF_RANGE) + ' and still opening. She is out of this fight.', 'Command', 'good');
+            const why = h.hull < 0.35 ? '舰体只剩 ' + Math.round(h.hull * 100) + ' %'
+              : (h.systems && h.systems.drive < 0.3) ? '推进器只剩 ' + Math.round(h.systems.drive * 100) + ' %'
+              : '推进剂快见底';
+            this.addLog(h.name + ' 被驱离：她脱离 ' + why + '，已在 ' + U.fmt.dist(DRIVEN_OFF_RANGE) + ' 外，还在拉开。她退出了这场战斗。', 'Command', 'good');
           }
         } else h.drivenOffSince = null;
       }
@@ -275,14 +275,14 @@
         ship.propMass -= used;
         ship.stats.dvSpent += a * dt;
         ship.stats.burnTime += dt;
-        if (ship.propMass <= 0) { ship.propMass = 0; ship.throttle = 0; if (!ship.flagsDry) { ship.flagsDry = true; this.addLog(ship.name + ' has no propellant left. She cannot burn again.', 'Engineering', 'warn'); } }
+        if (ship.propMass <= 0) { ship.propMass = 0; ship.throttle = 0; if (!ship.flagsDry) { ship.flagsDry = true; this.addLog(ship.name + ' 的推进剂已经用光。她再也不能点火。', 'Engineering', 'warn'); } }
       }
       ship.vel.x += acc.x * dt; ship.vel.y += acc.y * dt;
       ship.pos.x += ship.vel.x * dt; ship.pos.y += ship.vel.y * dt;
       ship.stats.distance += U.len(ship.vel) * dt;
       if (this.body && U.len(ship.pos) < this.body.radius) {
         ship.destroyed = true; ship.hull = 0; ship.lostHow = 'hit ' + this.body.name;
-        this.addLog(ship.name + ' has hit ' + this.body.name + '.', 'Sensors', 'alert');
+        this.addLog(ship.name + ' 命中了 ' + this.body.name + '.', 'Sensors', 'alert');
         this.burst(ship.pos, 40, '#ffb454');
       }
     }
@@ -310,7 +310,7 @@
       const was = ship.overheated;
       if (load >= 0.999) ship.overheated = true; else if (load < 0.9) ship.overheated = false;
       ship.weaponsInhibited = ship.overheated;
-      if (ship.overheated && !was) this.addLog(ship.name + ': heat sink full. Drive held to a quarter and every mount stopped until it drains.', 'Engineering', 'warn');
+      if (ship.overheated && !was) this.addLog(ship.name + '：热沉已满。推进器只剩四分之一，所有炮位停火，直到它排空。', 'Engineering', 'warn');
     }
 
     // A hull disabled for a wrecked drive comes back when a jury-rig gives her thrust (v13). A hull disabled for
@@ -328,14 +328,14 @@
         if (!ship._driveDead || ship.hull < floor) continue;
         ship._driveDead = false;
         ship.disabled = false;
-        this.addLog(ship.name + ' has thrust again: her drive is at ' + Math.round(ship.systems.drive * 100) + ' %. She can move.', 'Damage control', 'good');
+        this.addLog(ship.name + ' 重新有了推力：主推进器 ' + Math.round(ship.systems.drive * 100) + ' %。她能动了。', 'Damage control', 'good');
       }
     }
 
     // " 8 min from thrust" for the party on her drive, or '' when there is no time to give.
     mendEtaWords(ship) {
       const p = ship.crew && ship.crew.parties ? ship.crew.parties.find((q) => q.task === 'repair' && q.part === 'drive') : null;
-      return p && p.eta > 0 ? ' ' + (p.eta >= 90 ? Math.round(p.eta / 60) + ' min' : Math.round(p.eta) + ' s') + ' from thrust' : '';
+      return p && p.eta > 0 ? '，' + (p.eta >= 90 ? Math.round(p.eta / 60) + ' 分钟' : Math.round(p.eta) + ' 秒') + '后恢复推力' : '';
     }
     // True while one of her parties is on the drive and the damage module says a mend would change something.
     driveMendRunning(ship) {
@@ -367,7 +367,7 @@
           // The crossing takes longer against a bigger fit crew (v13): 90 s hull to hull, up to four times that.
           const plan = boardingPlan(ship, best), time = plan.time;
           ship.boarding = { target: best.id, progress: 0, time };
-          this.addLog(ship.name + ': boarding party crossing to ' + best.name + (plan.known ? ', ' + plan.theirs + ' fit aboard her against our ' + plan.ours + ', ' + U.fmt.time(time) + ' across' : '') + '.', 'Marines', 'info');
+          this.addLog(ship.name + '：登舰班组正在前往 ' + best.name + (plan.known ? '，她那边能动的有 ' + plan.theirs + ' 人，我们这边 ' + plan.ours + ' 人，' + U.fmt.time(time) + ' 过去' : '') + '。', 'Marines', 'info');
         }
         // Contact lost mid-crossing: the party holds on for a while rather than starting over.
         ship.boarding.progress += inContact ? dt / (ship.boarding.time || BOARD.time) : -dt / 120;
@@ -382,25 +382,25 @@
             if (!(OD.Crew && typeof OD.Crew.casualties === 'function') || !(wFit > 0 && lFit > 0)) return null;
             try {
               const w = (n, k) => (n > 0 ? n + ' ' + k : '');
-              const line = (r) => [w(r.wounded, 'wounded'), w(r.lost, 'lost')].filter(Boolean).join(', ') || 'nobody';
-              const won = OD.Crew.casualties(winner, null, 0.4 * Math.min(1, lFit / wFit), 'in the boarding') || {};
-              const lostSide = OD.Crew.casualties(loser, null, Math.min(1, 0.8 * Math.max(0.5, wFit / lFit)), 'in the boarding') || {};
+              const line = (r) => [w(r.wounded, '人受伤'), w(r.lost, '人阵亡')].filter(Boolean).join('，') || '无人伤亡';
+              const won = OD.Crew.casualties(winner, null, 0.4 * Math.min(1, lFit / wFit), '（登舰战斗中）') || {};
+              const lostSide = OD.Crew.casualties(loser, null, Math.min(1, 0.8 * Math.max(0.5, wFit / lFit)), '（登舰战斗中）') || {};
               return { winner: line(won), loser: line(lostSide) };
             } catch (e) { return null; }
           };
           if (thrownBack) {
             const c = cost(best, ship, dFit, bFit);
-            this.addLog('Boarding ' + best.name + ' failed: ' + Math.round(dFit) + ' fit aboard her against our ' + Math.round(bFit) + '. The party is thrown back'
-              + (c ? ', and it cost us ' + c.loser + ' and her crew ' + c.winner : '') + '.', 'Marines', 'warn');
+            this.addLog('登舰 ' + best.name + ' 失败：她那边能动的有 ' + Math.round(dFit) + ' 人，我们这边 ' + Math.round(bFit) + ' 人。班组被打回来了'
+              + (c ? '，我方 ' + c.loser + '，对方船员 ' + c.winner : '') + '。', 'Marines', 'warn');
             ship._noBoard = { target: best.id, until: this.time + BOARD.retry };
             ship.boarding = null; this.freeAfterBoarding(ship, null, true);
             continue;
           }
           best.captured = true; best.disabled = true; best.ai = false; best.order = { type: 'hold' }; best.throttle = 0; best.cmdThrottle = 0;
           best.faction = ship.faction; best.weaponsFree = false; best.target = null; best.jink = false;
-          this.addLog(best.name + ' has been taken. Prize crew aboard.', 'Marines', 'good');
+          this.addLog(best.name + ' 被俘获。俘获班组已登舰。', 'Marines', 'good');
           const c = cost(ship, best, bFit, dFit);
-          if (c) this.addLog('Boarding ' + best.name + ' cost us ' + c.winner + ' and her crew ' + c.loser + '.', 'Marines', 'info');
+          if (c) this.addLog('登舰 ' + best.name + ' 的代价：我方 ' + c.winner + '，对方船员 ' + c.loser + '。', 'Marines', 'info');
           ship.boarding = null; this.freeAfterBoarding(ship, best);
         }
       }
@@ -413,7 +413,7 @@
       else if (prize && ship.target === prize.id) ship.target = null;
       if (ship.heldFireForBoarding) {
         ship.heldFireForBoarding = false; ship.weaponsFree = true;
-        this.addLog(ship.name + ': ' + (prize ? 'prize secured. Weapons free again.' : failed ? 'boarding party back aboard. Weapons free again.' : 'boarding party recalled. Weapons free again.'), 'Marines', 'info');
+        this.addLog(ship.name + '：' + (prize ? '战利品已控制，恢复自由开火。' : failed ? '登舰班组已撤回船上，恢复自由开火。' : '登舰班组已召回，恢复自由开火。'), '陆战队', 'info');
       }
     }
 
@@ -442,17 +442,17 @@
           const est = tr && tr.est && q < SQ ? tr.est : { pos: h.pos, vel: h.vel };
           const rel = U.sub(est.pos, p.pos);
           const R = Math.max(1, U.len(rel));
-          const role = OD.Ships.CLASSES[h.cls] ? OD.Ships.CLASSES[h.cls].role : 'ship';
+          const role = OD.Ships.CLASSES[h.cls] ? (OD.Ships.roleName ? OD.Ships.roleName(OD.Ships.CLASSES[h.cls]) : OD.Ships.CLASSES[h.cls].role) : '舰船';
           let text;
           if (q < TQ) {
             const err = tr ? tr.rangeErr || tr.posErr || 0 : 0;
-            text = 'Contact bearing ' + bearing5(U.angleOf(rel)) + ', range ' + dist2(R) + (err > 0 ? ' ±' + dist2(err) : '') + '. Class unknown.';
+            text = '接触，方位 ' + bearing5(U.angleOf(rel)) + '，距离 ' + dist2(R) + (err > 0 ? ' ±' + dist2(err) : '') + '。舰级未知。';
           } else {
             const rate = -U.dot(U.sub(est.vel, p.vel), U.norm(rel));
             const closing = Math.abs(rate) < 0.5 ? 0 : rate;   // nobody says 'closing at 9e-11 m/s'
             text = q < SQ
-              ? 'Contact: ' + h.name + ' (' + role + ') at ' + dist2(R) + ', closing ' + speed2(closing) + '.'
-              : 'Contact: ' + h.name + ' (' + role + ') at ' + U.fmt.dist(d) + ', closing ' + U.fmt.speed(closing) + '.';
+              ? '接触：' + h.name + '（' + role + '）距离 ' + dist2(R) + '，接近 ' + speed2(closing) + '。'
+              : '接触：' + h.name + '（' + role + '）距离 ' + U.fmt.dist(d) + '，接近 ' + U.fmt.speed(closing) + '。';
           }
           this.addLog(text, 'Sensors', 'warn');
           break;
@@ -467,14 +467,14 @@
         if (ship.destroyed || ship.faction !== this.playerFaction) continue;
         if (!ship._firstHit && ship.hull < 0.995) {
           ship._firstHit = true; ship._hullTenth = Math.floor(Math.max(0, ship.hull) * 10);
-          this.addLog(ship.name + ' took her first hit. Hull integrity ' + Math.round(Math.max(0, ship.hull) * 100) + ' %.', 'Damage control', 'warn');
+          this.addLog(ship.name + ' 挨了第一发。舰体完整度 ' + Math.round(Math.max(0, ship.hull) * 100) + ' %。', 'Damage control', 'warn');
           continue;
         }
         // and a line at every tenth after that, so a hull being ground down is heard, not only read off a bar
         if (ship._firstHit) {
           const tenth = Math.floor(Math.max(0, ship.hull) * 10);
           if (ship._hullTenth == null) ship._hullTenth = tenth;
-          if (tenth < ship._hullTenth) { ship._hullTenth = tenth; if (ship.hull > 0) this.addLog(ship.name + ': hull integrity ' + Math.round(Math.max(0, ship.hull) * 100) + ' %.', 'Damage control', tenth <= 3 ? 'alert' : 'warn'); }
+          if (tenth < ship._hullTenth) { ship._hullTenth = tenth; if (ship.hull > 0) this.addLog(ship.name + '：舰体完整度 ' + Math.round(Math.max(0, ship.hull) * 100) + ' %。', 'Damage control', tenth <= 3 ? 'alert' : 'warn'); }
         }
       }
     }
@@ -538,7 +538,7 @@
           if (!s || s.destroyed || s.captured) return 'fail';
           if (!s.disabled) { o._mendHold = false; return false; }
           if (!this.driveMendRunning(s)) return 'fail';
-          if (!o._mendHold) { o._mendHold = true; this.addLog(s.name + ' cannot move, but a party is on her drive,' + this.mendEtaWords(s) + '. The engagement goes on while that repair can land.', 'Command', 'info'); }
+          if (!o._mendHold) { o._mendHold = true; this.addLog(s.name + ' 动不了，但有一个班组正在修她的主推进器' + this.mendEtaWords(s) + '。只要这次修理还能落地，这场交战就继续。', 'Command', 'info'); }
           return false;
         }
         case 'escapeFail': { const s = this.byId(o.ship); if (!s || s.neutralised()) return true; const d = U.dist(s.pos, o.point || { x: 0, y: 0 }); o.progress = U.clamp(d / o.range, 0, 1); return d > o.range ? 'fail' : false; }
@@ -555,14 +555,14 @@
         if (o.done || o.failed || o.inactive) continue;
         const r = this.objectiveTest(o, dt);
         if (r === 'fail') {
-          o.failed = true; o.failedAt = this.time; this.addLog('Objective failed: ' + o.text, 'Command', 'alert');
+          o.failed = true; o.failedAt = this.time; this.addLog('目标失败：' + o.text, 'Command', 'alert');
           if (!o.optional) { this.outcome = 'defeat'; this.outcomeTime = this.time; return; }
         } else if (r === true) {
           // an objective with `hold` stays open that many seconds after it is first met (chapter 2 keeps its
           // victory back a minute so the prize hint has a window)
           if (o.hold > 0) { if (o.metAt == null) { o.metAt = this.time; continue; } if (this.time - o.metAt < o.hold) continue; }
           o.done = true; o.doneAt = this.time; if (o.ship) { const sh = this.resolveShip(o.ship); if (sh) o.doneDv = sh.stats.dvSpent; }
-          if (!isGuard(o)) this.addLog('Objective complete: ' + o.text, 'Command', 'good');
+          if (!isGuard(o)) this.addLog('目标达成：' + o.text, 'Command', 'good');
         }
       }
       const noPlayer = this.playerShips().filter((s) => !s.disabled && s.role !== 'station').length === 0 && this.ships.some((s) => s.player);
@@ -574,9 +574,9 @@
           if (!this._mendHold) {
             this._mendHold = true;
             const s = mending[0];
-            this.addLog(s.name + ' cannot move, but a party is on her drive,' + this.mendEtaWords(s) + '. The engagement goes on while that repair can land.', 'Command', 'info');
+            this.addLog(s.name + ' 动不了，但有一个班组正在修她的主推进器' + this.mendEtaWords(s) + '。只要这次修理还能落地，这场交战就继续。', 'Command', 'info');
           }
-        } else { this.outcome = 'defeat'; this.outcomeTime = this.time; this.addLog('None of our ships can move. The engagement is lost.', 'Command', 'alert'); return; }
+        } else { this.outcome = 'defeat'; this.outcomeTime = this.time; this.addLog('我方没有舰船能动。这场交战输了。', 'Command', 'alert'); return; }
       } else this._mendHold = false;
       // A neutralise objective still open with nothing of ours left that can fight is lost now, not forty minutes
       // later when the last freighter is boarded: an adrift warship cannot be the whole chapter.
@@ -586,14 +586,14 @@
         const canFight = this.playerShips().some((s) => (!s.disabled || this.driveMendRunning(s)) && !s.captured && s.role !== 'station' && s.role !== 'freighter' && s.role !== 'tanker' && s.role !== 'liner');
         if (!canFight) {
           if (!this._noFightSince) this._noFightSince = this.time;
-          if (this.time - this._noFightSince >= 60) { this.outcome = 'defeat'; this.outcomeTime = this.time; this.addLog('None of our ships can fight. The engagement is lost.', 'Command', 'alert'); return; }
+          if (this.time - this._noFightSince >= 60) { this.outcome = 'defeat'; this.outcomeTime = this.time; this.addLog('我方没有舰船能作战。这场交战输了。', 'Command', 'alert'); return; }
         } else this._noFightSince = 0;
       }
       const required = this.objectives.filter((o) => !o.optional);
       const goals = required.filter((o) => !isGuard(o));
       if (goals.length && goals.every((o) => o.done) && required.every((o) => !o.failed)) {
         for (const o of this.objectives) if (isGuard(o) && !o.failed) o.done = true;
-        this.outcome = 'victory'; this.outcomeTime = this.time; this.addLog('All objectives complete.', 'Command', 'good');
+        this.outcome = 'victory'; this.outcomeTime = this.time; this.addLog('所有目标达成。', 'Command', 'good');
       }
     }
     triggersStep() {

@@ -45,10 +45,10 @@
     biteMemory: 60,       // s a burn-through reading stands: a spinal mount only bears now and then
     trackMemory: 30,      // s the worst reading of a track stands, so a flickering picture is not a strobe
     approachStart: 15,    // s after a start before the first 'how do we close' question
-    // 'Hold and watch' is an answer with a clock on it. Ten dead minutes at a thousand kilometres
+    // '按兵不动' is an answer with a clock on it. Ten dead minutes at a thousand kilometres
     // is what the full cooldown bought the reviewers, so a hold is re-asked on this instead, and
     // again every time it is answered the same way. Dismissal still doubles the ordinary cooldown.
-    holdAgain: 120,       // s before a question answered 'hold and watch' is put again
+    holdAgain: 120,       // s before a question answered '按兵不动' is put again
     quietFight: 240,      // s of a falling hull with nothing on the band before the questions come back
     approachFar: 1000e3,  // m: a hostile farther out than this is an approach, whatever the reach
     // × the larger burn-through reach outside which a hull that is holding is not in the fight at
@@ -175,7 +175,7 @@
   // ---- formatting: times as 'm ss' or 'h mm', ranges in km, delta-v labelled, power in MW or GW --
   const pad = (n) => (n < 10 ? '0' + n : '' + n);
   function time(s) {
-    if (s == null || !isFinite(s)) return 'never';
+    if (s == null || !isFinite(s)) return '—';
     s = Math.max(0, Math.round(s));
     if (s < 60) return s + ' s';
     if (s < 3600) return Math.floor(s / 60) + 'm ' + pad(s % 60) + 's';
@@ -197,7 +197,7 @@
   const spd = (v) => U.fmt.speed(Math.max(0, v || 0));
   const dv = (v, est) => {
     if (v == null || !isFinite(v)) return 'Δv —';
-    const a = est ? 'about ' : '';
+    const a = est ? '约 ' : '';
     return v >= 1000 ? 'Δv ' + a + U.fmt.dv(v) : 'Δv ' + a + Math.round(v) + ' m/s';
   };
   const power = (w) => {
@@ -217,20 +217,20 @@
   // which is exactly why the cooldown and the unchanged-text rule must not be allowed to sit on it.
   const loadOf = (ship) => (ship && typeof ship.thermalLoad === 'function' ? ship.thermalLoad() : 0);
   const sinkLocked = (ship) => !!ship && (loadOf(ship) >= T.sinkLock || !!ship.overheated || !!ship.weaponsInhibited);
-  const NUMBERS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+  const NUMBERS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
   const count = (n) => (n >= 0 && n < NUMBERS.length ? NUMBERS[n] : String(n));
   const Count = (n) => { const w = count(n); return w.charAt(0).toUpperCase() + w.slice(1); };
   // A sink that never fills does not read 'full in never': this course does not fill it.
-  const fullIn = (t) => (t == null ? 'the sink does not fill on this course' : 'the sink fills in ' + time(t));
+  const fullIn = (t) => (t == null ? '这条航向上热沉不会满' : '热沉还有 ' + time(t));
   // Whatever the sink is actually doing, in one phrase, from a forecast. A sink that neither fills
   // nor empties settles somewhere, and where it settles is the number the bridge wants.
-  const sinkPhrase = (v) => (v.tEmpty > 0 ? 'the sink drains in ' + time(v.tEmpty)
-    : v.tEmpty != null ? 'the sink is empty'
+  const sinkPhrase = (v) => (v.tEmpty > 0 ? '热沉排空还要 ' + time(v.tEmpty)
+    : v.tEmpty != null ? '热沉是空的'
     // A sink that is full already reads 'full in 0 s', which says nothing. What the bridge wants
     // from a saturated sink is where it goes next, which is the settle.
-    : v.tFull > 0 ? 'the sink fills in ' + time(v.tFull)
-      : v.settle != null ? 'the sink settles at ' + pct(v.settle)
-        : v.tFull === 0 ? 'the sink stays full on this course' : 'the sink holds where it is');
+    : v.tFull > 0 ? '热沉还有 ' + time(v.tFull)
+      : v.settle != null ? '热沉会稳定在 ' + pct(v.settle)
+        : v.tFull === 0 ? '这条航向上热沉会一直是满的' : '热沉保持不变');
   // A plan that does not close and a sink that never fills both read as words; a detail line with
   // no number in it is no use on the band, so the line falls back on one that is always there.
   const withNum = (line, fallback) => (/\d/.test(line) ? line : line + ' · ' + fallback);
@@ -242,7 +242,7 @@
   const clausesOf = (detail) => String(detail || '').split(DOT).filter((c) => c !== '');
   const headOf = (detail) => clausesOf(detail).slice(0, CLAUSES).join(DOT);
   const tailOf = (detail) => clausesOf(detail).slice(CLAUSES).join(DOT);
-  // A closing rate the plot can stand behind, in kilometres a minute: 'the range holds' was
+  // A closing rate the plot can stand behind, in kilometres a minute: '距离保持' was
   // printed while two orbits closed it seven kilometres a minute.
   // Below a solution the rate comes off the ghost's velocity, and that velocity carries an error
   // the card used to drop: '4.8 km a minute' was printed from a track whose own velocity error was
@@ -254,13 +254,13 @@
     const errMin = view && !view.solution && view.velErr > 0 ? view.velErr * 60 / 1000 : 0;
     const fig = (v) => (v >= 10 ? Math.round(v) : Math.round(v * 10) / 10);
     if (errMin >= Math.max(perMin, 0.5)) {
-      return 'the plot cannot tell which way the range is moving: the track is good to \u00b1' +
-        fig(errMin) + ' km a minute at ' + rangeSay(view);
+      return '海图分不清距离在往哪边走：跟踪精度在这个距离上只有每分钟 ±' +
+        fig(errMin) + ' 公里，距离 ' + rangeSay(view) + '。';
     }
-    if (!(perMin >= 0.5)) return 'the range holds at ' + rangeSay(view);
-    const rate = fig(perMin) + ' km a minute' + (errMin > 0 ? ', \u00b1' + fig(errMin) : '');
-    return c > 0 ? 'the two orbits close the range ' + rate + ' from ' + rangeSay(view)
-      : 'the two orbits open the range ' + rate + ' from ' + rangeSay(view);
+    if (!(perMin >= 0.5)) return '距离保持在 ' + rangeSay(view);
+    const rate = '每分钟 ' + fig(perMin) + ' 公里' + (errMin > 0 ? '，±' + fig(errMin) : '');
+    return c > 0 ? '两条轨道让距离缩小，' + rate + '，距离 ' + rangeSay(view)
+      : '两条轨道让距离拉开，' + rate + '，距离 ' + rangeSay(view) + '。';
   }
 
   // ---- guarded reads of the other modules -----------------------------------------------------
@@ -289,6 +289,8 @@
     try { return E.reach(sim, ship, target || null); } catch (e) { return null; }
   }
   // The facet of `subject` the `watcher` is looking at, when the engagement module can say.
+  const FACET_ZH = { nose: '舰首', flank: '舷侧', tail: '舰尾', armour: '装甲' };
+  const facetZh = (f) => FACET_ZH[f] || f;
   function facetOf(watcher, subject) {
     const E = OD.Engagement;
     if (E && E.shared && typeof E.shared.facetSeen === 'function') {
@@ -428,7 +430,7 @@
   function wordOf(sim, ship, target) {
     const S = OD.Sensors;
     if (!S || typeof S.track !== 'function') return 'solution';
-    try { const tr = S.track(sim, ship.faction, target); return tr ? tr.word : 'contact'; } catch (e) { return 'contact'; }
+    try { const tr = S.track(sim, ship.faction, target); const w = tr ? tr.word : 'contact'; return ({ contact: '接触', track: '跟踪', solution: '解算' })[w] || w; } catch (e) { return '接触'; }
   }
   // ---- what the bridge may honestly say about where she is -------------------------------------
   // Every range on the band about a hostile is read off our own track on her, never off the truth.
@@ -468,11 +470,11 @@
   function rangeSay(v) {
     if (!v) return km(0);
     if (v.solution) return km(v.R);
-    return 'about ' + km2(v.R) + (v.err > 0 ? ', ±' + km2(v.err) : '');
+    return '约 ' + km2(v.R) + (v.err > 0 ? '，±' + km2(v.err) : '');
   }
   // A distance or a time worked from a guess is a guess, and says so.
-  const kmSay = (v, m) => (v && !v.solution ? 'about ' + km2(m) : km(m));
-  const maybe = (v, text) => (v && !v.solution ? 'about ' + text : text);
+  const kmSay = (v, m) => (v && !v.solution ? '约 ' + km2(m) : km(m));
+  const maybe = (v, text) => (v && !v.solution ? '约 ' + text : text);
   // How fast the gap is closing, off the same picture: the ghost's velocity while she is fuzzy.
   function closingView(ship, v) {
     if (!v || !v.pos) return 0;
@@ -487,7 +489,7 @@
     if (!S || typeof S.signature !== 'function') return null;
     try { return S.signature(ship); } catch (e) { return null; }
   }
-  // seconds, or null for 'not at this range', or undefined when there is no sensor model
+  // seconds, or null for '此距离无解', or undefined when there is no sensor model
   function solutionEta(sim, ship, target) {
     const S = OD.Sensors;
     if (!S || typeof S.solutionEta !== 'function') return undefined;
@@ -547,7 +549,7 @@
   // is already at is not a distance a player can use — she reads us from where she is standing —
   // so that is what the clause says instead of a number sixty times the size of the fight.
   const seenAtWords = (eye) => (!eye ? ''
-    : eye.solution >= eye.at ? 'from where she is, ' + km(eye.at) + ' off' : 'at ' + km(eye.solution));
+    : eye.solution >= eye.at ? '就在她现在站的地方，' + km(eye.at) + ' 外' : '在 ' + km(eye.solution));
   function seenWords(eye, verb) {
     return eye ? eye.name + ' ' + verb + ' ' + seenAtWords(eye) : '';
   }
@@ -625,7 +627,7 @@
   // The panels' ceiling with them fully out: what they would shed with the sink hot, which is both
   // the price of extending them and the budget every forecast is run against. ship.radiatorRating()
   // is scaled by how far the panels are out, so a stowed hull reads zero there and the state has to
-  // be taken back out before the number means 'what these panels are worth'.
+  // be taken back out before the number means '这些散热板值多少'.
   function ratingOf(ship) {
     if (!ship) return 0;
     const state = ship.radiators ? ship.radiators.state : 1;
@@ -668,11 +670,11 @@
   }
   function heatSourceWords(p) {
     const bits = [];
-    if (p.guns > 0) bits.push('the mounts at ' + power(p.guns));
-    if (p.drive > 0) bits.push('the drive at ' + power(p.drive));
-    if (p.active > 0) bits.push('the active suite at ' + power(p.active));
-    bits.push('the hull at ' + power(p.idle));
-    return bits.length > 1 ? bits.slice(0, -1).join(', ') + ' and ' + bits[bits.length - 1] : bits[0];
+    if (p.guns > 0) bits.push('炮位 ' + power(p.guns));
+    if (p.drive > 0) bits.push('主推进器 ' + power(p.drive));
+    if (p.active > 0) bits.push('主动传感器 ' + power(p.active));
+    bits.push('舰体 ' + power(p.idle));
+    return bits.length > 1 ? bits.slice(0, -1).join('、') + ' 和 ' + bits[bits.length - 1] : bits[0];
   }
   // What the panels shed at a load they are not at yet: the law is the sink's temperature, so a
   // coasting hull whose sink is filling glows brighter as it goes, and the approach card has to
@@ -741,7 +743,7 @@
   // The plan this hull is actually flying. An approach order burns once to its cruise speed, goes
   // dark and brakes at brakeAt: a forecast that prices the drive as it is this second — lit, at
   // thirty megawatts — against a hull that will be coasting forty seconds from now is a forecast
-  // about a different ship, and it is what put 'Extend the radiators' on the band twenty seconds
+  // about a different ship, and it is what put '展开散热板' on the band twenty seconds
   // after the approach card had stowed them for the coast.
   function approachLegs(sim, ship) {
     const o = ship && ship.order;
@@ -828,7 +830,7 @@
   // ---- objectives, threats and the weight of the two sides -------------------------------------
   const liveObjectives = (sim) => (sim.objectives || []).filter((o) => o && !o.done && !o.failed && !o.inactive);
   // An order to neutralise this hull, still open. Optional or not: the band should not be pointing
-  // at 'open the range' while the mission board says to put her out of the fight.
+  // at '拉开距离' while the mission board says to put her out of the fight.
   function neutraliseOpen(sim, target) {
     if (!target || target.neutralised && target.neutralised()) return false;
     for (const o of liveObjectives(sim)) {
@@ -852,6 +854,7 @@
   const mustComeHome = (sim, ship) => !!ship && protectedShips(sim).some((p) => p.id === ship.id);
   // Who is shooting at that hull right now: rounds and interceptors in flight, and any hostile
   // whose beams reach her from where she is.
+  const HOW_ZH = { beams: '光束', slugs: '弹丸', interceptors: '拦截弹', dart: '拦截弹' };
   function attackersOn(sim, prot) {
     const out = [];
     const seen = Object.create(null);
@@ -973,28 +976,28 @@
   // flying — has to name her, or 'we are 8 s from six rounds' reads as if the bridge's own ship
   // were the one about to be holed.
   // Both readings are written out, clause by clause, wherever they differ. Swapping the pronouns
-  // by rule is what wrote 'Hold her own station' and 'she keeps the approach she is flying, now
+  // by rule is what wrote '守自己的位置' and 'she keeps the approach she is flying, now
   // aimed at her': three ships and one pronoun between them. `v.we`, `v.us` and `v.our` carry the
   // subject, and `v.say(first, third)` picks between two written clauses when the verb moves with
   // it. Every card kind names both hulls in the third person.
   function voiceOf(ship, third) {
-    const name = ship && ship.name ? ship.name : 'she';
+    const name = ship && ship.name ? ship.name : '她';
     const on = !!third && !!(ship && ship.name);
     return {
       third: on,
       name,
-      we: on ? name : 'we',
-      us: on ? name : 'us',
-      our: on ? name + '\u2019s' : 'our',
+      we: on ? name : '我们',
+      us: on ? name : '我们',
+      our: on ? name + '的' : '我们的',
       say: (first, alt) => (on ? alt : first),
     };
   }
   // The same for the hull on the other side of the card: 'her' while the bridge is speaking for
-  // itself, her name once another hull is under the player's hand and 'her' could be either of
+  // itself, her name once another hull is under the player' 手里，'her' could be either of
   // them.
-  const foeWord = (v, target, word) => (v.third && target && target.name ? target.name : (word || 'she'));
-  const foeOwn = (v, target) => (v.third && target && target.name ? target.name + '\u2019s' : 'her');
-  const foeHer = (v, target) => (v.third && target && target.name ? target.name : 'her');  // ---- breaking off, without cooking on the way out --------------------------------------------
+  const foeWord = (v, target, word) => (v.third && target && target.name ? target.name : (word || '她'));
+  const foeOwn = (v, target) => (v.third && target && target.name ? target.name + '的' : '她的');
+  const foeHer = (v, target) => (v.third && target && target.name ? target.name : '她');  // ---- breaking off, without cooking on the way out --------------------------------------------
   // A retreat order burns at full throttle for as long as it is carried, which is how 'break off
   // and cool' cooked the ship it was supposed to save: 1 600 s of drive heat into a sink the panels
   // could not keep up with. Breaking off is a short burn away and then a long coast, so the module
@@ -1124,12 +1127,12 @@
   const quietHull = (ship) => !!ship && (!!ship.drivenOff ||
     (typeof ship.neutralised === 'function' ? !!ship.neutralised()
       : !!(ship.destroyed || ship.disabled || ship.captured)));
-  const partyWord = (id) => 'Party ' + String(id == null ? '' : id).replace(/^p/, '');
-  const partyLower = (id) => partyWord(id).toLowerCase();
+  const partyWord = (id) => '班组 ' + String(id == null ? '' : id).replace(/^p/, '');
+  const partyLower = partyWord;
   // The board's own name for a part, in the case a sentence wants it. damage.js owns the spelling
-  // (OD.Damage.plainName): 'the drive', 'radiator panel 1', 'the coilgun'. The card used to strip
-  // the article off everything, so the band read 'Pull a party off watch for coilgun?' over a
-  // board and a log that both said 'the coilgun'. With the export not in yet the fallback is
+  // (OD.Damage.plainName): '主推进器', '散热板 1', '线圈炮'. The card used to strip
+  // the article off everything, so the band read '从值班里抽一个班组去修线圈炮？' over a
+  // board and a log that both said '线圈炮'. With the export not in yet the fallback is
   // damage.js's own rule rather than a second one, so the two can never disagree.
   function partPhrase(name, id, ship) {
     const D = OD.Damage;
@@ -1139,7 +1142,7 @@
         try { const said = D.plainName(c); if (typeof said === 'string' && said) return said; } catch (e) { /* the rule below */ }
       }
     }
-    const s = String(name || id || 'the part');
+    const s = String(name || id || '这个部件');
     const low = /^[A-Z][A-Z]/.test(s) ? s : s.charAt(0).toLowerCase() + s.slice(1);
     if (/^(radiator|tank)/i.test(s)) return low;
     return 'the ' + low;
@@ -1148,35 +1151,37 @@
   // The same name after a ship's possessive, where the article cannot stand: “JCS Greylag’s drive
   // is hit.”, never “JCS Greylag’s the drive is hit.”
   const partOwned = (name, id, ship) => partPhrase(name, id, ship).replace(/^the /, '');
-  const STATION_WORD = { fire: 'fire control', sensors: 'the sensor watch' };
+  const STATION_WORD = { fire: '火控', sensors: '传感器值班' };
   // Where a party is, in the words the log and the cards both use.
   function taskPhrase(p, ship) {
-    if (!p) return 'on standby';
-    if (p.task === 'repair' && p.part) return 'on ' + partPhrase(p.partName, p.part, ship);
-    if (p.task === 'medical') return 'in the sick bay';
-    if (STATION_WORD[p.task]) return 'on ' + STATION_WORD[p.task];
-    return 'on standby';
+    if (!p) return '待命';
+    if (p.task === 'repair' && p.part) return '守着 ' + partPhrase(p.partName, p.part, ship);
+    if (p.task === 'medical') return '在医务室';
+    if (STATION_WORD[p.task]) return '守着 ' + STATION_WORD[p.task];
+    return '待命';
   }
   // What a jury-rig on this part buys, in the words the board itself uses. The board row's `buys`
   // is the one sentence in the build that prices a mend — 'A party brings radiator panel 1 to
   // 70 %: cooling back to 85 %. 4 min.' — and the card used to re-derive its own clause from the
-  // cap, so the key read 'cooling back to 70 %' over a board row reading 85 % for the same repair.
+  // cap, so the key read '冷却后回到 70 %' over a board row reading 85 % for the same repair.
   // The card now reads that sentence: the clause after the colon, without its trailing time, which
   // the key prints once itself.
   // The head runs to the first colon. 'A party cross-connects the spare feed line and brings the
   // reactor to 60 %:' has a hyphen in it, which the old [a-z]+ pattern stopped at, so the reactor's
   // key printed the board's whole sentence, head, colon and all.
-  const BUYS_TIME = /[\s\u00b7,;]*\b\d+\s*(min|s)\.?\s*$/i;
-  const BUYS_HEAD = /^A party\b[^:]*:\s*/;
+  // The board row reads '班组把备用供给管路跨接过去，把反应堆修到 60 %：光束和点防御功率上限 85 %。6 分钟。'
+  // The gain is the clause after the colon — the job before it is the board's own wording, and it
+  // stays on the row. A venting tank names its gain after the last comma instead of a colon, and
+  // the row's trailing time is the key's own clause here, so it is dropped, never shown twice.
   function buysPhrase(part, ship) {
     if (!part) return '';
     const said = String(part.buys || '');
-    if (said && !/^Nothing/.test(said)) {
-      // The sentence ends where the time begins, and anything after the time — 'with the radiators
-      // in' — is a condition the card's own key already carries.
-      const clause = said.replace(BUYS_HEAD, '').split(/\.(?:\s|$)/)[0]
-        .replace(BUYS_TIME, '').replace(/[.\s]+$/, '').trim();
-      if (clause) return clause.charAt(0).toLowerCase() + clause.slice(1);
+    if (said && !/^这个部件班组无能为力/.test(said)) {
+      const first = said.split(/。/)[0].trim();
+      const ci = first.indexOf('：');
+      const clause = (ci >= 0 ? first.slice(ci + 1) : first.slice(first.lastIndexOf('，') + 1))
+        .replace(/\s*\d+\s*(?:分钟|秒)\s*$/, '').trim();
+      if (clause && !/^(需要|最多只能到)/.test(clause)) return clause;
     }
     return derivedBuys(part, ship);
   }
@@ -1189,7 +1194,7 @@
     if (D && typeof D.timeWords === 'function') {
       try { const said = D.timeWords(secs); if (typeof said === 'string' && said) return said; } catch (e) { /* the rule below */ }
     }
-    return Math.max(1, Math.round(secs / 60)) + ' min';
+    return Math.max(1, Math.round(secs / 60)) + ' 分钟';
   }
   // What the mend buys and how long it takes, in one detail clause. The time used to be bolted on
   // to whatever the board row said, which reads right after a percentage and wrong after anything
@@ -1200,7 +1205,7 @@
     const said = buysPhrase(part, ship);
     const t = mendTime(secs);
     if (!t) return said;
-    if (/\d+\s*%$/.test(said)) return said + ' in ' + t;
+    if (/\d+\s*%$/.test(said)) return said + '，' + t;
     return t + ' \u00b7 ' + said;
   }
   // What a holed tank is costing, in the sim's own arithmetic: the propellant going out of the
@@ -1227,12 +1232,12 @@
     if (part && part.state === 'venting') {
       const out = ventDvPerMin(ship, part.id);
       if (out != null) {
-        const said = partPhrase(part.name, part.id, ship) + ' keeps venting, about ' + U.fmt.dv(out) + ' a minute';
+        const said = partPhrase(part.name, part.id, ship) + '还在泄漏，每分钟大约 ' + U.fmt.dv(out);
         return cap ? said.charAt(0).toUpperCase() + said.slice(1) : said;
       }
     }
     const level = (cap ? partCap(part.name, part.id, ship) : partPhrase(part.name, part.id, ship)) +
-      ' stays at ' + pct(part.hp);
+      '保持在 ' + pct(part.hp);
     return level;
   }
   // Why a party cannot start: the board's own reason, from OD.Crew's inUse rule. A part that is
@@ -1244,10 +1249,10 @@
   // and too long beside an option.
   function blockShort(part) {
     const id = String((part && part.id) || '');
-    if (/^drive/.test(id)) return 'nothing can be done until the throttle is 0';
-    if (/^rad/.test(id)) return 'nothing can be done until the radiators are in';
+    if (/^drive/.test(id)) return '推力不归零就什么都做不了';
+    if (/^rad/.test(id)) return '散热板不收起来就什么都做不了';
     const said = blockOf(part);
-    if (!said) return 'nothing can be done while it is running';
+    if (!said) return '它还在运转就什么都做不了';
     const first = said.split(/\.(?:\s|$)/)[0].trim();
     return first.charAt(0).toLowerCase() + first.slice(1);
   }
@@ -1274,13 +1279,13 @@
   function derivedBuys(part, ship) {
     const name = partPhrase(part.name, part.id, ship);
     const kind = (/^[a-z]+/.exec(String(part.id || '')) || [''])[0];
-    if (part.cap == null || !isFinite(part.cap)) return kind === 'tank' ? 'the venting stops' : name + ' back in service';
+    if (part.cap == null || !isFinite(part.cap)) return kind === 'tank' ? '泄漏停止' : name + '重新投入使用';
     switch (kind) {
-      case 'drive': return 'thrust back to ' + pct(part.cap);
-      case 'reactor': return 'power back to ' + pct(part.cap);
-      case 'sensors': return 'the passive range back to ' + pct(part.cap);
-      case 'rad': return 'cooling back to ' + pct(part.cap);
-      case 'tank': return 'the venting stops';
+      case 'drive': return '推力回到 ' + pct(part.cap);
+      case 'reactor': return '功率回到 ' + pct(part.cap);
+      case 'sensors': return '被动探测距离回到 ' + pct(part.cap);
+      case 'rad': return '散热恢复到 ' + pct(part.cap);
+      case 'tank': return '泄漏停止';
       default: return name + ' back to ' + pct(part.cap);
     }
   }
@@ -1387,7 +1392,7 @@
     }
     return solutionHeld(sim, ship) ? 'sensors' : 'fire';
   }
-  // 'Keep the parties where they are' is the player's authority over the routine, and it used to
+  // '班组原地不动' is the player's authority over the routine, and it used to
   // last until the routine's next tick ten seconds later. A refusal now holds that part for the
   // minute the card would have waited.
   function holdPart(ship, partId) {
@@ -1397,7 +1402,7 @@
   }
   // OD.Crew.assign returns the sentence for the log — 'Party 2 to the drive: 7 min to 70 %. The
   // sensor watch drops to 70 % of its rate until she is back.' — and the card used to throw it
-  // away, so an answered repair logged 'Decision: … → Send party 1 to the drive' with no time and
+  // away, so an answered repair logged '决策：… → 派班组 1 去主推进器' with no time and
   // no cost. It is held here and printed after the Decision line, which is the order a reader
   // wants: the answer, then what it bought.
   function assignParty(sim, ship, partyId, task, partId) {
@@ -1417,7 +1422,7 @@
     if (st) (st.said || (st.said = [])).push(line);
   }
   // A party standing by a part the order keeps in use is doing nothing, and the watch she left is
-  // running at 70 % for it. 'Press on' stands her down in the same breath as the order that keeps
+  // running at 70 % for it. '继续进攻' stands her down in the same breath as the order that keeps
   // her idle, and the sentence OD.Crew.release gives back goes under the Decision line. The crew
   // module stands a party down by itself after a minute on a part the ship is using, so this may
   // find her already gone: then there is nobody to release and nothing to say.
@@ -1442,13 +1447,13 @@
     for (const line of said) sim.addLog(line, 'Crew', 'good');
   }
   // What an order is called, when a log line has to name the one the ship is flying.
-  const ORDER_WORDS = { keeprange: 'keep range', intercept: 'the intercept', approach: 'the approach',
-    retreat: 'the break-off', evade: 'the evasion', manual: 'the heading she was flying', hold: 'hold' };
-  const ORDER_STOP = { keeprange: 'holding the range', intercept: 'the intercept', approach: 'the approach',
-    retreat: 'the break-off', evade: 'the evasion' };
-  const orderWords = (o) => ORDER_WORDS[String((o && o.type) || 'hold')] || 'the order she was flying';
+  const ORDER_WORDS = { keeprange: '保持距离', intercept: '拦截', approach: '接近',
+    retreat: '脱离', evade: '规避', manual: '她原来的航向', hold: '按兵不动' };
+  const ORDER_STOP = { keeprange: '保持距离', intercept: '拦截', approach: '接近',
+    retreat: '脱离', evade: '规避' };
+  const orderWords = (o) => ORDER_WORDS[String((o && o.type) || 'hold')] || '她原来的指令';
   const orderStop = (o) => ORDER_STOP[String((o && o.type) || '')] || null;
-  // Clearing the way for a party, and remembering what was cleared. 'Cut the drive for 6 min' set
+  // Clearing the way for a party, and remembering what was cleared. '关闭推进器 6 分钟' set
   // the throttle to 0 and the order to hold, and nothing gave either back: the ship sat at
   // throttle 0 long after the mend landed. What the act found is kept here, with the very objects
   // it put in their place, so a hand on the order or the radiators since then is plain to see —
@@ -1462,8 +1467,7 @@
     else ship.order = { type: 'hold' };
     if (sim) state(sim).clear[ship.id] = { part: partId, kind: 'drive', was, put: ship.order, at: sim.time };
     // The board logs a send; the card logs what the send cost the order.
-    sayCrew(sim, ship, 'Throttle to 0. ' + (stop ? stop.charAt(0).toUpperCase() + stop.slice(1) +
-      ' stops while the party works.' : 'She coasts while the party works.'));
+    sayCrew(sim, ship, '推力归零。' + (stop ? stop + ' 在班组工作期间停下。' : '班组工作期间她滑行。'));
   }
   function clearPanels(sim, ship, partId) {
     const r = ship.radiators || null;
@@ -1471,7 +1475,7 @@
     if (sim && typeof sim.setRadiators === 'function') sim.setRadiators(ship.id, false);
     else if (r) { r.auto = false; r.deployed = false; }
     if (sim) state(sim).clear[ship.id] = { part: partId, kind: 'rad', was, at: sim.time };
-    sayCrew(sim, ship, 'The radiators come in. No cooling while the party works.');
+    sayCrew(sim, ship, '散热板收起。班组工作期间没有散热。');
   }
   // The repair a trade cleared the way for, while the party is still on the part.
   function heldRepair(sim, ship) {
@@ -1494,7 +1498,7 @@
       if (board && board.parties.some((p) => p.task === 'repair' && p.part === rec.part)) continue;
       delete st.clear[id];
       const row = board ? board.parts.find((p) => p.id === rec.part) : null;
-      const at = row && row.hp != null ? partCap(row.name, rec.part, sh) + ' is at ' + pct(row.hp) + '. ' : '';
+      const at = row && row.hp != null ? partCap(row.name, rec.part, sh) + ' 在 ' + pct(row.hp) + '。' : '';
       const say = (line) => {
         if (typeof sim.addLog !== 'function') return;
         const who = sh.name && selectedId() !== sh.id ? sh.name + ' \u2014 ' : '';
@@ -1505,7 +1509,7 @@
         if (typeof sim.setOrder === 'function') sim.setOrder(id, rec.was.order);
         else sh.order = rec.was.order;
         if (!(sh.cmdThrottle > 0) && rec.was.throttle > 0) sh.cmdThrottle = rec.was.throttle;
-        say(at + 'Back on ' + orderWords(rec.was.order) + '.');
+        say(at + '回到' + orderWords(rec.was.order) + '。');
       } else {
         const r = sh.radiators;
         if (!r || !rec.was || r.auto !== false || r.deployed !== false) continue;
@@ -1521,8 +1525,8 @@
         } else { r.auto = !!rec.was.auto; r.deployed = !!rec.was.deployed; }
         // What went back, named: the panels, and whether the ship is running them again herself.
         say(at + (rec.was.deployed
-          ? (rec.was.auto ? 'The radiators are out again, and back on automatic.' : 'The radiators are out again.')
-          : (rec.was.auto ? 'The radiators stay in, and back on automatic.' : 'The radiators stay in.')));
+          ? (rec.was.auto ? '散热板重新展开，恢复自动。' : '散热板重新展开。')
+          : (rec.was.auto ? '散热板保持收起，恢复自动。' : '散热板保持收起。')));
       }
     }
   }
@@ -1585,7 +1589,7 @@
     if (d.kind === 'medical') {
       const b = crewBoard(ship);
       const k = b && b.crew;
-      return k && k.wounded > 0 ? 'Nobody is in the sick bay: ' + k.wounded + ' stay wounded.' : '';
+      return k && k.wounded > 0 ? '医务室没人：' + k.wounded + ' 一直带伤。' : '';
     }
     if (d.kind === 'repair') {
       const c = repairChoice(sim, ship, d._shape || null);
@@ -1609,7 +1613,7 @@
     try { if (typeof o.act === 'function') o.act(sim); } catch (e) { /* the ship does what it can */ }
     if (typeof sim.addLog !== 'function') return;
     const cost = settleCost(sim, d, o, ship);
-    sim.addLog('Decision: ' + d.title + ' \u2192 ' + o.label + ' \u00b7 the ship\u2019s routine.' +
+    sim.addLog('决策：' + d.title + ' \u2192 ' + o.label + ' · 舰上的例行程序。' +
       (cost ? ' ' + cost : ''), 'Bridge', 'good');
     flushSaid(sim);
   }
@@ -1654,70 +1658,27 @@
   // The one sentence in the withdraw lesson that is about armour already gone. On a hull still
   // above half it is a sentence about somebody else's ship, and the card was printing it under
   // the title at 100 %, so it is composed in and taken back out by teachOf below.
-  const WITHDRAW_HALF = 'With half of it gone every hit lands deeper than the last. ';
+  const WITHDRAW_HALF = '装甲去掉一半之后，每一发都会打得比上一发更深。';
   const TEACH = {
-    approach: 'Getting to a fight costs propellant and shows you to the other side. Burn hard and you arrive ' +
-      'soonest. The drive is lit the whole way, and a plume is a firing solution for every hostile that can see ' +
-      'it. Coast and you spend one short burn, then run dark until the brake. That costs less propellant and keeps ' +
-      'you dim. It takes longer.',
-    sensors: 'A solution is a track good enough to aim by, and the beams hold their fire until you have one. ' +
-      'The active sensor buys a solution in about 20 s, and it announces you. Every hostile inside its range ' +
-      'gets a solution on you as soon as it lights. The passive suite gives away nothing, and it needs time on ' +
-      'the target or a shorter range.',
-    radiators: 'The radiators shed the heat the ship makes. Extended, they glow, and that glow is ' +
-      'most of what a hostile tracks you by. They are thin, so beams take them first. Stow them and you are dim ' +
-      'and they cannot be shot off. Every joule the ship makes then stays in the heat sink. A full sink holds ' +
-      'the drive to a quarter and stops every mount, point defence included, until it drains.',
-    range: 'Range decides who can hurt whom. A beam spreads as it travels and armour soaks a fixed amount of it, ' +
-      'so each beam has a distance inside which it gets through and outside which it does nothing. Her beams ' +
-      'against your armour give a different distance. When yours is the longer one, there is a band where you can ' +
-      'hit her and she cannot reach you.',
-    salvo: 'Interceptors are small craft with their own drives, and the bays never reload. Her point defence ' +
-      'shoots them down at a fixed rate while they close, so a salvo bigger than what she can stop in that flight ' +
-      'time puts the rest of it aboard. A smaller salvo is spent for nothing. Every one you launch is one you do ' +
-      'not have in the next fight.',
-    cripple: 'A ship with no drive cannot manoeuvre or run. Board her, and if the party wins, the hull and crew are yours. That ' +
-      'means matching her speed and holding station inside 3 km: 90 s against a crew the size of ours, longer ' +
-      'against a bigger one. Finishing her off with full fire is quicker, and it leaves no prize to take home. ' +
-      'Boarding holds you still for the whole crossing. That is dangerous while anything else on her side is ' +
-      'shooting.',
-    slugs: 'A coilgun slug is a lump of metal thrown at where you will be, and nothing steers it after that. Move ' +
-      'a few ship lengths before it arrives and it passes into empty space. Jinking does that for you. It is a ' +
-      'run of small random burns across her line of fire, and every dodge costs propellant. Holding still keeps ' +
-      'a boarding match or a nose-on aim, and the slugs hit.',
-    heat: 'Everything aboard makes heat, and in vacuum the only way to lose it is to radiate it. The heat sink is ' +
-      'the tank it collects in. The radiators are the only drain. A full sink holds the drive to a quarter and ' +
-      'stops every mount, point defence included, until it drains. Full fire is the most damage you can do and ' +
-      'it fills the sink fastest. Sustained fire holds the beams to what the radiators shed, so the sink does ' +
-      'not fill.',
-    defend: 'The ships you are escorting cannot fight back, and anything shooting at them is shooting at the ' +
-      'objective. Close on the attacker and kill her, and the shooting stops for good. That takes as long as ' +
-      'the range takes to fly. Sit alongside the ship being shot at instead and your point defence covers her. ' +
-      'That stops what is already in flight. Holding your station does neither.',
-    withdraw: 'Armour is what keeps a hit out of the hull. ' + WITHDRAW_HALF +
-      'Breaking off is one burn and then a coast, and outside her reach her beams do nothing. ' +
-      'Getting behind a sister ship puts her point defence over you and her armour between you and the shooting. ' +
-      'Staying in it is right when the fight is nearly over.',
-    sink: 'Every joule the ship makes goes into the heat sink. A full sink holds the drive to a quarter and ' +
-      'stops every mount, point defence included, until it drains. Only the radiators drain it, and only while ' +
-      'they are extended. The two heat sources you can switch off are the beams and the drive.',
-    capped: 'Her sink is full. A full sink holds the drive to a quarter and stops every mount, point defence ' +
-      'included, until it drains. That lasts as long as her radiators need to catch up. Press her now and she ' +
-      'cannot manoeuvre away or shoot back, and closing spends propellant and leaves you inside her reach when ' +
-      'she cools. Holding the range spends nothing but the time.',
-    aim: 'Beams go where the gunnery officer points them. The hull is the biggest thing to hit, so all of the ' +
-      'shot lands on it. A smaller part takes a smaller share of the shot. Her radiators are thin and ' +
-      'exposed, and they are the only cooling she has. Burn them off and she must stow what is left, and her ' +
-      'sink fills with nothing to drain it.',
-    repair: 'The crew works in parties, and a party can only be in one place. Send one to a hit part and its ' +
-      'jury-rig brings that part some of the way back, never all of it, and the fire control or sensor watch it ' +
-      'came off runs at 70 % until it returns.',
-    burn: 'About 1.2 g is what people can work at, and above it the parties strap into their couches and a ' +
-      'repair stops where it is until the burn ends. 3 g is the couch limit, and above that a corvette\u2019s ' +
-      'crew takes about 2 wounded a minute for every g over.',
-    medical: 'A party in the sick bay turns one wounded back to fit every 45 s, and with nobody there nobody ' +
-      'comes back for the rest of the fight. Once the fit are under a third of the whole crew, fire control and ' +
-      'the sensor watch both run at 70 % whatever the parties are doing.',
+    approach: '接近一场战斗要花推进剂，也会把自己暴露给对方。全力点火到得最快，但推进器一路亮着，而尾焰对任何看得见的敌舰都是一个射击解算。滑行过去只花一次短点火，然后一路静默到反推。那样更省推进剂，也更暗，只是更慢。',
+    sensors: '解算是好到可以瞄准的跟踪，没有解算光束就不开火。主动传感器大约 20 秒就能买到解算，同时也会喊出自己的位置。它一开机，射程内每一艘敌舰立刻拿到对你的解算。被动套件不暴露任何东西，但需要在目标上花时间，或者拉近距离。',
+    radiators: '散热板排出舰上产生的热。展开时它们会发亮，而那层亮光就是敌舰跟踪你的主要依据。它们很薄，光束会先打它们。收起来你就暗了，它们也打不掉。但舰上产生的每一焦耳都会留在热沉里。热沉满了，推进器只剩四分之一，所有炮位停火——包括点防御——直到它排空。',
+    range: '距离决定谁能伤到谁。光束在飞行中会散开，装甲能吸收固定的一部分，所以每门光束都有一个能打穿的近距离、以及打不穿的远距离。她的光束对你的装甲，又是另一个距离。当你的距离更长时，就存在一段你能打她、她够不着你的区间。',
+    salvo: '拦截弹是自带推进器的小型飞行器，发射舱不会补充。她的点防御在拦截弹接近时按固定速率击落，所以一次放出的数量超过她在飞行时间里能拦掉的，剩下的就会打到船上。放少了等于白花。你放出去的每一枚，都是下一场战斗里没有的。',
+    cripple: '没有推进器的船既不能机动也不能跑。登舰，如果班组赢了，舰体和船员就归你。这意味着匹配她的速度，并在 3 公里内保持位置：对方船员和我们差不多时 90 秒，更多就更久。用全力开火打沉她更快，但就没有战利品可以带回家。登舰的整个过程会把你钉在原地。她那边还有别的东西在开火时，这很危险。',
+    slugs: '线圈炮弹丸是一块金属，朝你“将会在的位置”扔过去，之后没有任何东西制导。在它到达前移动几个舰身，它就会飞进空处。规避就是替你干这个。那是一串横穿她射击线的小幅随机点火，每次躲避都要花推进剂。保持不动能维持登舰对接或舰首对正的瞄准，弹丸就会打中。',
+    heat: '舰上一切都在产热，而在真空里，唯一的热去处就是辐射掉。热沉是收集这些热的容器。散热板是唯一的排水口。热沉满了，推进器只剩四分之一，所有炮位停火——包括点防御——直到它排空。全力开火是你能造成的最大伤害，也是灌满热沉最快的方式。持续开火把光束压到散热板排得掉的程度，热沉就不会满。',
+    defend: '你护航的船没法还手，任何朝她们开火的东西都是在打目标。逼近攻击者并打掉她，炮火就永远停了。这要花掉飞完那段距离的时间。贴着被攻击的船待着，你的点防御就能罩住她。那只能拦住已经在飞的东西。原地不动两样都做不到。',
+    withdraw: '装甲是挡住命中、不让它打进舰体的东西。' + WITHDRAW_HALF +
+      '脱离是一次点火加一段滑行，出了她的射程，她的光束就没用了。' +
+      '躲到姊妹舰后面，她的点防御能罩住你，她的装甲挡在你和炮火之间。' +
+      '战斗快结束时，留在场上才是对的。',
+    sink: '舰上产生的每一焦耳都进热沉。热沉满了，推进器只剩四分之一，所有炮位停火——包括点防御——直到它排空。只有散热板能排空它，而且只在展开时。你能关掉的两个热源是光束和推进器。',
+    capped: '她的热沉满了。满热沉会把推进器压到四分之一，所有炮位停火——包括点防御——直到排空。这能持续到她散热板追上来为止。现在压上去，她既不能机动躲开也不能还手；而接近要花推进剂，等她冷却下来你还留在她的射程里。保持距离只花时间。',
+    aim: '光束是炮术军官指哪打哪。舰体是最大的目标，所以整发的伤害都落在上面。部位越小，分到的伤害越少。她的散热板又薄又暴露，而且是她唯一的散热手段。把它们烧掉，剩下的她只能收起来，热沉就会涨满而没有任何东西排水。',
+    repair: '船员按班组行动，一个班组只能在一个地方。派一组去受损部件，应急抢修能把那个部件恢复一部分，永远不是全部；而它离开的火控或传感器值班，在它回来之前只能按 70 % 运转。',
+    burn: '大约 1.2 g 是人能干活的上限，超过它，班组要绑进抗荷座椅，修理停在原地直到点火结束。3 g 是抗荷座椅上限，再往上，护卫艇的船员每多 1 g 每分钟大约伤 2 人。',
+    medical: '医务室里有一组人，每 45 秒能让一名伤员恢复执勤；没人守着，剩下的战斗里就没人能回来。一旦能干活的人少于全体的三分之一，火控和传感器值班都只能按 70 % 运转，不管班组在做什么。',
   };
 
   // One idea, one teaching string — and for a repair, the case in hand rather than the whole
@@ -1740,13 +1701,13 @@
     if (cap == null || !isFinite(cap)) return '';
     const wrecked = (c.hp || 0) <= 0;
     if (/^tank/.test(String(partId)) && c.hp != null && c.hp <= 0.5) {
-      return 'A repair in vacuum is a jury-rig: ' + name + ' is valved out of the feed, never refilled, and what vented is gone.';
+      return '真空里的修理就是应急抢修：' + name + '已经从管路里关掉，不会再补，漏掉的就再也回不来了。';
     }
     if (wrecked) {
-      return 'A repair in vacuum is a jury-rig: a wrecked ' + name.replace(/^the /, '') + ' reaches ' + pct(cap) +
-        ' in one shift, and no further in this fight.';
+      return '真空里的修理就是应急抢修：报废的' + name.replace(/^the /, '') + '一个班次能修到 ' + pct(cap) +
+        '，这战场上再高也不行。';
     }
-    return 'A repair in vacuum is a jury-rig: ' + name + ' comes back to ' + pct(cap) + ', never further.';
+    return '真空里的修理就是应急抢修：' + name + '恢复到 ' + pct(cap) + '，不能再高。';
   }
   function teachOf(kind, ship, partId) {
     // Half the armour gone is what makes the armour sentence true. Above that line the card is
@@ -1874,7 +1835,7 @@
     // The break-off gap is the force's, so that one hull's question does not put the same one to
     // her sisters. A hull that has lost a fifth of her armour since her own last answer is not a
     // sister being asked along: it is her fight changing under her. Chapter 4's corvette answered
-    // 'Press on' at full armour at 275 s, the force gap ran to 510 s, and she was out of the fight
+    // '继续进攻' at full armour at 275 s, the force gap ran to 510 s, and she was out of the fight
     // at 512 s having never been asked again.
     const back = kind === 'withdraw' ? st.reask[ship.id] : null;
     if (back != null && back >= rec2.at && sim.time >= back) return false;
@@ -1891,7 +1852,7 @@
     // cooldown says and whatever the words: here the situation not moving is the emergency, so the
     // unchanged-text rule — which is what kept the band silent for eighty minutes — does not apply.
     if (urgent) return sim.time - r.at < T.lockRepeat;
-    // 'Hold and watch' costs nothing and decides nothing, so it is put again a couple of minutes
+    // '按兵不动' costs nothing and decides nothing, so it is put again a couple of minutes
     // later rather than held shut for the whole cooldown: ten dead minutes at a thousand
     // kilometres is what the full span bought the reviewers. A dismissal still doubles.
     if (r.hold && sim.time - r.at >= T.holdAgain) return false;
@@ -1981,7 +1942,7 @@
     st.hot[ship.id] = band;
     // A hull that has lost a fifth of her armour since the last time the question was put is in a
     // different fight, and the ten-minute cooldown is the wrong answer to it. Chapter 4's corvette
-    // answered 'Press on' at full armour at 275 s and was out of the fight at 512 s with nothing
+    // answered '继续进攻' at full armour at 275 s and was out of the fight at 512 s with nothing
     // on the band in between: the withdraw question comes back on the armour, cooldown or no
     // cooldown, which is the one gate the quiet-fight rule cannot reach while other cards are
     // still speaking for her.
@@ -1993,7 +1954,7 @@
       // The force-wide gap goes with the cooldown: both were written for a hull whose fight had
       // not changed, and this one's has.
       st.reask[ship.id] = sim.time;
-      // The three-a-fight cap goes with it. Chapter 2 answered 'Press on' three times, the last at
+      // The three-a-fight cap goes with it. Chapter 2 answered '继续进攻' three times, the last at
       // 1 225 s, and Larkspur was out at 1 843 s with ISV Sabre at 18 % and the cap holding the
       // question shut for the whole of the last ten minutes.
       for (const k of Object.keys(st.asked)) {
@@ -2089,8 +2050,8 @@
     return at == null || sim.time < at ? Infinity : sim.time - at;
   }
   // One kind owns the panels at a time. While a heat, sink or withdraw card is open for this hull,
-  // or has just been answered, nothing else offers to move them: 'Stow the radiators' at t = 1 and
-  // 'Extend the radiators' at t = 19 is not two decisions, it is one question asked twice.
+  // or has just been answered, nothing else offers to move them: '收起散热板' at t = 1 and
+  // '展开散热板' at t = 19 is not two decisions, it is one question asked twice.
   function panelsOwned(sim, ship) {
     if (coastOwnsPanels(sim, ship)) return true;
     for (const d of sim.decisions || []) {
@@ -2158,14 +2119,14 @@
     // A trade cleared the drive or the panels and a party is on the part now. Any key that would
     // light the drive again or put the panels back out stops that repair where it stands, and it
     // says so on the key; none of them is the lit pick. On the recommended pick alone the card
-    // after the trade used to undo it — 'Stow the panels for 3 min' and then 'Extend the
+    // after the trade used to undo it — '收起散热板 3 分钟' and then 'Extend the
     // radiators' — and the mend never landed.
     const held = heldRepair(sim, ship);
     if (held) {
       for (const o of list) {
         if (!(held.kind === 'drive' ? o.burns : o.panel === 'out')) continue;
         o.noRec = true;
-        const says = 'this puts ' + partyLower(held.party) + '\u2019s repair down';
+        const says = '这会让' + partyLower(held.party) + '的修理停下来';
         if (clausesOf(o.detail).indexOf(says) < 0) o.detail = says + (o.detail ? DOT + o.detail : '');
       }
     }
@@ -2202,7 +2163,7 @@
     if (rec < 0) for (let i = 0; i < list.length && i < 3; i++) if (ok(list[i])) { rec = i; break; }
     // Of the two rules the press rule is the stronger one: with a fight to press, an answer the
     // card itself is lukewarm about still beats one that steps out of it. Chapter 4's heat card
-    // lit 'Break off and cool' at 820 s with ISV Coriolis at 98 % and the objective open.
+    // lit '脱离并冷却' at 820 s with ISV Coriolis at 98 % and the objective open.
     // `never` is the stronger of the two marks: not 'the card is lukewarm about this' but 'this
     // key does not do what it says' — a burn rung the tanks cannot pay for, a boarding the decks
     // would throw back. A fight to press does not light one of those.
@@ -2227,10 +2188,9 @@
     };
     // A clause read on its own is a sentence, not an item in a list: the first one runs on from
     // the key's label, the rest stand by themselves.
-    const sentences = (cs) => cs.map((c, i) => {
+    const sentences = (cs) => cs.map((c) => {
       const t = String(c).trim();
-      const w = i > 0 ? t.charAt(0).toUpperCase() + t.slice(1) : t;
-      return /[.!?]$/.test(w) ? w : w + '.';
+      return /[。！？.!?]$/.test(t) ? t : t + '。';
     }).join(' ');
     for (let i = 0; i < list.length && i < 3; i++) {
       const full = list[i].detail || '';
@@ -2239,8 +2199,8 @@
       // because the player has not read it.
       const rest = clausesOf(tailOf(full)).filter((c) => shown.every((h) => h.indexOf(c) < 0) && !carried(c));
       // The key's name, not the whole label: a label that already carries a clause of its own
-      // ('Break off: she can match the burn') would put two colons in one line.
-      if (rest.length) behind.push(String(list[i].label).split(': ')[0] + ': ' + sentences(rest));
+      // ('脱离：她能跟上这次点火') would put two colons in one line.
+      if (rest.length) behind.push(String(list[i].label).split(/[:：] /)[0] + '：' + sentences(rest));
       opts.push({
         key: String(i + 1), id: list[i].id || 'o' + (i + 1),
         label: list[i].label, detail: headOf(full), more: rest.join(DOT),
@@ -2259,11 +2219,11 @@
   }
   // What each kind is about, in the words the log uses when the question is not worth putting.
   const SUBJECT = {
-    approach: 'how we close', sensors: 'the sensors', radiators: 'the radiators', range: 'the range',
-    salvo: 'the bays', cripple: 'the cripple', slugs: 'the slugs inbound', heat: 'the heat',
-    defend: 'the escort', aim: 'where the beams go', withdraw: 'breaking off', sink: 'the sink',
-    capped: 'her silence',
-    repair: 'the repair parties', burn: 'the burn', medical: 'the wounded',
+    approach: '怎么接近', sensors: '传感器', radiators: '散热板', range: '距离',
+    salvo: '发射舱', cripple: '打瘫', slugs: '来袭的弹丸', heat: '热量',
+    defend: '护航的船', aim: '光束打哪', withdraw: '脱离', sink: '热沉',
+    capped: '她的沉默',
+    repair: '修理班组', burn: '点火', medical: '伤员',
   };
   // A question that came to one answer, said once per hull and kind: the band stays quiet and the
   // log carries the reason, so a kind that has gone silent can be read rather than guessed at.
@@ -2274,8 +2234,8 @@
     if (st.skipped[key]) return;
     st.skipped[key] = { at: sim.time, why };
     if (typeof sim.addLog === 'function') {
-      sim.addLog((ship && ship.name ? ship.name + ': ' : '') + 'nothing to decide about ' +
-        (SUBJECT[kind] || kind) + '. The only answer worth anything is ' + why + '.', 'Bridge', 'info');
+      sim.addLog((ship && ship.name ? ship.name + '：' : '') + '关于' +
+        (SUBJECT[kind] || kind) + '没有什么要决定的。唯一值得做的选择是' + why + '。', 'Bridge', 'info');
     }
   }
   function noteBuildError(sim, kind, e) {
@@ -2283,7 +2243,7 @@
     if (!st.broke) st.broke = Object.create(null);
     if (st.broke[kind]) return;
     st.broke[kind] = true;
-    if (window.OD && Array.isArray(OD.errors)) OD.errors.push('Decisions: building the ' + kind + ' card threw: ' + (e && e.stack ? e.stack : e));
+    if (window.OD && Array.isArray(OD.errors)) OD.errors.push('决策：构建' + kind + '卡片时出错：' + (e && e.stack ? e.stack : e));
   }
   function refresh(sim, d) {
     if (!sim || !d || typeof d._build !== 'function') return;
@@ -2309,7 +2269,7 @@
       base = ship.name + ': ' + (/^[A-Z][a-z]*\s+[a-z]/.test(base) ? base.charAt(0).toLowerCase() + base.slice(1) : base);
     }
     // the count follows the words without a full stop between them ('Pick the range · 3 ships')
-    d.title = n > 1 ? base.replace(/\.$/, '') + ' · ' + n + ' ships' : base;
+    d.title = n > 1 ? base.replace(/。$/, '') + ' · ' + n + ' 艘' : base;
     d.text = say(d._text, d.third);
     d.plain = say(d._text, false); // the first-person sentence the cooldown compares against
   }
@@ -2379,9 +2339,9 @@
     st.cool[coolKey(ship.id, 'burn')] = { at: sim.time, span: T.cooldown, text: null,
       target: target ? target.id : null, hull: ship.hull != null ? ship.hull : null, hold: false };
     if (typeof sim.addLog !== 'function') return;
-    sim.addLog((ship.name ? ship.name + ': ' : '') + 'the burn' +
-      (target && target.name ? ' on ' + target.name : '') + ' runs ' + time(rung.secs) + ' above ' +
-      gs(rung.limit) + '. The parties are in the couches for all of it, and this question was put once already.',
+    sim.addLog((ship.name ? ship.name + '：' : '') + '这次点火' +
+      (target && target.name ? '打向 ' + target.name : '') + '持续 ' + time(rung.secs) + '，超过 ' +
+      gs(rung.limit) + '。整个过程班组都绑在抗荷座椅里，这个问题已经问过一次了。',
       'Bridge', 'info');
   }
   // A question raised for one hull is raised for every hull in the same situation, in the same
@@ -2690,15 +2650,15 @@
       teach: undefined,
       supersede: chosen ? null : (s) => { const me = s.byId(ship.id); return !!(me && designated(s, me)); },
       title: (sm, sh, third) => (third && sh && sh.name
-        ? 'How does ' + sh.name + ' close on ' + target.name + '?'
-        : 'How do we close on ' + target.name + '?'),
+        ? sh.name + ' 怎么接近 ' + target.name + '？'
+        : '我们怎么接近 ' + target.name + '？'),
       text: (sm, sh, third) => {
         const me = sh || ship;
         const at = rangeSay(trackRange(sm, me, sm.byId(id) || target));
         return third && me && me.name
-          ? me.name + ' is holding, and ' + target.name + ' is at ' + at +
-            '. Closing fast costs propellant and lights the drive.'
-          : 'We are holding, and she is at ' + at + '. Closing fast costs propellant and lights the drive.';
+          ? me.name + ' 在保持，' + target.name + ' 在 ' + at +
+            '。快速接近要花推进剂，也会亮起推进器。'
+          : '我们在保持，她在 ' + at + '。快速接近要花推进剂，也会亮起推进器。';
       },
       until(s) {
         const me = s.byId(ship.id), t = s.byId(id);
@@ -2786,41 +2746,41 @@
     const panelsNow = !!(ship.radiators && ship.radiators.state > 0.5);
     const stowForCoast = panelsNow && shutLeg.tFull == null;
     const legPanels = panelsNow && !stowForCoast;
-    const sinkBit = (v) => (v.tFull != null ? 'the sink fills in ' + time(v.tFull) : 'the sink is at ' + pct(v.end) + ' on arrival');
+    const sinkBit = (v) => (v.tFull != null ? '热沉还有 ' + time(v.tFull) : '到达时热沉在 ' + pct(v.end));
     const V = voiceOf(ship, d.third);
     const her = foeWord(V, target);
     // Priced against a hostile that can still shoot, at the signature the leg would show.
     const range = (to) => {
       const e = watcher(sim, ship, to);
-      return e ? seenWords(e, 'gets a solution on ' + V.us)
-        : her + ' needs to be close for a solution on ' + V.us;
+      return e ? seenWords(e, '对' + V.us + '拿到解算')
+        : her + '必须再靠近才能对' + V.us + '拿到解算';
     };
     const quiet = legPanels
-      ? 'radiators out and warming: ' + range(base + shedAtLoad(ship, outLeg.end)) + ' · ' + sinkBit(outLeg)
-      : (stowForCoast ? 'radiators stowed for the coast: ' : 'radiators already stowed: ') + range(base) + ' · ' + sinkBit(shutLeg);
+      ? '散热板展开，正在升温：' + range(base + shedAtLoad(ship, outLeg.end)) + ' · ' + sinkBit(outLeg)
+      : (stowForCoast ? '滑行段把散热板收起来：' : '散热板已经收着：') + range(base) + ' · ' + sinkBit(shutLeg);
     const rush = timeMatters(sim, ship, target);
     const saving = fast.dv > 0 && slow.dv != null ? (fast.dv - slow.dv) / fast.dv : 0;
     return [
       {
         id: 'burn',
-        label: 'Burn hard',
-        detail: withNum((outrun ? arriveWords(hardRung) : 'alongside in ' + maybe(view, time(fast.t))) + ' · ' + dv(fast.dv, !view.solution) +
-          ' · the drive burns the whole way, so every hostile holds a solution on ' + V.us, kmSay(view, gap) + ' to cover'),
+        label: '全力点火',
+        detail: withNum((outrun ? arriveWords(hardRung) : '并排靠上要 ' + maybe(view, time(fast.t))) + ' · ' + dv(fast.dv, !view.solution) +
+          ' · 推进器一路都在点火，所以每个敌舰都对' + V.us + '持有解算，' + kmSay(view, gap) + ' 的距离要顶着打'),
         recommended: rush || saving < T.minBenefit,
         burns: true,
         act: (s) => { s.setTarget(ship.id, target.id); s.setOrder(ship.id, hard); },
       },
       {
         id: 'coast',
-        label: 'Coast in at ' + Math.round(T.coastSpeed / 100) / 10 + ' km/s',
+        label: '滑行接近，' + Math.round(T.coastSpeed / 100) / 10 + ' km/s',
         // The opening burn is not free and the card says so: for as long as it lasts the plume is a
         // firing solution for everyone in the engagement, and the quiet only starts when it stops.
         // a leg with no coast in it says nothing about going dark ('then dark for 0 s' in chapter 7)
-        detail: withNum(maybe(view, time(slow.burn)) + ' of burn, and they hold a solution while it lasts' +
-          (slow.coast >= 1 ? ' · then dark for ' + maybe(view, time(slow.coast)) : '') + ' · ' + dv(slow.dv, !view.solution) + ' · ' + quiet +
-          (plan.fits ? ' · brake at ' + km(brakeAt) + ', alongside at ' + km(hold) : ' · settling at ' + km(standoff)) +
-          (outrun ? ' · this coast never closes the range' : ' in ' + maybe(view, time(slow.t))),
-          kmSay(view, gap) + ' to cover'),
+        detail: withNum(maybe(view, time(slow.burn)) + ' 的点火，期间他们一直持有解算' +
+          (slow.coast >= 1 ? ' · 然后静默 ' + maybe(view, time(slow.coast)) : '') + ' · ' + dv(slow.dv, !view.solution) + ' · ' + quiet +
+          (plan.fits ? ' · 在 ' + km(brakeAt) + ' 反推，在 ' + km(hold) + ' 并排' : ' · 最终停在 ' + km(standoff)) +
+          (outrun ? ' · 这段滑行拉不开距离' : '，全程 ' + maybe(view, time(slow.t))),
+          kmSay(view, gap) + ' 的距离要顶着打'),
         recommended: !rush && saving >= T.minBenefit,
         benefit: saving,
         burns: true,
@@ -2837,12 +2797,12 @@
       },
       {
         id: 'hold',
-        label: 'Hold and watch',
+        label: '按兵不动',
         // 'The range holds at about 1 000 km' was printed while the two orbits closed it seven
         // kilometres a minute. Whatever the orbits are doing to the range is the whole content of
         // this option, so it is the number on the key.
-        detail: 'nothing spent · ' + closingWords(ship, view) +
-          V.say(', and we keep listening', ', and ' + V.name + ' keeps listening'),
+        detail: '不消耗 · ' + closingWords(ship, view) +
+          V.say('，而且我们继续听', '，而且' + V.name + '继续听'),
         passive: true,
         quiet: holdingStill(ship),
         act: (s) => { s.setTarget(ship.id, target.id); s.setOrder(ship.id, { type: 'hold' }); },
@@ -2874,8 +2834,8 @@
     return {
       target,
       title: (sm, sh, third) => (third && sh && sh.name
-        ? sh.name + ' has no solution on ' + target.name + '.'
-        : 'No solution on ' + target.name + '.'),
+        ? sh.name + ' 对 ' + target.name + ' 没有解算。'
+        : '对 ' + target.name + ' 没有解算。'),
       text: (sm, sh, third) => {
         const me = sh || ship, t = sm.byId(id) || target;
         if (!me || !t) return '';
@@ -2885,13 +2845,13 @@
         const held = b > 0 && v.R <= T.sensorReach * b;
         if (third && me.name) {
           return held
-            ? me.name + '\u2019s mounts are holding fire at ' + rangeSay(v) + '. She has a ' + word + ' on ' +
-              t.name + ', and a beam needs a solution to aim by.'
-            : me.name + ' is closing on a ' + word + ' at ' + rangeSay(v) + '. A beam needs a solution to aim by.';
+            ? me.name + ' 的炮位在 ' + rangeSay(v) + ' 上按住不打。她对 ' + word + '：' +
+              t.name + '，而光束需要解算才能瞄准。'
+            : me.name + ' 正在接近一个 ' + word + '，距离 ' + rangeSay(v) + '。光束需要解算才能瞄准。';
         }
         return held
-          ? 'The mounts are holding fire at ' + rangeSay(v) + '. We have a ' + word + ' on her, and a beam needs a solution to aim by.'
-          : 'We are closing on a ' + word + ' at ' + rangeSay(v) + '. A beam needs a solution to aim by.';
+          ? '炮位在 ' + rangeSay(v) + ' 上按住不打。我们对她有一个 ' + word + '，而光束需要解算才能瞄准。'
+          : '我们正在接近一个 ' + word + '，距离 ' + rangeSay(v) + '。光束需要解算才能瞄准。';
       },
       until(s) {
         const me = s.byId(ship.id), t = s.byId(id);
@@ -2926,20 +2886,20 @@
     // close and the offer would be an order to open. It is only made when the suite really does
     // want the range, and the order it writes can never take us farther out than we are.
     const closer = rSol > 0 && rSol < R;
-    const quietSuite = V.say('nothing of ours goes out', V.name + ' sends nothing out');
+    const quietSuite = V.say('我方什么都不会暴露出去', V.name + '什么都不会暴露出去');
     const to = Math.min(R * 0.9, Math.max(5e3, rSol * 0.9));
     const out = [];
     if (lit) {
       out.push({
         id: 'active',
-        label: 'Go active',
+        label: '开启主动',
         // The flash is not a range, it is a light: a hostile 1 041 km out, well beyond our own
         // active reach, went from a bare contact to a solution the second the suite lit. So the
         // line says what it costs, and a plume that already pins us is not a reason to add to it.
-        detail: 'solution in ' + time(T.activeEta) + ' · every hostile that can see the flash gets a solution on ' +
-          V.us + ', at any range' + (pinned && eye
-          ? ' · ' + V.our + ' plume already gives ' + eye.name + ' one ' + seenAtWords(eye) + ', and the flash carries past that'
-          : pinned ? ' · ' + V.our + ' plume already gives them one, and the flash carries farther' : ''),
+        detail: '解算还需 ' + time(T.activeEta) + ' · 每个看得见这道闪光的敌舰在任何距离上都会对' +
+          V.us + '拿到解算' + (pinned && eye
+          ? ' · ' + V.our + '尾焰已经让 ' + eye.name + '拿到一个解算' + seenAtWords(eye) + '，而这道闪光传得更远'
+          : pinned ? ' · ' + V.our + '尾焰已经让他们拿到一个解算，而这道闪光传得更远' : ''),
         noRec: pinned,
         recommended: !wait && !pinned,
         act: () => setActive(ship, true),
@@ -2947,13 +2907,13 @@
     }
     out.push({
       id: 'passive',
-      label: 'Stay passive',
+      label: '保持被动',
       detail: eta == null || eta === undefined
-        ? 'no solution at ' + rangeSay(view) + ' · ' + (pinned
-          ? V.say('the mounts stay dark, and our plume still shows her where we are',
-            'the mounts stay dark, and ' + V.our + ' plume still shows ' + her + ' where ' + V.name + ' is')
+        ? '在 ' + rangeSay(view) + ' 上没有解算 · ' + (pinned
+          ? V.say('炮位保持静默，但我们的尾焰还是暴露了我们在这里',
+            '炮位保持静默，但' + V.our + '尾焰还是把' + her + '引向' + V.name + '所在的位置')
           : quietSuite)
-        : 'solution in ' + time(eta) + ' · ' + quietSuite,
+        : '解算还需 ' + time(eta) + ' · ' + quietSuite,
       recommended: wait,
       quiet: !isActive(ship),
       act: () => setActive(ship, false),
@@ -2961,8 +2921,8 @@
     if (closer) {
       out.push({
         id: 'close',
-        label: 'Close to ' + km(rSol),
-        detail: 'the passive suite holds a solution from there · ' + kmSay(view, R - rSol) + ' to cover',
+        label: '接近到 ' + km(rSol),
+        detail: '被动套件在那里就能保持解算 · ' + kmSay(view, R - rSol) + ' to cover',
         recommended: !wait && !lit, // with no active set, closing is the only way to a solution
         burns: true,
         act: (s) => s.setOrder(ship.id, { type: 'keeprange', target: target.id, range: to }),
@@ -2995,7 +2955,7 @@
     if (ship.thermalLoad() >= knee()) return null;
     if (burning(ship)) return null;
     // One kind owns the panels at a time. While the heat, sink or withdraw card is holding them,
-    // stowing them is that card's question: 'Stow the radiators' at t = 1 and 'Extend the radiators'
+    // stowing them is that card's question: '收起散热板' at t = 1 and '展开散热板'
     // at t = 19 was one argument had twice, and the player paid for both.
     if (panelsOwned(sim, ship)) return null;
     const target = nearestWarship(sim, ship, false);
@@ -3033,19 +2993,19 @@
     const id = target.id;
     return {
       target,
-      title: 'Stow the radiators?',
+      title: '收起散热板？',
       text: (sm, sh, third) => {
         const V = voiceOf(sh || ship, third);
         const her = foeWord(V, target);
         // the flip opens the card, so its first word takes a capital ('she' becomes 'She')
         const Her = her.charAt(0).toUpperCase() + her.slice(1);
         const flip = !flipped ? ''
-          : exposed ? Her + ' is close enough to burn the radiators off now. '
-            : Her + ' has broken off, and her beams no longer reach the radiators. ';
+          : exposed ? Her + '已经近到可以现在就打掉散热板。'
+            : Her + '已经脱离，光束够不到散热板了。';
         return flip + (exposed
-          ? (V.third && target && target.name ? target.name + '\u2019s' : 'Her') + ' beams reach ' + V.us + ' at ' + rangeSay(view) +
-            ', and the radiators are the thinnest part of the ship.'
-          : 'The radiators are ' + pct(share) + ' of what ' + her + ' can see of ' + V.us + ' at ' + rangeSay(view) + '.');
+          ? (V.third && target && target.name ? target.name + '\u2019s' : 'Her') + ' 的光束够得到 ' + V.us + ' at ' + rangeSay(view) +
+            '，而散热板是舰体上最薄的部分。'
+          : '在 ' + rangeSay(view) + ' 上，散热板占了' + her + '看到的' + V.us + '的 ' + pct(share) + '。');
       },
       until(s) {
         const me = s.byId(ship.id), t = s.byId(id);
@@ -3096,19 +3056,19 @@
     const pinnedQuiet = !!(eyeQuiet && eyeQuiet.solution >= eyeQuiet.at);
     const quiet = !eyeQuiet ? ''
       : pinnedQuiet
-        ? 'signature ' + power(A) + ' → ' + power(B) + ' · ' + eyeQuiet.name + ' still reads ' + V.us +
-          ' from where she is, ' + km(eyeQuiet.at) + ' off · '
-        : 'signature ' + power(A) + ' → ' + power(B) + ' · ' + seenWords(eyeQuiet, 'gets a solution on ' + V.us) +
-          (pinnedNow ? '' : ' instead of ' + km(eyeNow.solution)) + ' · ';
-    const loud = !eyeNow ? ' · nothing of theirs that can still shoot reads ' + V.us + ' from here'
-      : ' · ' + seenWords(eyeNow, 'reads ' + V.us) + ', and her beams can burn them off';
+        ? '信号特征 ' + power(A) + ' → ' + power(B) + ' · ' + eyeQuiet.name + '仍然能从她所在的地方读出' + V.us +
+          '，距离 ' + km(eyeQuiet.at) + ' · '
+        : '信号特征 ' + power(A) + ' → ' + power(B) + ' · ' + seenWords(eyeQuiet, '对' + V.us + '拿到解算') +
+          (pinnedNow ? '' : '，而不是 ' + km(eyeNow.solution)) + ' · ';
+    const loud = !eyeNow ? ' · 她那边还能开火的舰船没有一艘能从这里读出' + V.us
+      : ' · ' + seenWords(eyeNow, '读出' + V.us) + '，而她的光束能把它们烧掉';
     const drop = A > 0 ? (A - B) / A : 0;
     return [
       {
         id: 'stow',
-        label: 'Stow the radiators',
-        detail: quiet + V.say('we lose ', V.name + ' loses ') + power(shed) + ' of cooling · ' +
-          fullIn(shut.tFull) + (fight > 0 ? ' with the beams at full' : ''),
+        label: '收起散热板',
+        detail: quiet + V.say('我们少掉 ', V.name + '少掉 ') + power(shed) + ' 的散热 · ' +
+          fullIn(shut.tFull) + (fight > 0 ? '，光束全力开火时' : ''),
         panel: 'in',
         // Never lit while the panels-in forecast fills the sink inside a quarter of an hour, and
         // never at or above the knee, where the panels are the only cooling there is. A stow that
@@ -3121,11 +3081,11 @@
       },
       {
         id: 'keep',
-        label: 'Keep them out',
+        label: '保持展开',
         panel: 'out',
         // Where the sink settles with them out, not where it happens to be this second: the panels
         // hold an idle hull near the knee's share of the load, not at the reading on the gauge.
-        detail: 'they shed ' + power(shed) + ' and hold the sink at ' +
+        detail: '散热板排掉 ' + power(shed) + '，热沉稳定在 ' +
           pct(outView.settle != null ? outView.settle : ship.thermalLoad()) +
           (outView.tFull != null ? ' · ' + fullIn(outView.tFull) : '') + loud,
         recommended: !stowable,
@@ -3181,26 +3141,26 @@
       // A hull with nothing to answer — no order, or four quiet minutes while her armour goes —
       // is asked again every couple of minutes, cooldown or no cooldown.
       urgent: idle || loud,
-      title: 'Pick the range.',
+      title: '选一个交战距离。',
       text: (sm, sh, third) => {
         const me = sh || ship, t = sm.byId(id) || target;
         if (!me || !t) return '';
         const v = trackRange(sm, me, t), bb = bites(sm, me, t);
         const V = voiceOf(me, third);
-        const at = 'At ' + rangeSay(v) + ' ';
+        const at = '在 ' + rangeSay(v) + ' 上，';
         if (V.third) {
-          const hers = t.name + '\u2019s';
+          const hers = t.name + ' 的';
           return bb.ours > 0
-            ? at + V.name + '\u2019s beams burn through ' + hers + ' armour out to ' + km(bb.ours) + '. ' +
-              (bb.theirs > 0 ? hers + ' beams reach ' + km(bb.theirs) + '.' : hers + ' beams do not reach her at any range.')
-            : at + V.name + '\u2019s beams never get through ' + hers + ' ' + facet + ' armour at any range. ' +
-              (bb.theirs > 0 ? hers + ' beams reach ' + km(bb.theirs) + '.' : hers + ' beams do not reach her either.');
+            ? at + V.name + ' 的光束能烧穿' + hers + '装甲，直到 ' + km(bb.ours) + '。' +
+              (bb.theirs > 0 ? hers + ' 的光束够得到 ' + km(bb.theirs) + '.' : hers + '光束在任何距离都够不到她。')
+            : at + V.name + ' 的光束在任何距离都烧不穿' + hers + facet + '装甲。' +
+              (bb.theirs > 0 ? hers + ' 的光束够得到 ' + km(bb.theirs) + '.' : hers + '光束也够不到她。');
         }
         return bb.ours > 0
-          ? at + 'our beams burn through her armour out to ' + km(bb.ours) +
-            (bb.theirs > 0 ? ', and hers reach ' + km(bb.theirs) + '.' : ', and hers do not reach us at any range.')
-          : at + 'our beams never get through her ' + facet + ' armour at any range' +
-            (bb.theirs > 0 ? ', and hers reach ' + km(bb.theirs) + '.' : ', and hers do not reach us either.');
+          ? at + '我方光束能烧穿她的装甲，直到 ' + km(bb.ours) +
+            (bb.theirs > 0 ? '，她的光束能打到 ' + km(bb.theirs) + '。' : '，她的光束在任何距离都够不到我们。')
+          : at + '我方光束在任何距离都烧不穿她的' + facet + '装甲' +
+            (bb.theirs > 0 ? '，她的光束能打到 ' + km(bb.theirs) + '。' : '，她的光束也够不到我们。');
       },
       until(s) {
         const me = s.byId(ship.id), t = s.byId(id);
@@ -3242,7 +3202,7 @@
     const V = voiceOf(ship, d.third);
     const her = foeWord(V, target);
     const herOwn = foeOwn(V, target);
-    const ourBeams = V.say('our beams', V.name + '\u2019s beams');
+    const ourBeams = V.say('我方光束', V.name + '的光束');
     const r = reachOf(sim, ship, target);
     const b = bites(sim, ship, target);
     const ours = b.ours, theirs = b.theirs;
@@ -3261,9 +3221,9 @@
     const theirLaunch = r && r.their && r.their.launch > 0 ? r.their.launch : 0;
     const alsoReach = (at) => {
       const bits = [];
-      if (theirSlug > at) bits.push('coilguns to ' + km(theirSlug));
-      if (theirLaunch > at) bits.push('bays to ' + km(theirLaunch));
-      return bits.length ? ' · ' + herOwn + ' ' + bits.join(' and ') + ' still reach ' + V.us : '';
+      if (theirSlug > at) bits.push('线圈炮能打到 ' + km(theirSlug));
+      if (theirLaunch > at) bits.push('发射舱能打到 ' + km(theirLaunch));
+      return bits.length ? ' · ' + herOwn + '的' + bits.join('、') + '仍然够得到' + V.us : '';
     };
     // A standing-off range she can simply walk through is not a range. The card recommended
     // 'Hold at 1 307 km' against a hull under thrust and the ship was dragged to 299 km over
@@ -3277,8 +3237,8 @@
     const herWant = chased
       ? Math.max(5e3, Math.min(theirs > 0 ? theirs * 0.8 : 1e12, (herCls && herCls.doctrine && herCls.doctrine.range) || 1e12))
       : 0;
-    const chaseNote = chased ? ' · ' + her + ' is closing at ' + Math.round(closing) +
-      ' m/s under thrust, so this is the range she allows' : '';
+    const chaseNote = chased ? ' · ' + her + '正以 ' + Math.round(closing) +
+      ' 米/秒点火接近，所以这就是她允许的距离' : '';
     // Holding a range off a hull that is closing means burning away from her, and a hull burning
     // away shows her tail: 4 cm on a corvette against 20 on the nose. Chapter 2 was lost there —
     // 'Hold at 585 km' at 225 s, beam fire on the tail from 542 s, the drive gone at 1 038 s.
@@ -3296,8 +3256,8 @@
     // What her beams reach once the hold is being held, which is the number the answer turns on.
     const theirsHold = runs ? theirWorst : theirs;
     const tailNote = tailFirst && theirs > 0 && tailCm > 0 && noseCm > tailCm
-      ? ' · holding it means burning away from ' + foeHer(V, target) + ', so she reads ' + V.our + ' tail: ' +
-        tailCm + ' cm against ' + noseCm + ' cm on the nose'
+      ? ' · 保持这个距离就意味着背对' + foeHer(V, target) + '点火，所以她读到的是' + V.our + '舰尾：' +
+        tailCm + ' 厘米，舰首是 ' + noseCm + ' 厘米'
       : '';
     // The rest of the group, and when it is in this fight.
     const sup = supportOn(sim, ship, target);
@@ -3363,24 +3323,24 @@
       if (holdable) {
         list.push({
           id: 'hold',
-          label: 'Hold at ' + km(hold),
+          label: '保持在 ' + km(hold),
           // A gun that does not bite at all does not 'fall short by the difference': it falls short
           // by the whole distance, whatever that distance happens to be.
           detail: (theirsHold <= 0
-            ? ourBeams + ' burn through ' + herOwn + ' armour at ' + km(hold) + ' and ' + herOwn + ' beams do not reach ' + V.us + ' at any range'
-            : advantage ? ourBeams + ' burn through ' + herOwn + ' ' + ourFacet + ' · ' + herOwn + ' beams fall short by ' + km(Math.max(0, hold - theirsHold))
+            ? ourBeams + '在 ' + km(hold) + '上能烧穿' + herOwn + '的装甲，而' + herOwn + '的光束在任何距离都够不到' + V.us
+            : advantage ? ourBeams + '能烧穿' + herOwn + '的' + facetZh(ourFacet) + ' · ' + herOwn + '的光束差 ' + km(Math.max(0, hold - theirsHold)) + '才够得到'
               // Holding it means burning away from her, so the number on the key is what her beams
               // open the tail at, and the key says that is the facet holding turns toward her.
-              : runs ? ourBeams + ' burn through ' + herOwn + ' ' + ourFacet + ' · holding it turns ' + V.our + ' ' +
-                tailCm + ' cm tail to ' + foeHer(V, target) + ', and ' + herOwn + ' beams open a tail out to ' + km(theirWorst)
-                : ourBeams + ' burn through ' + herOwn + ' ' + ourFacet + ' · ' + herOwn + ' beams reach ' + V.us + ' here too, out to ' + km(theirs)) + chaseNote +
+              : runs ? ourBeams + '能烧穿' + herOwn + '的' + facetZh(ourFacet) + ' · 保持这个距离会把' + V.our +
+                tailCm + ' 厘米舰尾转向' + foeHer(V, target) + '，而' + herOwn + '的光束能烧开舰尾直到 ' + km(theirWorst)
+                : ourBeams + '能烧穿' + herOwn + '的' + facetZh(ourFacet) + ' · ' + herOwn + '的光束在这里也够得到 ' + V.us + '，直到 ' + km(theirs)) + chaseNote +
             (closeIn != null && closeIn <= T.holdMargin && margin > 0
-              ? ' · ' + her + ' is inside that in ' + time(closeIn) + ' at the rate she is closing' : '') +
-            (onFacet ? ' · ' + ourBeams + ' reach ' + herOwn + ' ' + ourFacet + ' out to ' + km(ours) +
-              ' but only burn through ' + herOwn + ' thickest facet inside ' + km(held) + ', so a turn ends it' : '') +
+              ? ' · ' + her + '按她现在的接近速度，再过 ' + time(closeIn) + ' 就进到这个距离里' : '') +
+            (onFacet ? ' · ' + ourBeams + '能打到的' + herOwn + '的' + facetZh(ourFacet) + '最远到 ' + km(ours) +
+              '，但只有在 ' + km(held) + '以内才烧穿她' + herOwn + '最厚的装甲，所以掉头就能躲开' : '') +
             tailNote + alsoReach(hold) +
-            (lightUp ? ' · ' + V.say('we go active', V.name + ' goes active') + ' to aim that far, and every hostile inside ' +
-              km(ship.activeRange) + ' then gets a solution on ' + V.us : ''),
+            (lightUp ? ' · ' + V.say('我们开启主动', V.name + '开启主动') + '才能瞄那么远，而 ' +
+              km(ship.activeRange) + '内的每个敌舰都会对' + V.us + '拿到解算' : ''),
           recommended: standOff,
           burns: true,
           act: (s) => {
@@ -3399,15 +3359,15 @@
       const odds = localOdds(sim, ship);
       list.push({
         id: 'close',
-        label: 'Close to ' + km(tight),
+        label: '接近到 ' + km(tight),
         detail: (theirs <= 0
-          ? ourBeams + ' burn through ' + herOwn + ' armour at ' + km(tight) + ' and ' + herOwn + ' beams do not reach ' + V.us + ' at any range' + alsoReach(tight)
-          : 'both sets of beams burn through · ' +
-            V.say('she sees our ' + theirFacet + ', we see her ' + ourFacet,
-              her + ' sees ' + V.our + ' ' + theirFacet + ', ' + V.name + ' sees ' + herOwn + ' ' + ourFacet) +
-            ' · ' + herOwn + ' beams reach ' + km(theirs)) +
-          (odds.trapped ? ' · ' + count(odds.foes) + ' of them can reach ' + V.us + ' here and ' +
-            V.say('nobody of ours is close', 'nobody on her side is close') : ''),
+          ? ourBeams + '在 ' + km(tight) + '上能烧穿' + herOwn + '的装甲，而' + herOwn + '的光束在任何距离都够不到' + V.us + alsoReach(tight)
+          : '双方的光束都能烧穿 · ' +
+            V.say('她看到我们的' + facetZh(theirFacet) + '，我们看到她的' + facetZh(ourFacet),
+              her + '看到' + V.our + facetZh(theirFacet) + '，' + V.name + '看到' + herOwn + '的' + facetZh(ourFacet)) +
+            ' · ' + herOwn + '的光束够得到 ' + km(theirs)) +
+          (odds.trapped ? ' · ' + count(odds.foes) + '艘能在这里打到' + V.us + '，而且' +
+            V.say('我方没有一艘靠得近', '她那边没有一艘靠得近') : ''),
         // Closing is the answer when the fight is ours to take: our beams reach as far as hers, or
         // the rest of the group is in it with us. One hull closing alone on a beam that reaches
         // twice as far is not pressing the fight, it is feeding her one hull at a time.
@@ -3423,9 +3383,9 @@
       const tight = Math.max(5e3, slug > 0 ? Math.min(slug * 0.7, plot.R * 0.6) : plot.R * 0.5);
       list.push({
         id: 'close',
-        label: 'Close to ' + km(tight),
-        detail: herOwn + ' ' + ourFacet + ' armour turns ' + ourBeams + ' at every range · inside this the coilguns and the bays do the work · ' +
-          herOwn + ' beams reach ' + km(theirs) + alsoReach(tight) + chaseNote,
+        label: '接近到 ' + km(tight),
+        detail: herOwn + '的' + facetZh(ourFacet) + '装甲在所有距离上都能挡住' + ourBeams + ' · 在这个距离内靠线圈炮和发射舱干活 · ' +
+          herOwn + '的光束够得到 ' + km(theirs) + alsoReach(tight) + chaseNote,
         recommended: true,
         burns: true,
         act: (s) => { s.setTarget(ship.id, target.id); s.setOrder(ship.id, { type: 'keeprange', target: target.id, range: tight }); },
@@ -3434,8 +3394,8 @@
         const at = Math.max(5e3, Math.min(slug * 0.8, plot.R));
         list.push({
           id: 'slugs',
-          label: 'Beams cold, slugs to ' + km(slug),
-          detail: 'the beams make heat here for nothing · the coilguns hold at ' + km(at) + ' · sink ' + pct(ship.thermalLoad()),
+          label: '光束停，弹丸打到 ' + km(slug),
+          detail: '光束在这里白发热量 · 线圈炮保持在 ' + km(at) + ' · 热沉 ' + pct(ship.thermalLoad()),
           burns: true,
         act: (s) => { setFireMode(ship, 'hold'); s.setTarget(ship.id, target.id); s.setOrder(ship.id, { type: 'keeprange', target: target.id, range: at }); },
         });
@@ -3443,9 +3403,9 @@
     }
     list.push({
       id: 'open',
-      label: 'Open to ' + km(wide),
-      detail: 'no beams burn through at that range · ' + herOwn + ' sink is at ' + pct(theirLoad) + ' and ' +
-        (view.tFull != null ? 'fills in ' + time(view.tFull) : view.tEmpty != null ? 'draining' : 'holding there') +
+      label: '拉开到 ' + km(wide),
+      detail: '那个距离上没有光束能烧穿 · ' + herOwn + '的热沉在 ' + pct(theirLoad) + '，' +
+        (view.tFull != null ? '还有 ' + time(view.tFull) + ' 就满' : view.tEmpty != null ? '正在排空' : '保持在那里') +
         alsoReach(wide) + chaseNote,
       recommended: ours <= 0 && theirs > 0 && view.tFull != null && !chased,
       passive: true,
@@ -3503,7 +3463,7 @@
     const target = designated(sim, ship);
     if (!target || !canLaunch(sim, ship, target)) return null;
     const id = target.id;
-    // Nine salvo cards in a row, all of them answered 'Hold the bays', because at five minutes of
+    // Nine salvo cards in a row, all of them answered '压住发射舱', because at five minutes of
     // flight her point defence takes the whole salvo however many hulls send one. When even
     // everything we have aboard puts nothing through, there is no question here.
     const group = salvoGroup(sim, launchers(sim, ship, target), target);
@@ -3511,11 +3471,11 @@
     const at = rangeSay(trackRange(sim, ship, target));
     return {
       target,
-      title: 'Launch now?',
+      title: '现在发射？',
       text: (sm, sh, third) => {
         const me = (sm && sm.byId(ship.id)) || ship;
         const V = voiceOf(sh || me, third);
-        const hers = V.third ? target.name + '\u2019s' : 'her';
+        const hers = V.third ? target.name + ' 的' : '她的';
         // The sentence is priced on the same salvo the keys are. The group's estimate moves while
         // the card is up, and a card that read 'nothing we send gets through' over a key that read
         // '5 of 6 aboard for one arrival' was two answers to the same question: where the group
@@ -3523,14 +3483,14 @@
         const all = salvoGroup(sm || sim, launchers(sm || sim, me, target), target);
         const g = all.through >= 1 ? all : salvoGroup(sm || sim, [me], target);
         if (!(g.through >= 1)) {
-          return V.say('We have ' + g.left + ' aboard, so nothing we send gets through.',
-            V.name + ' has ' + g.left + ' aboard, so nothing she sends gets through.');
+          return V.say('我们船上只有 ' + g.left + ' 枚，怎么放都穿不过去。',
+            V.name + ' 船上只有 ' + g.left + ' 枚，怎么放都穿不过去。');
         }
         return g.n > 0
-          ? (V.third ? hers : 'Her') + ' point defence stops about ' + g.stopped +
-            ' interceptors on the way in, so it takes ' + g.n + ' to put ' + count(Math.max(1, Math.round(g.through))) + ' through.'
-          : 'At ' + at + ' ' + hers + ' point defence stops every interceptor ' +
-            V.say('we have', V.name + ' has') + ' left.';
+          ? (V.third ? hers : '她的') + '点防御在途中大约拦掉 ' + g.stopped +
+            ' 枚，所以要放 ' + g.n + ' 枚才能过去 ' + count(Math.max(1, Math.round(g.through))) + '枚。'
+          : '在 ' + at + ' 上，' + hers + '点防御能拦掉每一枚拦截弹，' +
+            V.say('我们剩下的', V.name + '剩下的') + '都没有了。';
       },
       until(s) {
         const me = s.byId(ship.id), t = s.byId(id);
@@ -3625,12 +3585,12 @@
     // magazine can stand it twice over — five of twelve for one arrival is a trade; five of six
     // is the last card in the hand.
     const worth = through >= 1 && (through >= n * T.salvoShare || n * 2 <= left);
-    const trade = n + ' of ' + left + ' aboard for ' + count(Math.round(through)) + (Math.round(through) === 1 ? ' arrival' : ' arrivals');
+    const trade = '舰上 ' + left + ' 枚里出 ' + n + ' 枚，换 ' + count(Math.round(through)) + '枚到达';
     list.push(through >= 1 ? {
       id: 'launch',
-      label: 'Launch ' + n,
-      detail: time(sat.flight) + ' of flight · ' + herOwn + ' point defence stops about ' + sat.stopped +
-        ' of them over the last ' + km(pdReach()) + ', which is as far as those mounts reach · ' + trade,
+      label: '发射 ' + n,
+      detail: '飞行 ' + time(sat.flight) + ' · ' + herOwn + '点防御在最后 ' + km(pdReach()) + '内大约拦掉 ' + sat.stopped +
+        ' 枚，那就是那些炮位够到的最远距离 · ' + trade,
       noRec: !worth,
       recommended: worth,
       act: (s) => launchSalvo(s, ship, Math.max(1, mine.n || 1)),
@@ -3638,13 +3598,13 @@
       // A salvo her point defence takes whole is not an option with a key on it: it is the
       // magazine thrown away, priced at nothing. It comes off the board.
       id: 'launch',
-      label: 'Launch ' + n + ' anyway',
+      label: '仍然发射 ' + n,
       detail: sat.flight == null
-        ? herOwn + ' drive opens the range faster than the interceptors close it · nothing arrives'
+        ? herOwn + '的推进器拉开距离的速度比拦截弹追上的快 · 一枚都到不了'
         : !sat.lasts
-          ? time(sat.flight) + ' of flight is more than an interceptor holds its closing for · they run dry short of ' +
-            foeHer(V, target) + ' and coast · nothing arrives'
-          : time(sat.flight) + ' of flight, and ' + herOwn + ' point defence stops all ' + n + ' over the last ' + km(pdReach()) + ' · nothing arrives',
+          ? '飞行 ' + time(sat.flight) + '，超过了拦截弹能维持接近速度的时间 · 它们在够到 ' +
+            foeHer(V, target) + '之前就烧干了，只能滑行 · 一枚都到不了'
+          : '飞行 ' + time(sat.flight) + '，而 ' + herOwn + '点防御在最后 ' + km(pdReach()) + '内拦掉全部 ' + n + ' 枚 · 一枚都到不了',
       dead: true,
       noRec: true,
       act: (s) => launchSalvo(s, ship, Math.max(1, mine.n || 1)),
@@ -3652,17 +3612,17 @@
     if (worthWaiting) {
       list.push({
         id: 'wait',
-        label: V.say('Wait for her sink', 'Wait for ' + foeHer(V, target) + '\u2019s sink'),
-        detail: herOwn + ' sink fills in ' + time(view.tFull) + ' · a full sink stops every mount, point defence included · ' +
-          V.say('our beams', V.name + '\u2019s beams') + ' work on ' + herOwn + ' radiators until then',
+        label: V.say('等她的热沉满', '等' + foeHer(V, target) + '的热沉满'),
+        detail: herOwn + '的热沉还有 ' + time(view.tFull) + ' 就满 · 热沉满了所有炮位停火，包括点防御 · ' +
+          V.say('我方光束', V.name + '的光束') + '在那之前一直打' + herOwn + '的散热板',
         recommended: !worth,
         act: () => setAim(ship, 'radiators'),
       });
     }
     list.push({
       id: 'bays',
-      label: 'Hold the bays',
-      detail: left + ' interceptors stay aboard for the next fight · ' + herOwn + ' sink is at ' + pct(load) + ' · nothing goes out',
+      label: '压住发射舱',
+      detail: left + ' 枚拦截弹留在舰上，留给下一场战斗 · ' + herOwn + '的热沉在 ' + pct(load) + ' · 一枚都不发',
       recommended: !worth && !worthWaiting,
       quiet: true,
       act: () => { /* the rails stay loaded: the choice is to spend nothing */ },
@@ -3704,24 +3664,24 @@
     const id = best.id, stuck = !!held && bd > T.crippleRange;
     return {
       target: best,
-      title: best.name + ' is out of the fight.',
+      title: best.name + ' 已退出战斗。',
       text: (sm, sh, third) => {
         const me = sh || ship, t = sm.byId(id) || best;
         if (!me || !t) return '';
         const say = rangeSay(trackRange(sm, me, t));
         const V = voiceOf(me, third);
-        const her = foeWord(V, t, 'She');
+        const her = foeWord(V, t, '她');
         // Who else is pointed at her. The card speaks for all of them, so it says which they are.
         const also = sm.ships.filter((s2) => s2 && s2.id !== me.id && s2.faction === me.faction &&
           !s2.destroyed && !s2.captured && !s2.disabled && !civilian(s2) && !station(s2) &&
           ((s2.order && s2.order.target === id) || s2.target === id));
         const more = !also.length ? ''
-          : also.length === 1 ? ' ' + also[0].name + ' has her orders on her too.'
-            : ' ' + Count(also.length) + ' more of ours have their orders on her: ' +
-              also.map((s2) => s2.name).join(', ') + '.';
+          : also.length === 1 ? ' ' + also[0].name + ' 的指令也对着她。'
+            : ' 我方另有 ' + Count(also.length) + ' 艘的指令也对着她：' +
+              also.map((s2) => s2.name).join('、') + '。';
         return (stuck
-          ? her + ' is ' + say + ' off with no drive, and ' + V.our + ' orders are still on her.'
-          : her + ' is ' + say + ' off and cannot manoeuvre.') + more;
+          ? her + ' 在 ' + say + ' 外，没有推进器，而' + V.our + '指令还对着她。'
+          : her + ' 在 ' + say + ' 外，无法机动。') + more;
       },
       until(s) {
         const me = s.byId(ship.id), t = s.byId(id);
@@ -3774,24 +3734,24 @@
     return [
       {
         id: 'board',
-        label: 'Board her',
+        label: '登舰',
         // No run the tanks and the drive can fly reads 'cannot get alongside', not 'alongside in never'; and a
         // party her crew throws back does not take the hull, so that line leaves out the prize.
-        detail: withNum(!reach ? V.say('we cannot get alongside her', V.name + ' cannot get alongside her') :
-          'alongside in ' + maybe(view, time(p.t)) +
-          ' · hold ' + time(cross) + ' inside ' + km(B.range) + ' at under ' + Math.round(B.speed) + ' m/s' +
+        detail: withNum(!reach ? V.say('我们靠不到她身边', V.name + '靠不到她身边') :
+          '并排靠上要 ' + maybe(view, time(p.t)) +
+          ' · 在 ' + km(B.range) + '内保持 ' + time(cross) + '，相对速度低于 ' + Math.round(B.speed) + ' 米/秒' +
           (decks && decks.beaten
-            ? ' · her ' + decks.theirs + ' fit crew against ' + V.say('our ', V.name + '\u2019s ') + decks.ours +
-              ' throw the party back'
-            : V.say(' and the hull and crew are ours', ' and the hull and crew are ' + V.name + '\u2019s') +
-            (swarmed ? ' · ' + count(theirs) + ' of hers ' + (theirs === 1 ? 'is' : 'are') + ' still shooting against ' +
+            ? ' · 她那边能动的有 ' + decks.theirs + ' 人，我们这边 ' + decks.ours +
+              ' 人，会把登舰班组打回来'
+            : V.say('，而舰体和船员就归我们', '，而舰体和船员就归' + V.name) +
+            (swarmed ? ' · 她那边有 ' + count(theirs) + ' 艘还在朝我们开火，而' +
               (ours === 0
-                ? V.say('nothing of ours, and we sit still for all of it',
-                  'nothing of ' + V.name + '\u2019s, and she sits still for all of it')
-                : count(ours) + V.say(' of ours, and we sit still for all of it',
-                  ' of ' + V.name + '\u2019s, and she sits still for all of it'))
-              : !inTime && reach ? ' · ' + maybe(view, time(run)) + ' of it with ' + count(theirs) + ' of hers still shooting' : '')),
-          rangeSay(view) + ' to her'),
+                ? V.say('我方一艘都没有，我们就那么站着挨打',
+                  V.name + '那边一艘都没有，她就那么站着挨打')
+                : count(ours) + V.say('艘我方舰船，我们就那么站着挨打',
+                  V.name + '那边一艘都没有，她就那么站着挨打'))
+              : !inTime && reach ? ' · 这件事要 ' + maybe(view, time(run)) + '，而她那边还有 ' + count(theirs) + ' 艘在开火' : '')),
+          '距离 ' + rangeSay(view)),
         noRec: swarmed || !inTime || !reach || !!(decks && decks.beaten),
         // The decks decide it, so this key does not do what it says: never lit, and never the
         // routine's answer either.
@@ -3812,8 +3772,8 @@
       },
       {
         id: 'finish',
-        label: 'Finish her',
-        detail: 'full fire · ' + pct(target.hull) + ' of her hull left · no prize to take home',
+        label: '击沉她',
+        detail: '全力开火 · 她的舰体还剩 ' + pct(target.hull) + ' · 带不回战利品',
         act: (s) => {
           s.setTarget(ship.id, target.id);
           ship.weaponsFree = true;
@@ -3827,10 +3787,10 @@
       },
       {
         id: 'leave',
-        label: next ? 'On to ' + next.name : 'Leave her',
-        detail: next ? kmSay(trackRange(sim, ship, next), nd) + ' to ' + next.name + ' · this one is not going anywhere' +
-            (swarmed || !inTime ? ' · the next one is still shooting' : '')
-          : 'break off · ' + rangeSay(view) + ' from her and opening',
+        label: next ? '转向 ' + next.name : '放弃她',
+        detail: next ? '距 ' + next.name + ' ' + kmSay(trackRange(sim, ship, next), nd) + ' · 这一艘她跑不掉了' +
+            (swarmed || !inTime ? ' · 下一艘还在开火' : '')
+          : '脱离战斗 · 离她 ' + rangeSay(view) + '，而且正在拉开',
         recommended: (swarmed || !inTime) && !!next,
         // Leaving a prize while there is still a fight on is never the navigator's pick; going on
         // to the next hull is fighting, so only the bare 'leave her' is passive.
@@ -3920,44 +3880,39 @@
     return {
       target: from,
       _shot: shot,
-      title: (sm, sh, third) => {
+            title: (sm, sh, third) => {
         const cur = shot(sm, sh);
-        const who = sh && sh.name ? sh.name : 'she';
+        const who = sh && sh.name ? sh.name : '她';
         if (cur.flight) {
           return third
-            ? who + ' is ' + Math.round(cur.eta) + ' s from ' + count(cur.n) + (cur.n === 1 ? ' round' : ' rounds') + '. Have her jink?'
-            : 'Slugs inbound, ' + Math.round(cur.eta) + ' s.';
+            ? who + ' 还有 ' + Math.round(cur.eta) + ' 秒挨打，' + count(cur.n) + '发。要她规避吗？'
+            : '弹丸来袭，' + Math.round(cur.eta) + ' 秒后到达。';
         }
         const at = from ? km(U.dist((sh || ship).pos, from.pos)) : '';
-        // the card stays up long enough to be read after its moment passes: once we are out of her
-        // reach it says so, rather than 'inside her coilgun' beside a reach of 0 m
         if (from && !slugGunOn(sm, sh || ship, from)) {
-          return third ? who + ' is outside ' + from.name + '\u2019s coilgun now.' : 'Outside ' + from.name + '\u2019s coilgun now.';
+          return third ? who + ' 现在已经在 ' + from.name + ' 的线圈炮射程外了。' : '现在已在 ' + from.name + ' 的线圈炮射程外。';
         }
         return third
-          ? who + ' is inside ' + (from ? from.name + '\u2019s' : 'her') + ' coilgun at ' + at + '. Have her jink?'
-          : 'Inside ' + (from ? from.name + '\u2019s' : 'her') + ' coilgun at ' + at + '.';
+          ? who + ' 在 ' + (from ? from.name + ' 的' : '她的') + '线圈炮射程内，距离 ' + at + '。要她规避吗？'
+          : '在 ' + (from ? from.name + ' 的' : '她的') + '线圈炮射程内，距离 ' + at + '。';
       },
       text: (sm, sh, third) => {
         const cur = shot(sm, sh);
         const me = sh || ship;
-        const subject = third && me.name ? me.name : 'us';
-        const tail = 'Nothing steers a slug, so it hits ' + (third && me.name ? me.name + ' only if she is' : 'us only if we are') +
-          ' still on this course when it arrives.';
+        const subject = third && me.name ? me.name : '我们';
+        const tail = '弹丸没有制导，只有到达时' + (third && me.name ? me.name + ' 还在这条航线上' : '我们还在这条航线上') + '，它才会打中。';
         if (cur.flight) {
-          return cur.n + (cur.n === 1 ? ' round' : ' rounds') + ' on the way' + (from ? ' from ' + from.name : '') + '. ' + tail;
+          return count(cur.n) + '发在途中' + (from ? '，来自 ' + from.name : '') + '。' + tail;
         }
         const reach = from ? slugGunOn(sm, me, from) : 0;
-        const nom = third && me.name ? me.name + ' is' : 'we are';
+        const nom = third && me.name ? me.name : '我们';
         if (!reach) {
-          return (cur.was > 0 ? (from ? from.name : 'She') + ' has thrown ' + count(cur.was) + (cur.was === 1 ? ' round' : ' rounds') +
-            ' at ' + subject + ' already. ' : '') + (third && me.name ? me.name + ' is' : 'We are') + ' outside her coilgun now.';
+          return (cur.was > 0 ? (from ? from.name : '她') + ' 已经朝' + subject + '打了 ' + count(cur.was) + '发。' : '') + nom + ' 现在已经在她的线圈炮射程外。';
         }
-        const gun = (from ? from.name : 'She') + '\u2019s coilgun reaches ' + km(reach) + ' and ' + nom + ' inside it';
+        const gun = (from ? from.name : '她') + ' 的线圈炮能打到 ' + km(reach) + '，' + nom + ' 就在里面';
         return (cur.was > 0
-          ? (from ? from.name : 'She') + ' has thrown ' + count(cur.was) + (cur.was === 1 ? ' round' : ' rounds') +
-            ' at ' + subject + ' already, and her coilgun still reaches ' + km(reach) + '. '
-          : gun + '. ') + tail;
+          ? (from ? from.name : '她') + ' 已经朝' + subject + '打了 ' + count(cur.was) + '发，她的线圈炮还能打到 ' + km(reach) + '。'
+          : gun + '。') + tail;
       },
       until(sm) {
         const me = sm.byId(ship.id);
@@ -3997,32 +3952,32 @@
       return 0.5 * a * tb * tb + a * tb * Math.max(0, secs - tb);
     })();
     const clears = drift == null || drift >= window;
-    const keeps = boarding && noseOn ? 'the boarding match and the nose-on aim hold'
-      : boarding ? 'the boarding match holds'
-        : noseOn ? 'the nose-on aim holds' : 'nothing else changes';
+    const keeps = boarding && noseOn ? '登舰的同速匹配和舰首对正的瞄准都保住'
+      : boarding ? '登舰的同速匹配保住了'
+        : noseOn ? '舰首对正的瞄准保住了' : '别的什么都不变';
     return [
       {
         id: 'jink',
-        label: 'Jink',
-        detail: dv(cost) + ' a dodge · ' + (inFlight
-          ? s.n + ' in flight, first in ' + time(s.eta)
-          : (from ? from.name + '’s' : 'her') + ' coilgun bears on ' + V.us + ' out to ' + km(reach)) +
-          (clears ? ' · they pass through empty space'
-            : ' · the dodge moves ' + Math.round(drift) + ' m before they arrive, and a miss needs ' +
-              Math.round(window) + ' m'),
+        label: '规避',
+        detail: dv(cost) + ' 的规避 · ' + (inFlight
+          ? s.n + ' 发在途，最近的一发 ' + time(s.eta) + ' 后到'
+          : (from ? from.name + '的' : '她的') + '线圈炮能打到 ' + V.us + '，最远 ' + km(reach)) +
+          (clears ? ' · 它们会打进空处'
+            : ' · 规避能把她挪开 ' + Math.round(drift) + ' 米，而打空需要偏出 ' +
+              Math.round(window) + ' 米'),
         recommended: clears,
         noRec: !clears,
         act: () => { ship.jink = true; },
       },
       {
         id: 'still',
-        label: 'Hold still',
+        label: '别动',
         // What holding still actually keeps. The card used to append 'the match and the nose-on aim
         // hold' to every slugs question, including the first one a newcomer sees, which is on an
         // unarmed freighter that is neither boarding anybody nor holding an aim.
-        detail: 'nothing spent · ' + (inFlight
-          ? s.n + (s.n === 1 ? ' round' : ' rounds') + ' still on ' + V.us
-          : 'the next rounds are thrown at where ' + V.say('we', V.name) + ' will be') +
+        detail: '不消耗 · ' + (inFlight
+          ? s.n + ' 发还在打' + V.us
+          : '后面的弹丸都朝着' + V.say('我们', V.name) + '将会所在的位置打') +
           ' · ' + keeps,
         quiet: !ship.jink,
         act: () => { ship.jink = false; },
@@ -4047,12 +4002,12 @@
       const at2 = km(U.dist(ship.pos, t2.pos));
       return {
         target: t2,
-        title: (sm, sh) => 'The mounts are cold and the sink is down to ' +
-          pct(loadOf((sm && sm.byId(ship.id)) || ship)) + '.',
+        title: (sm, sh) => '炮位冷却着，热沉已经降到 ' +
+          pct(loadOf((sm && sm.byId(ship.id)) || ship)) + '。',
         text: (sm, sh, third) => {
           const V = voiceOf(sh || ship, third);
-          return foeWord(V, t2, 'She') + ' is inside ' + V.our + ' burn-through at ' + at2 +
-            V.say(' and nothing of ours is firing.', ' and ' + V.name + ' is not firing.');
+          return foeWord(V, t2, '她') + ' 已经进入' + V.our + '烧穿距离，' + at2 +
+            V.say('，我方没有一门炮在开火。', '，' + V.name + ' 没有开火。');
         },
         until(s) {
           const me = s.byId(ship.id), t = s.byId(id2);
@@ -4097,13 +4052,13 @@
       title: (sm, sh) => {
         const me = (sm && sm.byId(ship.id)) || ship;
         const v = sm ? planView(sm, me, undefined) : view;
-        return v.tFull != null ? 'The sink fills in ' + time(v.tFull) + '.'
-          : 'The sink is at ' + pct(loadOf(me)) + ' and holding.';
+        return v.tFull != null ? '热沉还有 ' + time(v.tFull) + ' 就满。'
+          : '热沉在 ' + pct(loadOf(me)) + '，稳住了。';
       },
       // Name what is making the heat. On a hull under burn most of it is the drive, and a card that
       // bills all of it to the guns is teaching the player something that is not true.
-      text: 'Heat into the sink: ' + heatSourceWords(heatParts(ship)) + '. ' +
-        (stowed ? 'The radiators are stowed.' : 'The radiators drain ' + power(view.shed) + '.'),
+      text: '进热沉的热：' + heatSourceWords(heatParts(ship)) + '. ' +
+        (stowed ? '散热板收着。' : '散热板排掉 ' + power(view.shed) + '.'),
       until(s) {
         const me = s.byId(ship.id), t = s.byId(id);
         if (!me || !t) return true;
@@ -4130,25 +4085,25 @@
     const list = [];
     list.push({
       id: 'full',
-      label: 'Full fire',
-      detail: 'everything the mounts have · ' + fullIn(full.tFull) +
-        (target && target.hull != null ? ' · ' + pct(target.hull) + ' of ' + herOwn + ' hull left' : ''),
+      label: '全力开火',
+      detail: '炮位能出的全部 · ' + fullIn(full.tFull) +
+        (target && target.hull != null ? ' · ' + herOwn + '舰体只剩 ' + pct(target.hull) : ''),
       recommended: holds,
       act: () => setFireMode(ship, 'full'),
     });
     if (share != null && share > T.sustainedMin && share < 0.99) {
       list.push({
         id: 'sustained',
-        label: 'Sustained fire',
-        detail: 'beams at ' + pct(share) + ' of full · the radiators shed all ' + power(now.shed) + ' of it, so the sink does not fill',
+        label: '持续开火',
+        detail: '光束开在额定的 ' + pct(share) + ' · 散热板把 ' + power(now.shed) + ' 全排掉，所以热沉不会满',
         recommended: !holds,
         act: () => setFireMode(ship, 'sustained'),
       });
     }
     list.push({
       id: 'cold',
-      label: 'Keep them cold',
-      detail: 'nothing spent · ' + sinkPhrase(now) + ' · the coilguns and the bays keep firing until the sink fills, and then nothing fires',
+      label: '保持冷却',
+      detail: '不消耗 · ' + sinkPhrase(now) + ' · 线圈炮和发射舱一直开火到热沉满了，之后什么都打不了',
       recommended: !holds && !(share != null && share > T.sustainedMin && share < 0.99),
       passive: true,
       quiet: true,
@@ -4191,18 +4146,18 @@
       const eNow = watcher(sim, ship, A);
       const eExt = watcher(sim, ship, out);
       const seenLine = legs && eDark && eOut
-        ? 'on the coast ' + eDark.name + ' gets a solution on ' + V.us + ' ' + seenAtWords(eDark) +
-          ' with them stowed, ' + seenAtWords(eOut) + ' with them out'
+        ? '滑行段里 ' + eDark.name + '对' + V.us + '拿到解算' + seenAtWords(eDark) +
+          '（散热板收着），' + seenAtWords(eOut) + '（散热板展开）'
         : eExt && eNow && rise >= T.minBenefit
-          ? 'signature ' + power(A) + ' → ' + power(out) + ' · ' + seenWords(eExt, 'gets a solution on ' + V.us) +
-            (eNow.solution >= eNow.at ? '' : ' instead of ' + km(eNow.solution))
+          ? '信号特征 ' + power(A) + ' → ' + power(out) + ' · ' + seenWords(eExt, '对' + V.us + '拿到解算') +
+            (eNow.solution >= eNow.at ? '' : '，而不是 ' + km(eNow.solution))
           : pinnedByPlume(ship)
-            ? V.our + ' plume already gives ' + herObj + ' a solution, so the radiators add nothing she can see'
-            : 'this moves what ' + her + ' can see of ' + V.us + ' by less than a tenth';
+            ? V.our + '尾焰已经让' + herObj + '拿到解算，所以散热板带来的变化她看不出来'
+            : '这只会把' + her + '能看到的' + V.us + '改变不到十分之一';
       list.push({
         id: 'extend',
-        label: 'Extend the radiators',
-        detail: 'sheds ' + power(rating) + ' · ' + seenLine,
+        label: '展开散热板',
+        detail: '多排出 ' + power(rating) + ' · ' + seenLine,
         panel: 'out',
         // Never while a cold coast is the plan and the sink survives it: the approach card stowed
         // them for that leg and issued the order on the promise.
@@ -4216,14 +4171,14 @@
           { secs: legs.coast, heatIn: heatAtThrottle(ship, 0, 0), panels: false }]);
         list.push({
           id: 'dark',
-          label: 'Stay dark for the coast',
+          label: '滑行时保持静默',
           panel: 'in',
-          detail: 'the coast ends with the sink at ' + pct(dk.end) + ' · ' +
+          detail: '滑行结束时热沉在 ' + pct(dk.end) + ' · ' +
             (eDark && eOut
-              ? seenWords(eDark, 'gets a solution on ' + V.us) +
-                (eOut.solution >= eOut.at ? '' : ' instead of ' + km(eOut.solution))
-              : V.say('nothing of ours is radiating', 'nothing aboard ' + V.name + ' is radiating')) +
-            ' · the radiators extend at the brake',
+              ? seenWords(eDark, '对' + V.us + '拿到解算') +
+                (eOut.solution >= eOut.at ? '' : '，而不是 ' + km(eOut.solution))
+              : V.say('我方没有任何东西在辐射', V.name + '舰上没有任何东西在辐射')) +
+            ' · 散热板在反推时才展开',
           recommended: true,
           quiet: true,
           act: () => { /* the panels stay in: the coast was priced with them in */ },
@@ -4234,11 +4189,11 @@
       // sustained fire is full fire, so the option is left off rather than offered as a no-op.
       list.push({
         id: 'sustained',
-        label: 'Sustained fire',
+        label: '持续开火',
         detail: weak
-          ? 'beams throttled to ' + pct(share) + ' of full · too little fire to hurt ' + herObj
-          : 'beams at ' + (share != null ? pct(share) + ' of full' : 'what the radiators allow') +
-            ' · the radiators shed all ' + power(view.shed) + ' of it, so the sink does not fill',
+          ? '光束压到额定的 ' + pct(share) + ' · 火力太小，伤不了' + herObj
+          : '光束开在' + (share != null ? '额定的 ' + pct(share) : '散热板允许的强度') +
+            ' · 散热板把 ' + power(view.shed) + ' 全排掉，所以热沉不会满',
         // Under a sixth of the guns is not fire discipline, it is silence with a name, so the key
         // comes off the board rather than sitting there priced at nothing.
         dead: weak,
@@ -4255,11 +4210,11 @@
     if (gunHeat > 0) {
       list.push({
         id: 'cold',
-        label: V.say('Beams cold, stay on her', 'Beams cold, stay on ' + herObj),
-        detail: 'the mounts stop making heat · ' + sinkPhrase(cold) +
+        label: V.say('光束冷却，继续打她', '光束冷却，继续打' + herObj),
+        detail: '炮位停止产热 · ' + sinkPhrase(cold) +
           (hasKind(ship, 'coilgun') || hasKind(ship, 'launcher')
-            ? ' · the coilguns and the bays keep firing until the sink fills, and then nothing fires'
-            : V.say(' · we hold the range and wait it out', ' · ' + V.name + ' holds the range and waits it out')),
+            ? ' · 线圈炮和发射舱一直开火到热沉满了，之后什么都打不了'
+            : V.say(' · 我们保持距离，等它过去', ' · ' + V.name + '保持距离，等它过去')),
         recommended: weak && !stowed,
         act: () => setFireMode(ship, 'hold'),
       });
@@ -4274,16 +4229,16 @@
     const burnIn = heatAtThrottle(ship, 1, -gunHeat);
     const boLegs = legView(ship, [{ secs: bo.secs, heatIn: burnIn, panels: true }, { secs: 900, heatIn: coldIn, panels: true }]);
     const boTail = stepSink(ship, boLegs.endHeat, ratingOf(ship), coldIn, 7200);
-    const boSink = boLegs.tFull != null ? 'the burn would fill the sink in ' + time(boLegs.tFull)
-      : 'the sink peaks at ' + pct(boLegs.peak) +
-        (boTail.tEmpty != null ? ' and drains in ' + time(boTail.tEmpty)
-          : ' and settles at ' + pct(boTail.settle != null ? boTail.settle : boLegs.end));
+    const boSink = boLegs.tFull != null ? '这次点火会在 ' + time(boLegs.tFull) + ' 内灌满热沉'
+      : '热沉最高到 ' + pct(boLegs.peak) +
+        (boTail.tEmpty != null ? '，再用 ' + time(boTail.tEmpty) + ' 排空'
+          : '，然后稳定在 ' + pct(boTail.settle != null ? boTail.settle : boLegs.end));
     list.push({
       id: 'breakoff',
-      label: 'Break off and cool',
+      label: '脱离并冷却',
       panel: 'out',
-      detail: withNum('beams cold, radiators extended, ' + time(bo.secs) + ' of burn away from ' + herObj + ', then coasting at ' +
-        spd(bo.speed) + ' · ' + boSink, 'the sink is at ' + pct(ship.thermalLoad())),
+      detail: withNum('光束冷却，散热板展开，背对' + herObj + '点火 ' + time(bo.secs) + '，然后以 ' +
+        spd(bo.speed) + ' 滑行 · ' + boSink, '热沉在 ' + pct(ship.thermalLoad())),
       passive: true,
       act: (s) => {
         setFireMode(ship, 'hold');
@@ -4297,9 +4252,9 @@
     if (list.length < 2) {
       list.push({
         id: 'ride',
-        label: 'Hold the course',
-        detail: 'nothing spent · ' + (view.plan ? 'the coast ends with the sink at ' + pct(view.end) : sinkPhrase(view)) +
-          ' · only the drive and the hull are making heat',
+        label: '保持航向',
+        detail: '不消耗 · ' + (view.plan ? '滑行结束时热沉在 ' + pct(view.end) : sinkPhrase(view)) +
+          ' · 只有推进器和舰体在产热',
         passive: true,
         quiet: true,
         act: () => { /* the course stands: the choice is to spend nothing */ },
@@ -4348,23 +4303,23 @@
     // the fight she is flying, and the coast chosen forty-five seconds ago would go with it. That
     // is the same no-op, read on the order she is carrying rather than on the one this card holds.
     if (o.type === 'approach' && o.target === att.ship.id) {
-      noteSkip(sim, ship, 'defend', 'the coast ' + (ship.name || 'she') + ' is already flying at ' + att.ship.name);
+      noteSkip(sim, ship, 'defend', (ship.name || '她') + '已经在以滑行方式飞向 ' + att.ship.name);
       return null;
     }
     if (ship.weaponsFree && ship.target === att.ship.id && o.type === dp.order.type &&
       o.target === dp.order.target && Math.abs((o.range || 0) - (dp.order.range || 0)) < 1e3) {
-      noteSkip(sim, ship, 'defend', 'the course ' + (ship.name || 'she') + ' is already flying at ' + att.ship.name);
+      noteSkip(sim, ship, 'defend', (ship.name || '她') + '的航向已经是冲着 ' + att.ship.name + ' 飞的');
       return null;
     }
     const protId = best.ship.id, attId = att.ship.id;
     const how = att.how;
     return {
       target: att.ship,
-      title: best.ship.name + ' is under fire.',
-      text: att.ship.name + ' has ' + (how === 'beams'
-        ? 'her beams on ' + best.ship.name + ' from ' + rangeSay(trackRange(sim, ship, att.ship, best.ship.pos))
-        : how + ' on ' + best.ship.name + (att.eta != null ? ', ' + time(att.eta) + ' out' : '')) +
-        '. ' + best.ship.name + ' cannot answer.',
+      title: best.ship.name + ' 正在挨打。',
+      text: att.ship.name + '正在用' + (how === 'beams'
+        ? '光束打' + best.ship.name + '，距离 ' + rangeSay(trackRange(sim, ship, att.ship, best.ship.pos))
+        : (HOW_ZH[how] || how) + '打' + best.ship.name + (att.eta != null ? '，还有 ' + time(att.eta) + ' 到达' : '')) +
+        '。' + best.ship.name + '没法还手。',
       until(s) {
         const me = s.byId(ship.id), p = s.byId(protId), a = s.byId(attId);
         if (!me || !p || !a || p.destroyed || p.captured || a.destroyed || a.captured) return true;
@@ -4420,36 +4375,36 @@
     const boarder = (d.ships || [d.shipId]).map((x) => sim.byId(x))
       .find((sh) => sh && sh.heldFireForBoarding && board[sh.id]);
     const prize = boarder ? sim.byId(board[boarder.id].target) : null;
-    const callsOff = boarder ? 'this calls off the boarding run on ' + (prize ? prize.name : 'her prize') + ' · ' : '';
+    const callsOff = boarder ? '这会取消对' + (prize ? prize.name : '她的战利品') + '的登舰行动 · ' : '';
     const how = plan
-      ? (dp.coasting ? 'one more burn from where ' + V.say('we are', 'she is') + ' now, then dark again'
-        : 'one burn, then dark the rest of the way')
-      : 'the drive burns to get there, and every hostile holds a solution while it does';
+      ? (dp.coasting ? '从' + V.say('我们', '她') + '现在的位置再点一次火，然后继续静默'
+        : '点一次火，剩下的路全程静默')
+      : '推进器一路点火过去，每个敌舰在这期间都持有解算';
     return [
       {
         id: 'closeon',
-        label: 'Close on ' + att.name,
-        detail: callsOff + rangeSay(view) + ' to ' + herObj + ' · hold at ' + km(dp.hold) +
-          ' and put her out of the fight · ' + how,
+        label: '接近 ' + att.name,
+        detail: callsOff + '距' + herObj + ' ' + rangeSay(view) + ' · 守在 ' + km(dp.hold) +
+          '，把她打出这场战斗 · ' + how,
         recommended: !beaten,
         burns: true,
         act: (s) => { s.setTarget(ship.id, att.id); ship.weaponsFree = true; ship.heldFireForBoarding = false; s.setOrder(ship.id, order); },
       },
       {
         id: 'screen',
-        label: 'Point defence between',
-        detail: callsOff + 'match ' + prot.name + ' at ' + km(T.screenRange) + ', inside ' + V.our + ' point defence reach of ' + km(pdReach()) + ' · ' +
-          km(toProt) + ' to get there, under the drive · ' + V.our + ' point defence stops about ' + Math.round(rate) +
-          ' a minute of what is aimed at ' + V.say('her', prot.name),
+        label: '点防御掩护',
+        detail: callsOff + '与 ' + prot.name + '保持同速，距离 ' + km(T.screenRange) + '，在' + V.our + '点防御射程 ' + km(pdReach()) + '之内 · ' +
+          '要在推进器点着的情况下跑 ' + km(toProt) + ' · ' + V.our + '点防御每分钟大约拦掉 ' + Math.round(rate) +
+          ' 枚冲着' + V.say('她', prot.name) + '来的东西',
         recommended: beaten,
         burns: true,
         act: (s) => { ship.weaponsFree = true; ship.heldFireForBoarding = false; s.setOrder(ship.id, screen); },
       },
       {
         id: 'hold',
-        label: V.say('Hold our station', 'Hold station'),
-        detail: 'nothing spent · ' + prot.name + ' takes it alone at ' + km(toProt) + ' from ' + V.us +
-          (boarder ? ' · the boarding run stands' : ''),
+        label: V.say('守住我们的位置', '守住位置'),
+        detail: '不消耗 · ' + prot.name + '在距' + V.us + ' ' + km(toProt) + ' 处独自扛住' +
+          (boarder ? ' · 登舰行动照旧' : ''),
         passive: true,
         quiet: true,
         act: () => { /* the station is kept: the choice is to spend nothing */ },
@@ -4500,18 +4455,18 @@
     return {
       target,
       title: (sm, sh, third) => (third && sh && sh.name
-        ? 'Where does ' + sh.name + ' put the beams on ' + target.name + '?'
-        : 'Where do we put the beams on ' + target.name + '?'),
+        ? sh.name + ' 把光束打向 ' + target.name + ' 的哪里？'
+        : '我们把光束打向 ' + target.name + ' 的哪里？'),
       text: (sm, sh, third) => {
         const V = voiceOf(sh || ship, third);
-        const hers = V.third ? target.name + '\u2019s' : 'Her';
-        const she = V.third ? target.name : 'She';
+        const hers = V.third ? target.name + ' 的' : '她的';
+        const she = V.third ? target.name : '她';
         const why = want === 'radiators'
-          ? hers + ' radiators are out and her sink still has room. Burn them off and she cannot get that cooling back.'
-          : !panels ? hers + ' radiators are stowed, so there is nothing out there to burn off.'
-            : capped ? hers + ' sink is full already, so taking her radiators changes nothing.'
-              : thin ? hers + ' hull is under a third, so the whole cross-section finishes her sooner.'
-                : hers + ' sink fills on its own within two minutes, so her radiators are not worth the shot.';
+          ? hers + '散热板展开着，热沉还有余量。把它们烧掉，她就再也拿不回这份散热能力。'
+          : !panels ? hers + '散热板收着，外面没有东西可烧。'
+            : capped ? hers + '热沉已经满了，打散热板也改变不了什么。'
+              : thin ? hers + '舰体不到三分之一，直接打整个断面更快解决她。'
+                : hers + '热沉两分钟内自己就会满，不值得为散热板花一发。';
         // The reach is not one number: the beams open her nose at 433 km, her flank at 685 and her
         // tail at 1 027, so 'inside our burn-through at 891 km' was true of the tail and false of
         // everything else. The sentence names the facet she is showing, the range to her and the
@@ -4520,18 +4475,18 @@
         const me2 = (s2 && s2.byId(ship.id)) || ship;
         const t2 = (s2 && s2.byId(id)) || target;
         const b2 = bites(s2, me2, t2).ours;
-        const facet2 = facetOf(me2, t2) || 'armour';
+        const facet2 = facetZh(facetOf(me2, t2) || 'flank');
         const at2 = rangeSay(trackRange(s2, me2, t2));
         const R2 = trackRange(s2, me2, t2).R;
-        const ourBeams2 = V.say('our beams', V.name + '\u2019s beams');
+        const ourBeams2 = V.say('我方光束', V.name + ' 的光束');
         const hers2 = foeOwn(V, target);
         const reach2 = !(b2 > 0)
-          ? ' ' + ourBeams2 + ' do not burn through ' + hers2 + ' ' + facet2 + ' at any range.'
+          ? ' ' + ourBeams2 + '在任何距离都烧不穿' + hers2 + facet2 + '。'
           : R2 <= b2
-            ? ' ' + she + ' is at ' + at2 + ', and ' + ourBeams2 + ' burn through ' + hers2 + ' ' +
-              facet2 + ' out to ' + km(b2) + '.'
-            : ' ' + she + ' is at ' + at2 + ', outside the ' + km(b2) + ' ' + ourBeams2 +
-              ' burn through ' + hers2 + ' ' + facet2 + '.';
+            ? ' ' + she + '在 ' + at2 + '，而' + ourBeams2 + '能烧穿' + hers2 + '的' +
+              facet2 + '直到 ' + km(b2) + '。'
+            : ' ' + she + '在 ' + at2 + '，超出了' + ourBeams2 +
+              '烧穿' + hers2 + '的' + facet2 + '的 ' + km(b2) + ' 距离。';
         return why + reach2;
       },
       until(s) {
@@ -4563,17 +4518,17 @@
     return [
       {
         id: 'radiators',
-        label: V.say('Her radiators', target.name + '\u2019s radiators'),
+        label: V.say('她的散热板', target.name + '的散热板'),
         detail: !panels
-          ? herOwn + ' radiators are stowed, so ' + pct(0) + ' of the shot lands on them'
+          ? herOwn + '的散热板收着，所以 ' + pct(0) + ' 的伤害落在它们上面'
           : !radReaches
-            ? 'aimed at the panels the beams only burn through ' + herOwn + ' ' +
-              (facetOf(ship, target) || 'armour') + ' inside ' + km(radBite) + ', and ' + she + ' is at ' +
-              rangeSay(trackRange(sim, ship, target)) + ' · nothing lands until ' + V.we + ' close that far · ' +
-              she + ' loses ' + power(rating) + ' of cooling once it does'
-            : she + ' loses ' + power(rating) + ' of cooling and must stow the rest · ' +
-              (shut.tFull != null ? herOwn + ' sink then fills in ' + time(shut.tFull) : herOwn + ' sink still does not fill') +
-              ' · the radiators are a small target, so less of the shot lands · ' + pct(target.hull) + ' of ' + herOwn + ' hull left',
+            ? '瞄准散热板时光束只能在 ' + km(radBite) + '以内烧穿' + herOwn + '的' +
+              (facetOf(ship, target) || '装甲') + '，而' + she + '在 ' +
+              rangeSay(trackRange(sim, ship, target)) + ' · 要等' + V.we + '靠到那么近才有伤害 · ' +
+              '那样' + she + '会少掉 ' + power(rating) + ' 的散热能力'
+            : she + '会少掉 ' + power(rating) + ' 的散热能力，剩下��部分必须收起来 · ' +
+              (shut.tFull != null ? herOwn + '的热沉随后在 ' + time(shut.tFull) + ' 内灌满' : herOwn + '的热沉仍然不会满') +
+              ' · 散热板是很小的目标，所以落上去的伤害更少 · ' + herOwn + '舰体只剩 ' + pct(target.hull),
         dead: !panels,
         noRec: !radReaches,
         recommended: want === 'radiators' && radReaches,
@@ -4581,10 +4536,10 @@
       },
       {
         id: 'hull',
-        label: V.say('Her hull', target.name + '\u2019s hull'),
-        detail: 'the whole cross-section, so all of the shot lands · ' + pct(target.hull) + ' of ' + herOwn + ' hull left · ' +
-          (now.tFull != null ? herOwn + ' sink fills in ' + time(now.tFull) + V.say(' without our help', ' on its own')
-            : herOwn + ' sink is at ' + pct(target.thermalLoad ? target.thermalLoad() : 0)),
+        label: V.say('她的舰体', target.name + '的舰体'),
+        detail: '整个断面，所以每一发都会落上 · ' + herOwn + '舰体只剩 ' + pct(target.hull) + ' · ' +
+          (now.tFull != null ? herOwn + '的热沉在 ' + time(now.tFull) + ' 内灌满' + V.say('，不用我们插手', '，不用我们插手')
+            : herOwn + '的热沉在 ' + pct(target.thermalLoad ? target.thermalLoad() : 0)),
         recommended: want === 'hull',
         act: () => setAim(ship, 'hull'),
       },
@@ -4821,7 +4776,7 @@
         const V = voiceOf(sh || me, third);
         const h2 = me.hull != null ? me.hull : 1;
         const bd = (sm ? boardingUs(sm, me) : null) || boarder;
-        if (bd) return bd.name + ' is coming alongside to board ' + V.us + '.';
+        if (bd) return bd.name + ' 正靠过来要登上 ' + V.us + '。';
         if (hurt || h2 <= T.withdrawHull) {
           // Above the hull line the card is raised on the armour clock, not on the hull: at 100 %
           // of her armour 'We are down to 100 % of our hull' reads as a misprint. Title the clock
@@ -4829,33 +4784,33 @@
           if (h2 > T.withdrawHull) {
             const lf = sm ? hullLife(sm, me).life : null;
             if (lf != null) {
-              return V.say('Our armour lasts ' + time(lf) + ' at this fire.',
-                V.name + '\u2019s armour lasts ' + time(lf) + ' at this fire.');
+              return V.say('我们的装甲还能撑 ' + time(lf) + '。',
+                V.name + '的装甲还能撑 ' + time(lf) + '。');
             }
           }
-          return V.say('We are down to ' + pct(h2) + ' of our hull.', V.name + ' is down to ' + pct(h2) + ' of her hull.');
+          return V.say('我们的舰体只剩 ' + pct(h2) + '。', V.name + ' 的舰体只剩 ' + pct(h2) + '。');
         }
         const n = (sm ? localOdds(sm, me).foes : 0) || odds.foes;
-        return V.say(Count(n) + ' of them have us in reach, and nobody of ours is close.',
-          Count(n) + ' of theirs can reach ' + V.name + '. None of ours is near her.');
+        return V.say(Count(n) + ' 艘能打到我们，附近没有我方舰船。',
+          Count(n) + ' 艘能打到 ' + V.name + '，我们这边没有船靠近她。');
       },
       text: (sm, sh, third) => {
         const V = voiceOf(sh || ship, third);
         if (boarder) {
-          return V.say('She is ' + atBoarder + ' off and matching our velocity. ' + held +
-            ' of this and the ship is hers. Any hard burn breaks the match.',
-          boarder.name + ' is ' + atBoarder + ' off and matching ' + V.our + ' velocity. ' + held +
-            ' of this and ' + V.name + ' is hers. Any hard burn breaks the match.');
+          return V.say('她在 ' + atBoarder + ' 外，正匹配我们的速度。' + held +
+            '，船就是她的了。任何一次硬点火都会破坏匹配。',
+          boarder.name + '在 ' + atBoarder + ' 外，正匹配' + V.our + '速度。这样再 ' + held +
+            '，' + V.name + '就是她的了。任何一次硬点火都会破坏匹配。');
         }
         if (hurt) {
-          return V.say((fire ? 'She has the range on us' : 'We are still closing on her') + ' at ' + atFoe +
-            ', and the next hit goes deeper than the last.',
-          (fire ? foe.name + ' has the range on ' + V.name : V.name + ' is still closing on ' + foe.name) + ' at ' + atFoe +
-            ', and the next hit goes deeper than the last.');
+          return V.say((fire ? '她在这个距离上压住了我们' : '我们还在接近她') + '，距离 ' + atFoe +
+            '，下一发会比上一发打得更深。',
+          (fire ? foe.name + ' 压住了 ' + V.name : V.name + ' 还在接近 ' + foe.name) + '，距离 ' + atFoe +
+            '，下一发会比上一发打得更深。');
         }
-        return 'The nearest of them is ' + atFoe + ' off, and ' +
-          V.say('our nearest sister is too far to cover us. ', V.name + ' has no sister close enough to cover her. ') +
-          'Being shot at by more hulls than you can answer is how ships are lost at full armour.';
+        return '最近的敌舰在 ' + atFoe + ' 外，而' +
+          V.say('我们最近的姊妹舰太远，罩不住。', V.name + ' 附近没有姊妹舰能掩护她。') +
+          '被比自己能还手的数量更多的舰船射击，满装甲的船就是这么没的。';
       },
       // It lapses when every reason for it has gone, not when one of them has. A card raised on a
       // hull falling fast and closed a second later because the hull is still over the line is a
@@ -4885,7 +4840,7 @@
     const base = d._textBase;
     d._text = !none ? base : (sm, sh, third) => {
       const said = typeof base === 'function' ? (base(sm, sh, third) || '') : String(base || '');
-      return said + ' Nothing on this card opens the range before the armour goes.';
+      return said + ' 这张卡上的任何选项，都没法在装甲被打穿之前拉开距离。';
     };
   }
   function buildWithdraw(sim, d, ship, target) {
@@ -4933,8 +4888,8 @@
     // on the card will do.
     const opensNothing = follows && spd(netSpeed) === spd(0);
     const matchedBy = (follows && netSpeed < bo.speed * 0.25) || opensNothing
-      ? V.say(' · she can match this burn, so the range only opens once her drive is hurt',
-        ' · ' + herObj + ' can match this burn, so the range only opens once her drive is hurt')
+      ? V.say(' · 她能跟上这次点火，所以只有她的推进器被打伤，距离才拉得开',
+        ' · ' + herObj + '能跟上这次点火，所以只有她的推进器被打伤，距离才拉得开')
       : '';
     const clock = hullLife(sim, ship);
     const life = clock.life;
@@ -4997,33 +4952,33 @@
     const list = [];
     list.push({
       id: 'breakoff',
-      label: opensNothing ? V.say('Break off: she can match the burn',
-        'Break off: ' + herObj + ' can match the burn') : 'Break off and open',
+      label: opensNothing ? V.say('脱离：她能跟上这次点火',
+        '脱离：' + herObj + '能跟上这次点火') : '脱离并拉开',
       // Where she matches the whole burn, why the range holds is the first thing to read: three
       // clauses is what a key holds, and behind the Why? key is not where that belongs.
-      detail: time(bo.secs) + ' of burn away from ' + herObj + ', then cold' +
+      detail: '背对' + herObj + '点火 ' + time(bo.secs) + '，然后冷却' +
         (opensNothing ? matchedBy : '') + ' · ' +
         // 'coasting at 0 m/s · outside her burn-through in 9m 40s' is a promise the coast does not
         // keep: where she matches the whole burn the key reads the same way it does when the burn
         // buys distance and nothing else.
         (covers && !opensNothing
-          ? 'coasting at ' + spd(netSpeed) + ' · outside ' + herOwn + ' ' + km(bite) + ' burn-through in ' + time(clear)
+          ? '以 ' + spd(netSpeed) + ' 滑行 · ' + herOwn + '的烧穿距离是 ' + km(bite) + '，要 ' + time(clear) + ' 才出得去'
           : (bite > 0
-            ? herOwn + ' beams reach ' + km(bite) + ', and ' + (clear == null ? 'this course never clears that'
-              : 'clearing that takes ' + time(clear)) +
-              (life != null ? ' · the armour lasts ' + time(life) : '') +
-              (opensNothing ? '' : ' · opening at ' + spd(netSpeed)) +
-              V.say(' · this buys distance, and we stay inside her beams',
-                ' · this buys distance, and ' + V.name + ' stays inside ' + herOwn + ' beams')
+            ? herOwn + '的光束够得到 ' + km(bite) + '，而' + (clear == null ? '这条航向永远出不去'
+              : '要 ' + time(clear) + ' 才出得去') +
+              (life != null ? ' · 装甲还能撑 ' + time(life) : '') +
+              (opensNothing ? '' : ' · 以 ' + spd(netSpeed) + ' 拉开距离') +
+              V.say(' · 这样能买到距离，但我们仍在她的光束射程里',
+                ' · 这样能买到距离，而' + V.name + '仍在' + herOwn + '的光束射程里')
             // R-5: her bite has fallen to nothing, so there is no burn-through to get outside of.
-            : herOwn + ' beams cannot reach ' + V.us + ' at any range now' +
-              (opensNothing ? '' : ' · opening at ' + spd(netSpeed)) +
-              ' · ' + rangeSay(view) + (opensNothing ? ' out' : ' out and opening'))) +
+            : herOwn + '的光束现在在任何距离都够不到' + V.us +
+              (opensNothing ? '' : ' · 以 ' + spd(netSpeed) + ' 拉开距离') +
+              ' · ' + rangeSay(view) + (opensNothing ? ' 外' : ' 外，而且还在拉开'))) +
         (opensNothing ? '' : matchedBy) +
-        (dartLed ? ' · ' + count(inc.darts) + ' interceptors in the air carry their own drive and follow this burn' : '') +
-        (runsTail ? ' · the run turns ' + V.our + ' tail to ' + herObj + ': ' + tailCm + ' cm against ' +
-          noseCm + ' cm on the nose' : '') +
-        ' · ' + pct(hull) + ' of hull left',
+        (dartLed ? ' · 空中的 ' + count(inc.darts) + '枚拦截弹自带推进器，会跟着这次点火' : '') +
+        (runsTail ? ' · 这趟把' + V.our + '舰尾转向' + herObj + '：' + tailCm + ' 厘米，舰首是 ' +
+          noseCm + ' 厘米' : '') +
+        ' · 舰体只剩 ' + pct(hull),
       // With the armour running out, a burn that only buys distance is still the answer: it is the
       // one key on the card that takes hull out of the fire. Unless the fire is interceptors, which
       // come with it.
@@ -5037,15 +4992,15 @@
     if (sis) {
       list.push({
         id: 'sister',
-        label: 'Get behind ' + sis.name,
+        label: '绕到背后：' + sis.name,
         detail: inTime
-          ? km(toSis) + ' to ' + sis.name + ', ' + time(toSisT) + ' to get behind her · match her at ' + km(T.screenRange) +
-            ', inside her point defence reach of ' + km(pdReach()) + ' · ' + V.say('she is at ', sis.name + ' is at ') +
-            pct(sis.hull) + ' of hull and can take the next hit'
-          : sis.name + ' is ' + time(toSisT) + ' away' +
-            (life != null ? '; the armour lasts ' + time(life) : '; nothing of ours is that close') +
-            ' · ' + km(toSis) + ' to her, under the drive the whole way · ' +
-            V.say('she is at ', sis.name + ' is at ') + pct(sis.hull) + ' of hull',
+          ? '距 ' + sis.name + ' ' + km(toSis) + '，' + time(toSisT) + '绕到她背后 · 在 ' + km(T.screenRange) +
+            '处与她同速，落在她点防御射程 ' + km(pdReach()) + '之内 · ' + V.say('她的舰体只剩 ', sis.name + '的舰体只剩 ') +
+            pct(sis.hull) + '，还能挨下一发'
+          : sis.name + '在 ' + time(toSisT) + '之外' +
+            (life != null ? '；装甲还能撑 ' + time(life) : '；我方没有船靠得那么近') +
+            ' · 要在推进器全程点着的情况下跑 ' + km(toSis) + ' · ' +
+            V.say('她的舰体只剩 ', sis.name + '的舰体只剩 ') + pct(sis.hull),
         noRec: !inTime,
         // F3: where the burn cannot outrun the armour clock, cover is the one thing left that can.
         recommended: !won && inTime && ((!covers && (sisNear || dartLed) && (behind || dying)) || escapeSlow),
@@ -5061,20 +5016,20 @@
     // counts them instead of comparing one.
     const odds = localOdds(sim, ship);
     const standing = odds.foes > 1
-      ? pct(hull) + V.say(' of our hull left, and ', ' of ' + V.name + '\u2019s hull left, and ') +
-        count(odds.foes) + ' of theirs can reach ' + V.us
-      : pct(hull) + V.say(' of our hull against ', ' of ' + V.name + '\u2019s hull against ') +
-        pct(target && target.hull != null ? target.hull : 1) + V.say(' of hers', ' of ' + herOwn);
+      ? V.say('我方舰体只剩 ', V.name + '的舰体只剩 ') + pct(hull) + '，还有 ' +
+        count(odds.foes) + '艘能打到 ' + V.us
+      : V.say('我方舰体剩 ', V.name + '的舰体剩 ') + pct(hull) + V.say('，对她的 ', '，对' + herOwn) +
+        pct(target && target.hull != null ? target.hull : 1);
     list.push({
       id: 'press',
-      label: 'Press on',
-      detail: 'nothing spent · ' + standing +
-        (won ? ' · the fight is nearly over'
+      label: '继续进攻',
+      detail: '不消耗 · ' + standing +
+        (won ? ' · 这场战斗快结束了'
           : life != null
-            ? ' · the armour lasts ' + time(life) + ' at the fire landing on ' + V.us + ' now' +
-              (air > 0 ? ', with ' + count(air) + ' still in the air' : '')
-            : !behind ? ' · the exchange is level so far'
-              : ' · the next hit goes deeper than the last'),
+            ? ' · 按现在落在' + V.us + '上的火力，装甲还能撑 ' + time(life) +
+              (air > 0 ? '，空中还有 ' + count(air) + '发' : '')
+            : !behind ? ' · 到目前为止交换是平的'
+              : ' · 下一发会比上一发打得更深'),
       // Never the recommendation while the armour is running out: this is the key that ends the
       // mission, and the card has to point at one that does not.
       noRec: dying && (covers || sisNear || bo.secs >= 10),
@@ -5108,13 +5063,12 @@
       urgent: sinkLocked(ship),
       title: (sm, sh) => {
         const me = (sm && sm.byId(id)) || ship;
-        return me.overheated ? 'The sink is full.' : 'The sink is at ' + pct(loadOf(me)) + '.';
+        return me.overheated ? '热沉满了。' : '热沉在 ' + pct(loadOf(me)) + '。';
       },
       text: (ship.overheated
-        ? 'A full sink holds the drive to a quarter and stops every mount, point defence included, until it drains. '
-        : 'A few more seconds of this and it is full. A full sink holds the drive to a quarter and stops every ' +
-          'mount, point defence included, until it drains. ') +
-        (stowed ? 'The radiators are still stowed.' : 'The radiators are already out.'),
+        ? '热沉满了，推进器只剩四分之一，所有炮位停火——包括点防御——直到它排空。'
+        : '再这样几秒钟就满了。热沉满了，推进器只剩四分之一，所有炮位停火——包括点防御——直到它排空。') +
+        (stowed ? '散热板还收着。' : '散热板已经展开了。'),
       until(s) {
         const me = s.byId(id);
         if (!me) return true;
@@ -5146,26 +5100,26 @@
     if (stowed) {
       list.push({
         id: 'extend',
-        label: 'Extend the radiators',
+        label: '展开散热板',
         panel: 'out',
-        detail: 'sheds ' + power(rating) + ' · ' + sinkPhrase(outView) +
-          (eye ? ' · ' + seenWords(eye, 'gets a solution on ' + V.us) : ' · they glow while they work'),
+        detail: '多排出 ' + power(rating) + ' · ' + sinkPhrase(outView) +
+          (eye ? ' · ' + seenWords(eye, '对' + V.us + '拿到解算') : ' · 它们工作时是亮的'),
         recommended: true,
         act: (s) => s.setRadiators(ship.id, true),
       });
     } else if (fireModeOf(ship) !== 'hold') {
       list.push({
         id: 'cold',
-        label: 'Beams cold until it drains',
-        detail: 'the mounts stop making heat · ' + sinkPhrase(cold) + ' · the coilguns and the bays keep firing until it fills, and then nothing fires',
+        label: '光束停到排空',
+        detail: '炮位停止产热 · ' + sinkPhrase(cold) + ' · 线圈炮和发射舱一直开火到热沉满了，之后什么都打不了',
         recommended: !locked,
         act: () => setFireMode(ship, 'hold'),
       });
     }
     list.push({
       id: 'ride',
-      label: 'Ride it out',
-      detail: 'nothing spent · ' + sinkPhrase(now) + ' · a quarter throttle and every mount quiet while it is full',
+      label: '硬扛过去',
+      detail: '不消耗 · ' + sinkPhrase(now) + ' · 热沉满着的时候，推进器只剩四分之一，所有炮位停火',
       // Riding out a lock is not an answer: the drive is capped, the mounts are inhibited, and
       // nothing in the sim takes the hull out of that state. It stays on the card as a choice the
       // player may make; it is never the one the band points at.
@@ -5181,10 +5135,10 @@
     const tail = stepSink(ship, legs.endHeat, rating, coldIn, 7200);
     list.push({
       id: 'breakoff',
-      label: 'Break off and cool',
+      label: '脱离并冷却',
       panel: 'out',
-      detail: 'beams cold, radiators extended, ' + time(bo.secs) + ' of burn away from ' + herObj + ', then coasting · ' +
-        (tail.tEmpty != null ? 'the sink drains in ' + time(tail.tEmpty) : 'the sink peaks at ' + pct(legs.peak)),
+      detail: '光束冷却，散热板展开，背对' + herObj + '点火 ' + time(bo.secs) + '，然后滑行 · ' +
+        (tail.tEmpty != null ? '热沉排空还要 ' + time(tail.tEmpty) : '热沉最高到 ' + pct(legs.peak)),
       recommended: locked && !stowed,
       // Breaking out of a lock is not a passive answer, whatever else is going on: a hull flown at
       // a quarter throttle with her mounts inhibited is not pressing anybody.
@@ -5217,12 +5171,11 @@
     const id = target.id;
     return {
       target,
-      title: target.name + ' has stopped answering.',
+      title: target.name + ' 不再回应了。',
       text: (sm, sh, third) => {
         const V = voiceOf(sh || ship, third);
-        return (V.third ? target.name + '\u2019s' : 'Her') + ' sink is full. A full sink holds the drive to a quarter ' +
-          'and stops every mount, point defence included, until it drains' +
-          (view.tEmpty != null ? '. That takes ' + time(view.tEmpty) + '.' : '. On this course it does not drain.');
+        return (V.third ? target.name + '的' : '她的') + '热沉满了。热沉满了，推进器只剩四分之一，所有炮位停火——包括点防御——直到它排空' +
+          (view.tEmpty != null ? '，要 ' + time(view.tEmpty) + '。' : '。在这条航向上它不会排空。');
       },
       until(s) {
         const me = s.byId(ship.id), t = s.byId(id);
@@ -5246,9 +5199,9 @@
     return [
       {
         id: 'press',
-        label: 'Press her',
-        detail: 'close to ' + km(to) + ' from ' + rangeSay(plot) + ' · ' + she + ' cannot manoeuvre out of it at a quarter throttle · ' +
-          pct(target.hull) + ' of ' + herOwn + ' hull left',
+        label: '压上去',
+        detail: '从 ' + rangeSay(plot) + ' 压到 ' + km(to) + ' · ' + she + '在四分之一推力下躲不开 · ' +
+          herOwn + '舰体只剩 ' + pct(target.hull),
         recommended: !beaten,
         burns: true,
         act: (s) => {
@@ -5261,10 +5214,10 @@
       },
       {
         id: 'hold',
-        label: 'Hold the range',
-        detail: 'nothing spent · ' + (view.tEmpty != null ? she + ' is quiet for ' + time(view.tEmpty) : she + ' stays quiet on this course') +
-          V.say(' · we stay at ' + rangeSay(plot) + ' and keep our track on her',
-            ' · ' + V.name + ' stays at ' + rangeSay(plot) + ' and keeps her track on ' + foeHer(V, target)),
+        label: '保持距离',
+        detail: '不消耗 · ' + (view.tEmpty != null ? she + '安静 ' + time(view.tEmpty) : she + '在这条航向上一直安静') +
+          V.say(' · 我们保持在 ' + rangeSay(plot) + '，继续跟踪她',
+            ' · ' + V.name + '保持在 ' + rangeSay(plot) + '，继续跟踪' + foeHer(V, target)),
         recommended: beaten,
         passive: true,
         quiet: true,
@@ -5358,7 +5311,7 @@
   // panels and the sensor suite — meant the card never came at all: seven chapters, no repair
   // card. It is now asked about any part a jury-rig puts three tenths back on, and the lit key is
   // the real value call: what the mend buys against what the watch costs while the party is away.
-  // 'Keep the parties where they are' is a real answer and can be the recommended one, and a card
+  // '班组原地不动' is a real answer and can be the recommended one, and a card
   // recommending it yields the band to anything more urgent (yielding(), above).
   //
   // The free-hands branch takes the same bar. It used to pass the whole mend list, so six of the
@@ -5370,7 +5323,7 @@
   // { trade: the part the trade is about, or null for a card raised as a send; why: the board's
   // reason that part could not be worked }. Without it the card flips between the two shapes
   // second by second, because the autopilot pulses the throttle and the drive's `blocked` follows
-  // it: key 2 read 'Keep the burn' and settled as 'Send party 1 to the drive'.
+  // it: key 2 read '继续点火' and settled as 'Send party 1 to the drive'.
   function repairChoice(sim, ship, shape) {
     const board = crewBoard(ship);
     if (!board) return null;
@@ -5433,9 +5386,9 @@
     return { sent, waits };
   }
   const waitWords = (ship, waits) => (!waits.length ? ''
-    : waits.length === 1 ? partPhrase(waits[0].name, waits[0].id, ship) + ' waits'
-      : waits.slice(0, 2).map((p) => partPhrase(p.name, p.id, ship)).join(' and ') +
-        (waits.length > 2 ? ' and ' + count(waits.length - 2) + ' more wait' : ' wait'));
+    : waits.length === 1 ? partPhrase(waits[0].name, waits[0].id, ship) + '在等着'
+      : waits.slice(0, 2).map((p) => partPhrase(p.name, p.id, ship)).join('、') +
+        (waits.length > 2 ? '，还有 ' + count(waits.length - 2) + '个在等着' : ' 在等着'));
   function trigRepair(sim, ship) {
     // A computer-flown hull runs her own routine and her own g mode whatever the bridge answers,
     // so the three crew cards are only ever put about the hull the player is actually flying.
@@ -5463,38 +5416,38 @@
         const now = repairChoice(sm, me, shape) || c;
         const head = now.hurt[0];
         if (now.blocked) {
-          if (/^drive/.test(String(head.id))) return 'The drive is hit, and she is burning.';
-          if (/^rad/.test(String(head.id))) return partCap(head.name, head.id, me) + ' is hit, and the radiators are out.';
-          return partCap(head.name, head.id, me) + ' is hit, and it is running.';
+          if (/^drive/.test(String(head.id))) return '主推进器被打中，她还在点火。';
+          if (/^rad/.test(String(head.id))) return partCap(head.name, head.id, me) + ' 被打中，散热板还展开着。';
+          return partCap(head.name, head.id, me) + ' 被打中，而且还在运转。';
         }
         return now.free.length
-          ? 'Which part does ' + partyLower(now.free[0].id) + ' take?'
-          : 'Pull a party off watch for ' + partPhrase(head.name, head.id, me) + '?';
+          ? partyLower(now.free[0].id) + ' 去修哪个部件？'
+          : '从值班里抽一个班组去修' + partPhrase(head.name, head.id, me) + '？';
       },
       text: (sm, sh, third) => {
         const me = sm.byId(ship.id) || ship;
         const V = voiceOf(sh || me, third);
         const now = repairChoice(sm, me, shape) || c;
-        const hit = (p) => (V.third ? V.name + '’s ' + partOwned(p.name, p.id, me) : partCap(p.name, p.id, me));
+        const hit = (p) => (V.third ? V.name + ' 的' + partOwned(p.name, p.id, me) : partCap(p.name, p.id, me));
         // The hull's own clock, once per card: the armour she has actually lost over the last
         // minute, and nothing at all under a minute of fire.
         const clock = now.armour != null
-          ? ' ' + V.say('Under this fire we have about ' + time(now.armour) + '.',
-            'Under this fire ' + V.name + ' has about ' + time(now.armour) + '.') : '';
+          ? ' ' + V.say('这种火力下我们还能撑 ' + time(now.armour) + '。',
+            '这种火力下 ' + V.name + ' 还能撑 ' + time(now.armour) + '。') : '';
         if (now.blocked) {
-          return hit(now.hurt[0]) + ' is hit, and ' + blockShort(now.hurt[0]) + '.' + clock;
+          return hit(now.hurt[0]) + ' 被打中，' + blockShort(now.hurt[0]) + '。' + clock;
         }
         if (now.free.length) {
-          const head = now.hurt.length > 2 ? Count(now.hurt.length) + ' parts are hit'
+          const head = now.hurt.length > 2 ? '有 ' + Count(now.hurt.length) + ' 个部件被打中'
             : now.hurt.length > 1
-              ? hit(now.hurt[0]) + ' and ' + partPhrase(now.hurt[1].name, now.hurt[1].id, me) + ' are both hit'
-              : hit(now.hurt[0]) + ' is hit';
-          return head + ', and ' + V.say('we have ', V.name + ' has ') + count(now.free.length) +
-            (now.free.length === 1 ? ' party free.' : ' parties free.') + clock;
+              ? hit(now.hurt[0]) + ' 和 ' + partPhrase(now.hurt[1].name, now.hurt[1].id, me) + ' 都被打中'
+              : hit(now.hurt[0]) + ' 被打中';
+          return head + '，' + V.say('我们有 ', V.name + ' 有 ') + count(now.free.length) +
+            (now.free.length === 1 ? ' 个班组空闲。' : ' 个班组空闲。') + clock;
         }
-        const where = now.watch.map((p, i) => (i ? partyLower(p.id) : partyWord(p.id)) + ' is ' + taskPhrase(p, me));
-        const line = where.length > 1 ? where.slice(0, -1).join(', ') + ' and ' + where[where.length - 1] : where[0];
-        return hit(now.hurt[0]) + ' is hit. ' + (line ? line + '.' : 'No party is free.') + clock;
+        const where = now.watch.map((p, i) => (i ? partyLower(p.id) : partyWord(p.id)) + ' 在' + taskPhrase(p, me));
+        const line = where.length > 1 ? where.slice(0, -1).join('、') + ' 和 ' + where[where.length - 1] : where[0];
+        return hit(now.hurt[0]) + ' 被打中。' + (line ? line + '。' : '没有空闲班组。') + clock;
       },
       until(s) {
         const me = s.byId(ship.id);
@@ -5520,7 +5473,7 @@
     const t = mendTime(secs);
     const p = c.pick;
     const onWatch = p && STATION_WORD[p.task] ? STATION_WORD[p.task] : null;
-    const cost = onWatch ? onWatch + ' drops to ' + pct(T.stationFactor) + ' of its rate while she is away' : '';
+    const cost = onWatch ? onWatch + ' 在她离开时降到 ' + pct(T.stationFactor) + ' 的速率' : '';
     const drive = /^drive/.test(String(part.id || ''));
     const gain = buysPhrase(part, ship);
     // Keeping the burn is the pick when the order is the thing that matters — she is going
@@ -5534,8 +5487,8 @@
       const stop = orderStop(ship.order);
       list.push({
         id: 'cut',
-        label: 'Cut the drive for ' + (t || 'the repair'),
-        detail: [gain, stop ? V.say('we stop ' + stop + ' and coast', V.name + ' stops ' + stop + ' and coasts') : '', cost]
+        label: '关闭推进器 ' + (t || '这次修理'),
+        detail: [gain, stop ? V.say('我们停下' + stop + '，转入滑行', V.name + ' 停下' + stop + '，转入滑行') : '', cost]
           .filter((x) => x).join(' · '),
         recommended: !pressing && c.worth,
         act: (s2) => {
@@ -5545,9 +5498,9 @@
       });
       list.push({
         id: 'keep',
-        label: 'Keep the burn',
+        label: '继续点火',
         detail: staysWords(part, ship, false) +
-          ' · ' + V.say('we hold the order we are flying', V.name + ' holds the order she is flying'),
+          ' · ' + V.say('保持当前指令', V.name + ' 保持当前指令'),
         recommended: pressing || !c.worth,
         quiet: true,
         act: () => holdPart(ship, part.id),
@@ -5555,10 +5508,10 @@
       return list;
     }
     const to = sinkAfterStow(ship, secs);
-    const sink = to != null ? 'the sink fills from ' + pct(loadOf(ship)) + ' to about ' + pct(to) : '';
+    const sink = to != null ? '热沉会从 ' + pct(loadOf(ship)) + ' 涨到约 ' + pct(to) : '';
     list.push({
       id: 'stow',
-      label: 'Stow the panels for ' + (t || 'the repair'),
+      label: '收起散热板 ' + (t || '这次修理'),
       detail: [gain, sink, cost].filter((x) => x).slice(0, 3).join(' · '),
       recommended: !pressing && c.worth,
       act: (s2) => {
@@ -5568,9 +5521,9 @@
     });
     list.push({
       id: 'keep',
-      label: 'Keep them out',
+      label: '保持展开',
       detail: staysWords(part, ship, false) +
-        ' · the radiators stay out and the sink holds at ' + pct(loadOf(ship)),
+        ' · 散热板保持展开，热沉稳定在 ' + pct(loadOf(ship)),
       recommended: pressing || !c.worth,
       quiet: true,
       act: () => holdPart(ship, part.id),
@@ -5594,13 +5547,13 @@
         if (seen[tag]) continue;
         seen[tag] = 1;
         const rest = plan.sent.slice(1);
-        const extra = rest.map((q, k) => partyLower(c.free[k + 1].id) + ' takes ' + partPhrase(q.name, q.id, ship));
-        const tail = extra.concat(waitWords(ship, plan.waits)).filter((x) => x).join(', ');
+        const extra = rest.map((q, k) => partyLower(c.free[k + 1].id) + '去修' + partPhrase(q.name, q.id, ship));
+        const tail = extra.concat(waitWords(ship, plan.waits)).filter((x) => x).join('，');
         const held = blockOf(part);
         list.push({
           id: 'send-' + part.id,
           held: !!held,
-          label: 'Send ' + partyLower(c.free[0].id) + ' to ' + partPhrase(part.name, part.id, ship),
+          label: '派 ' + partyLower(c.free[0].id) + ' 去修' + partPhrase(part.name, part.id, ship),
           // A part that is running takes no time: the work cannot start until the order changes,
           // and a clean repair time for it is a promise the ship will not keep.
           detail: (held ? blockShort(part) : buysClause(part, mendSecs(ship, part), ship)) +
@@ -5625,19 +5578,19 @@
       if (list.length >= 2) break;
       list.push({
         id: 'pull-' + p.id,
-        label: 'Send ' + partyLower(p.id) + ' to ' + partPhrase(part.name, part.id, ship),
-        detail: buysClause(part, secs, ship) + ' · ' + (STATION_WORD[p.task] || 'the watch') +
-          ' drops to ' + pct(T.stationFactor) + ' of its rate while she is away',
+        label: '派 ' + partyLower(p.id) + ' 去修' + partPhrase(part.name, part.id, ship),
+        detail: buysClause(part, secs, ship) + ' · ' + (STATION_WORD[p.task] || '值班') +
+          '在她离开时降到 ' + pct(T.stationFactor) + ' 的速率',
         recommended: p === c.pick && c.worth,
         act: (s) => assignParty(s, ship, p.id, 'repair', part.id),
       });
     }
     list.push({
       id: 'keep',
-      label: 'Keep the parties where they are',
+      label: '班组原地不动',
       detail: staysWords(part, ship, false) + ' · ' + (list.length > 1
-        ? 'both watches stay at ' + pct(1)
-        : (STATION_WORD[c.pick ? c.pick.task : ''] || 'the watch') + ' stays at ' + pct(1)),
+        ? '两个值班都保持 ' + pct(1)
+        : (STATION_WORD[c.pick ? c.pick.task : ''] || '值班') + '保持 ' + pct(1)),
       recommended: !c.worth,
       quiet: true,
       // The refusal holds: the routine leaves that part alone for the minute the card would have
@@ -5684,12 +5637,12 @@
   }
   // A rung's own clauses: what it spends of the tanks, and when it puts us alongside — or, where
   // no honest arrival can be had, what it does to the range instead.
-  const spendWords = (r) => (r && r.budget > 0 ? Math.round(r.dv / 100) / 10 + ' of ' + U.fmt.dv(r.budget) : null);
+  const spendWords = (r) => (r && r.budget > 0 ? Math.round(r.dv / 100) / 10 + '，总共 ' + U.fmt.dv(r.budget) : null);
   function arriveWords(r) {
     if (!r) return null;
-    if (r.dry) return 'the tanks run dry ' + km(r.short) + ' short';
-    if (r.never) return 'at ' + gs(r.a / G0()) + ' she outruns us, and the range opens at ' + spd(-r.closing);
-    return r.secs != null ? 'alongside in ' + time(r.secs) : null;
+    if (r.dry) return '推进剂会烧干，还差 ' + km(r.short);
+    if (r.never) return '在 ' + gs(r.a / G0()) + ' 上她跑得比我们快，距离以 ' + spd(-r.closing) + ' 拉开';
+    return r.secs != null ? '并排靠上要 ' + time(r.secs) : null;
   }
   const rungWords = (r) => [spendWords(r), arriveWords(r)].filter((x) => x);
   const BURNS = { intercept: 1, approach: 1, keeprange: 1 };
@@ -5819,9 +5772,9 @@
   function hurtWords(p, V) {
     // 'every one of the 24 aboard hurt before we are alongside' put 'alongside' on a key that
     // ended with 'alongside in 13m 06s', and said it again in the clause between them.
-    if (p.hurtTotal >= p.fit && p.fit > 0) return 'all ' + p.fit + ' aboard wounded on the way';
-    if (p.hurtTotal > p.hurtRate) return p.hurtTotal + ' of the ' + p.fit + ' aboard wounded on the way';
-    return p.hurtRate + ' wounded a minute at ' + gs(p.gDrive);
+    if (p.hurtTotal >= p.fit && p.fit > 0) return '船上 ' + p.fit + ' 个人在途中全部受伤';
+    if (p.hurtTotal > p.hurtRate) return '船上 ' + p.fit + ' 个人里有 ' + p.hurtTotal + ' 人在途中受伤';
+    return '在 ' + gs(p.gDrive) + ' 上每分钟有 ' + p.hurtRate + ' 人受伤';
   }
   function trigBurn(sim, ship) {
     if (quietHull(ship) || civilian(ship) || ship.ai) return null;
@@ -5843,30 +5796,30 @@
         const me = sm.byId(ship.id) || ship;
         const t = sm.byId(id) || target;
         const p = burnPlan(sm, me, t, crewBoard(me));
-        return p && p.stopped && p.stopped.drive ? 'The order has stopped the repair.' : 'Pick the burn.';
+        return p && p.stopped && p.stopped.drive ? '指令把修理停住了。' : '选一个点火强度。';
       },
       text: (sm, sh, third) => {
         const me = sm.byId(ship.id) || ship;
         const t = sm.byId(id) || target;
         const V = voiceOf(sh || me, third);
         const p = burnPlan(sm, me, t, crewBoard(me));
-        if (!p) return V.say('The order is set.', V.name + '’s order is set.');
+        if (!p) return V.say('指令已经设好。', V.name + ' 的指令已经设好。');
         if (p.stopped && p.stopped.drive) {
-          return partyWord(p.stopped.party) + ' is on ' + partPhrase(p.stopped.name, p.stopped.id, me) +
-            ', and ' + blockShort(p.stopped.row) + '. ' +
-            V.say('The order on ', V.name + '’s order on ') + foeHer(V, t) + ' has the drive lit at ' +
-            gs(p.gDrive) + '.';
+          return partyWord(p.stopped.party) + '在' + partPhrase(p.stopped.name, p.stopped.id, me) +
+            '上，而' + blockShort(p.stopped.row) + '。' +
+            V.say('对 ', V.name + ' 对 ') + foeHer(V, t) + ' 的指令会让推进器以 ' +
+            gs(p.gDrive) + ' 点火。';
         }
-        const head = V.say('The burn on ', V.name + '’s burn on ') + foeHer(V, t) + ' wants ' + gs(p.gDrive) + '. ';
-        if (p.lowMode !== 'work') return head + 'Above ' + gs(p.cw.couchG) + ' the burn starts hurting the crew.';
-        if (p.working) return head + 'Above ' + gs(p.cw.workG) + ' the parties strap in and the repair stops where it is.';
+        const head = V.say('对 ', V.name + ' 对 ') + foeHer(V, t) + ' 的点火需要 ' + gs(p.gDrive) + '。';
+        if (p.lowMode !== 'work') return head + '超过 ' + gs(p.cw.couchG) + '，点火就开始伤到船员。';
+        if (p.working) return head + '超过 ' + gs(p.cw.workG) + '，班组要绑进抗荷座椅，修理停在原地。';
         if (p.parts > 0) {
-          return head + 'Above ' + gs(p.cw.workG) + ' the parties strap in, and ' + count(p.parts) +
-            (p.parts === 1 ? ' part is still hit.' : ' parts are still hit.');
+          return head + '超过 ' + gs(p.cw.workG) + '，班组要绑进抗荷座椅，还有 ' + count(p.parts) +
+            (p.parts === 1 ? ' 个部件没修。' : ' 个部件没修。');
         }
         if (p.wounded > 0) {
-          return head + 'Above ' + gs(p.cw.workG) + ' the parties strap in, and ' + p.wounded +
-            ' aboard are still wounded.';
+          return head + '超过 ' + gs(p.cw.workG) + '，班组要绑进抗荷座椅，船上还有 ' + p.wounded +
+            ' 名伤员。';
         }
         if (p.long) {
           // Nothing aboard is under its cap and nobody is wounded, so 'nothing can be repaired for
@@ -5874,11 +5827,11 @@
           // minutes on a hull whose first damage landed at 2 465 s. What the burn costs here is
           // the propellant and the couches.
           const runs = p.rHigh && !p.rHigh.never && !p.rHigh.dry
-            ? 'It runs ' + time(p.tHigh) + ' above ' + gs(p.cw.workG) + '. '
-            : 'It holds above ' + gs(p.cw.workG) + ' the whole way. ';
-          return head + runs + 'Nothing aboard needs a party. What the burn costs is propellant.';
+            ? '它会在超过 ' + gs(p.cw.workG) + ' 的状态下持续 ' + time(p.tHigh) + '。'
+            : '全程都在 ' + gs(p.cw.workG) + ' 以上。';
+          return head + runs + '船上没有东西需要班组。这次点火花的是推进剂。';
         }
-        return head + 'Nothing is under repair, and the crew is still held to ' + gs(p.cw.workG) + '.';
+        return head + '没有东西在修，船员仍被压在 ' + gs(p.cw.workG) + ' 以内。';
       },
       until(s) {
         const me = s.byId(ship.id), t = s.byId(id);
@@ -5897,7 +5850,7 @@
     const w = p.stopped;
     const secs = w.left != null ? w.left : (w.row ? mendSecs(ship, w.row) : null);
     const t = mendTime(secs);
-    const gain = w.row ? buysPhrase(w.row, ship) : partPhrase(w.name, w.id, ship) + ' back in service';
+    const gain = w.row ? buysPhrase(w.row, ship) : partPhrase(w.name, w.id, ship) + '重新投入使用';
     // Coasting is the answer only when she is not in the fight and the job is shorter than the run
     // in: a corvette with slugs in the air or a hostile in reach is not asked to stop, and a
     // ten-minute job on a four-minute approach is not worth the approach. With a fight to press
@@ -5907,16 +5860,16 @@
     if (p.lowG != null && p.lowG === p.cw.workG && p.tLow != null) {
       list.push({
         id: 'low',
-        label: 'Ease to ' + gs(p.lowG),
-        detail: 'the parties are out of the couches, and ' + partPhrase(w.name, w.id, ship) + ' still cannot be worked' +
+        label: '减到 ' + gs(p.lowG),
+        detail: '班组离开抗荷座椅，但' + partPhrase(w.name, w.id, ship) + '还是不能修' +
           (arriveWords(p.rLow) ? ' · ' + arriveWords(p.rLow) : ''),
         act: () => setGMode(ship, 'work'),
       });
     }
     list.push({
       id: 'cut',
-      label: 'Throttle to 0 for ' + (t || 'the repair'),
-      detail: gain + ' · ' + V.say('we coast while the party works', V.name + ' coasts while the party works'),
+      label: '推力归零 ' + (t || '这次修理'),
+      detail: gain + ' · ' + V.say('我们在班组干活时滑行', V.name + '在班组干活时滑行'),
       recommended: cut,
       // Stopping the ship is the answer that steps out of the fight, so it is the passive one:
       // with a fight to press the card will not light it whatever the mend is worth.
@@ -5925,12 +5878,12 @@
     });
     list.push({
       id: 'press',
-      label: 'Press on',
+      label: '继续进攻',
       // The order stands, so the party cannot start: she comes off the part and back on watch
       // rather than standing by a drive that will be lit for the rest of the run. The key says so,
       // because the watch coming back is what the answer buys.
       detail: staysWords(w.row || { name: w.name, id: w.id, hp: 0 }, ship, false) + ' · ' +
-        partyLower(w.party) + ' comes off ' + partPhrase(w.name, w.id, ship) +
+        partyLower(w.party) + '撤下' + partPhrase(w.name, w.id, ship) +
         (arriveWords(p.rHigh) ? ' · ' + arriveWords(p.rHigh) : ''),
       recommended: !cut,
       act: (s) => { releaseWaiting(s, ship, w.id); },
@@ -5979,17 +5932,17 @@
     const high = [];
     if (crewCost && p.working && p.gDrive > p.cw.workG) {
       high.push(p.paused
-        ? 'the repair on ' + partPhrase(p.paused.name, p.paused.id, ship) + ' holds where it is for ' +
+        ? partPhrase(p.paused.name, p.paused.id, ship) + '上的修理会停在原地，还有 ' +
           (mendTime(p.paused.left) || time(p.paused.left))
-        : 'repairs pause until the burn ends');
+        : '修理要等点火结束才继续');
     } else if (crewCost && p.gDrive > p.cw.workG && p.parts > 0) {
-      high.push('no party can work ' + (p.parts === 1 ? 'the part that is hit' : 'the ' + count(p.parts) + ' parts that are hit') + ' while she burns');
+      high.push('点火期间没有班组能修' + (p.parts === 1 ? '那个被打中的部件' : '那 ' + count(p.parts) + ' 个被打中的部件'));
     }
     if (p.highMode === 'max') high.push(hurtWords(p, V));
-    else if (crewCost && !p.working && !high.length) high.push('the crew straps into the couches, nobody is hurt');
+    else if (crewCost && !p.working && !high.length) high.push('船员绑进抗荷座椅，但没有人受伤');
     // A burn long enough that the couches hold the parties for ten minutes costs the answer to
     // anything that lands on the way. It is said after what the burn costs, not instead of it.
-    if (crewCost && p.long && p.gDrive > p.cw.workG && high.length < 2) high.push('nobody left to answer a hit');
+    if (crewCost && p.long && p.gDrive > p.cw.workG && high.length < 2) high.push('没人手来还击路上的命中');
     // Three clauses is what a key holds, and two of them are the rung's own: what it spends and
     // when it puts us alongside. The arrival is never the one that falls off the end.
     const tail = rungWords(p.rHigh);
@@ -5997,14 +5950,14 @@
     return [
       {
         id: 'low',
-        label: 'Burn at ' + gs(p.lowG),
+        label: '点火，距离 ' + gs(p.lowG),
         // Both rungs print the whole arrival. One of them used to print the difference against
         // the other — 'alongside 1m 20s later' beside 'alongside in 5m 02s' — so the slow rung
         // read as the fast one and a newcomer comparing the two numbers picked backwards.
-        detail: [crewCost ? (p.lowMode !== 'work' ? 'the crew is strapped in and nobody is hurt'
-          : p.working ? 'repairs go on'
-            : p.parts > 0 ? 'the parties can work the ' + (p.parts === 1 ? 'part that is hit' : count(p.parts) + ' parts that are hit')
-              : 'the crew can work through the burn') : '']
+        detail: [crewCost ? (p.lowMode !== 'work' ? '船员绑进抗荷座椅，但没有人受伤'
+          : p.working ? '修理照常进行'
+            : p.parts > 0 ? '班组能修' + (p.parts === 1 ? '那个被打中的部件' : '那 ' + count(p.parts) + ' 个被打中的部件')
+              : '船员能挺过这次点火') : '']
           .concat(rungWords(p.rLow)).filter((x) => x).join(' · '),
         // A rung the tanks cannot pay for is never the pick, whatever it would have bought.
         noRec: !!(p.rLow && p.rLow.dry),
@@ -6014,7 +5967,7 @@
       },
       {
         id: 'high',
-        label: 'Burn at ' + gs(p.gDrive),
+        label: '点火，距离 ' + gs(p.gDrive),
         detail: cost.concat(tail).join(' · '),
         noRec: !!(p.rHigh && p.rHigh.dry),
         never: !!(p.rHigh && p.rHigh.dry),
@@ -6027,12 +5980,12 @@
         // ellipse, not a fight, and 'Hold and fight at this range' offered a fight to nobody.
         // What holding costs is then the clock — the tanker's fall, or the arrival given up.
         // The parties clause is printed only when a party is actually working.
-        label: quiet ? 'Hold this range' : 'Hold and fight at this range',
-        detail: (p.working ? 'no burn, and the parties keep working' : 'no burn') + ' · ' +
-          V.say('we hold at ', V.name + ' holds at ') + rangeSay(p.view) +
-          (quiet && fall != null ? ' · ' + target.name + ' comes down in ' + time(fall) : '') +
+        label: quiet ? '保持这个距离' : '保持距离打一场',
+        detail: (p.working ? '不点火，班组继续干活' : '不点火') + ' · ' +
+          V.say('我们守在 ', V.name + '守在 ') + rangeSay(p.view) +
+          (quiet && fall != null ? ' · ' + target.name + ' 还有 ' + time(fall) + ' 落下来' : '') +
           (quiet && fall == null && p.tHigh != null
-            ? ' · ' + V.say('the burn has us alongside in ', 'the burn has her alongside in ') + time(p.tHigh)
+            ? ' · ' + V.say('这次点火让我们在 ', '这次点火让她在 ') + time(p.tHigh) + ' 并排'
             : ''),
         passive: true,
         burns: true,
@@ -6072,13 +6025,12 @@
     if (!c) return null;
     return {
       target: null,
-      title: 'Put a party in the sick bay?',
+      title: '派班组去医务室？',
       text: (sm, sh, third) => {
         const me = sm.byId(ship.id) || ship;
         const V = voiceOf(sh || me, third);
         const k = (medicalChoice(sm, me) || c).crew;
-        return k.wounded + ' of ' + (V.third ? V.name + '\u2019s ' : 'the ') + k.total + ' aboard ' +
-          (k.wounded === 1 ? 'is' : 'are') + ' wounded, and nobody is in the sick bay.';
+        return k.wounded + ' / ' + (V.third ? V.name : '全船') + ' ' + k.total + ' 人受伤，医务室没人。';
       },
       until(s) {
         const me = s.byId(ship.id);
@@ -6092,7 +6044,7 @@
     if (!c) return null;
     const cw = crewT();
     const k = c.crew;
-    const back = 'one wounded back to fit every ' + time(cw.medic);
+    const back = '每 ' + time(cw.medic) + ' 让一名伤员恢复执勤';
     // Under a third fit, fire control and the sensor watch are already at 70 % whatever the
     // parties do, so putting a party in the sick bay is the only thing that takes that penalty off
     // again. Above the floor the wounded cost the fight nothing a watch at 70 % does not cost
@@ -6103,8 +6055,8 @@
       const p = c.free[0];
       list.push({
         id: 'medic',
-        label: 'Send ' + partyLower(p.id) + ' to the sick bay',
-        detail: back + ' \u00b7 ' + partyLower(p.id) + ' comes off standby',
+        label: '派 ' + partyLower(p.id) + ' 去医务室',
+        detail: back + ' · ' + partyLower(p.id) + ' 从待命中调出',
         recommended: true,
         act: (s) => assignParty(s, ship, p.id, 'medical', null),
       });
@@ -6114,9 +6066,9 @@
         if (list.length >= 2) break;
         list.push({
           id: 'medic-' + p.id,
-          label: 'Send ' + partyLower(p.id) + ' from ' + (STATION_WORD[p.task] || 'watch') + ' to the sick bay',
-          detail: back + ' \u00b7 ' + (STATION_WORD[p.task] || 'the watch') + ' drops to ' +
-            pct(T.stationFactor) + ' of its rate while she is away',
+          label: '派 ' + partyLower(p.id) + ' 从' + (STATION_WORD[p.task] || '值班') + '去医务室',
+          detail: back + ' · ' + (STATION_WORD[p.task] || '值班') + '在她离开时降到 ' +
+            pct(T.stationFactor) + ' 的速率',
           recommended: p === pick && thin,
           act: (s) => assignParty(s, ship, p.id, 'medical', null),
         });
@@ -6124,10 +6076,10 @@
     }
     list.push({
       id: 'later',
-      label: 'Leave the wounded until the fight is over',
-      detail: 'nobody comes back while the parties are where they are \u00b7 ' + k.fit + ' of ' + c.total +
-        ' still fit' + (thin ? ' \u00b7 under a third fit, so fire control and the sensor watch both run at ' +
-          pct(T.stationFactor) : ''),
+      label: '把伤员留到战斗结束',
+      detail: '班组还在原位，所以没人回来 · ' + c.total + ' 人里还有 ' + k.fit +
+        ' 人能执勤' + (thin ? ' · 不到三分之一，火控和传感器值班都只能按 ' +
+          pct(T.stationFactor) + ' 运转' : ''),
       recommended: !c.free.length && !thin,
       quiet: true,
       act: () => { /* the parties stay where they are */ },
@@ -6166,7 +6118,7 @@
     try { if (typeof o.act === 'function') o.act(sim); } catch (e) { /* the bridge does what it can */ }
     if (o.panel) notePanel(sim, d, o.panel);
     // An answer that changes nothing — hold, wait, leave the bays shut — is not a line in the log.
-    if (!o.quiet && typeof sim.addLog === 'function') sim.addLog('Decision: ' + d.title + ' → ' + o.label, 'Bridge', 'good');
+    if (!o.quiet && typeof sim.addLog === 'function') sim.addLog('决策：' + d.title + ' → ' + o.label, 'Bridge', 'good');
     flushSaid(sim);
     close(sim, d, true);
     return true;
@@ -6214,8 +6166,8 @@
     const board = crewBoard(ship);
     const row = board ? board.parts.find((p) => p.id === partId) : null;
     if (!row || !blockOf(row)) return null;
-    if (/^drive/.test(String(partId))) return 'Cut the drive';
-    if (/^rad/.test(String(partId))) return 'Stow the panels';
+    if (/^drive/.test(String(partId))) return '关闭推进器';
+    if (/^rad/.test(String(partId))) return '收起散热板';
     return null;
   }
   function clearAndSend(sim, ship, partId, partyId) {

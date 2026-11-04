@@ -66,13 +66,13 @@
   const BASE_ORDER = ['corvette', 'frigate', 'destroyer', 'cruiser', 'lancer', 'freighter'];
   const GROUPS = ['spinal', 'turret', 'rail', 'bay', 'pd'];
   const LOOK = {
-    tanks: { label: 'Tanks', options: [['auto', 'Yard\'s choice'], ['cluster', 'Clustered'], ['inline', 'In line'], ['saddle', 'Saddle'], ['ring', 'Ring']] },
-    material: { label: 'Tank finish', options: [['auto', 'Yard\'s choice'], ['tank', 'Gold foil'], ['tankSilver', 'Silver foil'], ['tankWhite', 'White paint']] },
-    radiators: { label: 'Radiators', options: [['auto', 'Yard\'s choice'], ['wings', 'Wings'], ['cross', 'Cross'], ['fan', 'Fan']] },
-    nozzles: { label: 'Nozzles', options: [['auto', 'Yard\'s choice'], ['1', 'One'], ['2', 'Two'], ['3', 'Three'], ['4', 'Four']] },
+    tanks: { label: '推进剂箱', options: [['auto', '船坞默认'], ['cluster', '聚集'], ['inline', '一字排开'], ['saddle', '鞍式'], ['ring', '环式']] },
+    material: { label: '箱体外观', options: [['auto', '船坞默认'], ['tank', '金色箔'], ['tankSilver', '银色箔'], ['tankWhite', '白色涂装']] },
+    radiators: { label: '散热板', options: [['auto', '船坞默认'], ['wings', '翼式'], ['cross', '十字式'], ['fan', '扇形']] },
+    nozzles: { label: '喷口', options: [['auto', '船坞默认'], ['1', '一'], ['2', '二'], ['3', '三'], ['4', '四']] },
   };
-  const VIEW_NAME = { blueprint: 'blueprint', threequarter: 'three-quarter', side: 'side', top: 'top' };
-  const GROUP_LABEL = { spinal: 'Spinal', turret: 'Turret', rail: 'Rail', bay: 'Bay', pd: 'Point defence' };
+  const VIEW_NAME = { blueprint: '蓝图', threequarter: '斜视', side: '侧视', top: '俯视' };
+  const GROUP_LABEL = { spinal: '轴射', turret: '炮塔', rail: '轨道', bay: '发射舱', pd: '点防御' };
 
   // ------------------------------------------------------------------ mass, power and heat rules
   // Every fitting has a mass; the sum plus the hull's structure is the dry mass. The structure of each hull family is
@@ -97,23 +97,23 @@
   // are identical in shape to the ones ships.js builds.
   const INTERCEPTOR = { dryMass: 150, propMass: 250, exhaustVelocity: 8000, accel: 60 };
   const CAT = {
-    laser_light:     { kind: 'beam', slots: ['spinal', 'turret'], label: 'Light laser', mountName: 'Laser turret', spinalName: 'Spinal laser', power: 8e6, aperture: 0.8, note: 'The lightest mount. 8 MW on a 0.8 m mirror.' },
-    laser_spinal:    { kind: 'beam', slots: ['spinal'], label: 'Spinal laser', mountName: 'Spinal laser', power: 12e6, aperture: 1.0, note: '12 MW on a 1.0 m mirror, fixed along the nose. The whole ship aims it.' },
-    laser_turret:    { kind: 'beam', slots: ['turret', 'spinal'], label: 'Laser turret', mountName: 'Laser turret', spinalName: 'Spinal laser', power: 10e6, aperture: 0.9, note: 'The standard turret of both navies. 10 MW on a 0.9 m mirror.' },
-    laser_heavy:     { kind: 'beam', slots: ['turret', 'spinal'], label: 'Heavy laser turret', mountName: 'Laser turret', spinalName: 'Spinal laser', power: 15e6, aperture: 1.2, note: 'A 1.2 m mirror, half as much reach again as a 0.8 m one.' },
-    laser_main:      { kind: 'beam', slots: ['turret', 'spinal'], label: 'Main laser', mountName: 'Main laser', spinalName: 'Main laser', power: 25e6, aperture: 1.6, note: 'Cruiser optics. 25 MW from the reactor and 16 MW into the sink while it fires.' },
-    laser_lance:     { kind: 'beam', slots: ['spinal'], label: 'Heavy spinal laser', mountName: 'Spinal laser', power: 30e6, aperture: 2.0, note: 'A 2.0 m mirror, the longest reach in the system. It draws 30 MW on its own.' },
-    coil_std:        { kind: 'coilgun', slots: ['rail'], label: 'Coilgun', mountName: 'Coilgun', mv: 4000, slug: 5, cycle: 6, mag: 90, note: '5 kg slugs at 4 km/s, one every 6 s, 90 in the magazine.' },
-    coil_long:       { kind: 'coilgun', slots: ['rail'], label: 'Coilgun, long', mountName: 'Coilgun', mv: 4000, slug: 8, cycle: 7, mag: 120, note: '8 kg slugs at 4 km/s, one every 7 s, 120 in the magazine.' },
-    coil_heavy:      { kind: 'coilgun', slots: ['rail'], label: 'Heavy coilgun', mountName: 'Heavy coilgun', mv: 4500, slug: 12, cycle: 8, mag: 100, note: 'Destroyer mount. 12 kg at 4.5 km/s, three times the energy of a light slug.' },
-    coil_heavy_long: { kind: 'coilgun', slots: ['rail'], label: 'Heavy coilgun, long', mountName: 'Heavy coilgun', mv: 5000, slug: 20, cycle: 10, mag: 80, note: 'Cruiser mount. 20 kg at 5 km/s, the shortest flight time of any coilgun.' },
-    bay_6:           { kind: 'launcher', slots: ['bay'], label: 'Interceptors ×6', mountName: 'Interceptor bay', count: 6 },
-    bay_12:          { kind: 'launcher', slots: ['bay'], label: 'Interceptors ×12', mountName: 'Interceptor bay', count: 12 },
-    bay_16:          { kind: 'launcher', slots: ['bay'], label: 'Interceptors ×16', mountName: 'Interceptor bay', count: 16 },
-    bay_24:          { kind: 'launcher', slots: ['bay'], label: 'Interceptors ×24', mountName: 'Interceptor bay', count: 24 },
-    pd_std:          { kind: 'pd', slots: ['pd'], label: 'Point-defence laser', mountName: 'Point-defence laser', power: 2e6, aperture: 0.3 },
-    pd_heavy:        { kind: 'pd', slots: ['pd'], label: 'Point-defence laser, heavy', mountName: 'Point-defence laser', power: 2.5e6, aperture: 0.3 },
-    pd_wide:         { kind: 'pd', slots: ['pd'], label: 'Point-defence laser, wide', mountName: 'Point-defence laser', power: 3e6, aperture: 0.35 },
+    laser_light:     { kind: 'beam', slots: ['spinal', 'turret'], label: '轻型激光', mountName: '激光炮塔', spinalName: '轴射激光', power: 8e6, aperture: 0.8, note: '最轻的炮位。0.8 米反射镜，8 兆瓦。' },
+    laser_spinal:    { kind: 'beam', slots: ['spinal'], label: '轴射激光', mountName: '轴射激光', power: 12e6, aperture: 1.0, note: '1.0 米反射镜、12 兆瓦，沿舰首固定安装，靠整艘舰转向来瞄准。' },
+    laser_turret:    { kind: 'beam', slots: ['turret', 'spinal'], label: '激光炮塔', mountName: '激光炮塔', spinalName: '轴射激光', power: 10e6, aperture: 0.9, note: '两方海军的标准炮塔。0.9 米反射镜，10 兆瓦。' },
+    laser_heavy:     { kind: 'beam', slots: ['turret', 'spinal'], label: '重型激光炮塔', mountName: '激光炮塔', spinalName: '轴射激光', power: 15e6, aperture: 1.2, note: '1.2 米反射镜，射程比 0.8 米的远一半。' },
+    laser_main:      { kind: 'beam', slots: ['turret', 'spinal'], label: '主激光', mountName: '主激光', spinalName: '主激光', power: 25e6, aperture: 1.6, note: '巡洋舰级光学。开火时从反应堆取 25 兆瓦，往热沉里灌 16 兆瓦。' },
+    laser_lance:     { kind: 'beam', slots: ['spinal'], label: '重型轴射激光', mountName: '轴射激光', power: 30e6, aperture: 2.0, note: '2.0 米反射镜，全系统射程最远。单门就要 30 兆瓦。' },
+    coil_std:        { kind: 'coilgun', slots: ['rail'], label: '线圈炮', mountName: '线圈炮', mv: 4000, slug: 5, cycle: 6, mag: 90, note: '5 公斤弹丸，初速 4 公里/秒，每 6 秒一发，弹仓 90 发。' },
+    coil_long:       { kind: 'coilgun', slots: ['rail'], label: '加长线圈炮', mountName: '线圈炮', mv: 4000, slug: 8, cycle: 7, mag: 120, note: '8 公斤弹丸，初速 4 公里/秒，每 7 秒一发，弹仓 120 发。' },
+    coil_heavy:      { kind: 'coilgun', slots: ['rail'], label: '重型线圈炮', mountName: '重型线圈炮', mv: 4500, slug: 12, cycle: 8, mag: 100, note: '驱逐舰炮位。12 公斤、4.5 公里/秒，能量是轻型弹丸的三倍。' },
+    coil_heavy_long: { kind: 'coilgun', slots: ['rail'], label: '加长重型线圈炮', mountName: '重型线圈炮', mv: 5000, slug: 20, cycle: 10, mag: 80, note: '巡洋舰炮位。20 公斤、5 公里/秒，是所有线圈炮里飞行时间最短的。' },
+    bay_6:           { kind: 'launcher', slots: ['bay'], label: '拦截弹 ×6', mountName: '拦截弹发射舱', count: 6 },
+    bay_12:          { kind: 'launcher', slots: ['bay'], label: '拦截弹 ×12', mountName: '拦截弹发射舱', count: 12 },
+    bay_16:          { kind: 'launcher', slots: ['bay'], label: '拦截弹 ×16', mountName: '拦截弹发射舱', count: 16 },
+    bay_24:          { kind: 'launcher', slots: ['bay'], label: '拦截弹 ×24', mountName: '拦截弹发射舱', count: 24 },
+    pd_std:          { kind: 'pd', slots: ['pd'], label: '点防御激光', mountName: '点防御激光', power: 2e6, aperture: 0.3 },
+    pd_heavy:        { kind: 'pd', slots: ['pd'], label: '重型点防御激光', mountName: '点防御激光', power: 2.5e6, aperture: 0.3 },
+    pd_wide:         { kind: 'pd', slots: ['pd'], label: '广角点防御激光', mountName: '点防御激光', power: 3e6, aperture: 0.35 },
   };
   for (const id in CAT) CAT[id].id = id;
 
@@ -319,12 +319,12 @@
     const s = d.summary, stock = CLASSES()[d.base];
     const arms = [];
     const n = (k) => d.mounts.filter((m) => m.kind === k).length;
-    if (n('beam')) arms.push(n('beam') + (n('beam') > 1 ? ' lasers' : ' laser'));
-    if (n('coilgun')) arms.push(n('coilgun') + (n('coilgun') > 1 ? ' coilguns' : ' coilgun'));
+    if (n('beam')) arms.push(n('beam') + ' 门激光');
+    if (n('coilgun')) arms.push(n('coilgun') + ' 门线圈炮');
     const ic = d.mounts.filter((m) => m.kind === 'launcher').reduce((a, m) => a + m.count, 0);
-    if (ic) arms.push(ic + ' interceptors');
-    if (n('pd')) arms.push(n('pd') + ' point-defence');
-    return d.params.name + '-class ' + stock.role + ' on the ' + stock.name.split('-')[0] + ' hull. ' + U.fmt.dv(s.dv) + ' of delta-v at ' + s.g.toFixed(2) + ' g full-tank. ' + (arms.length ? arms.join(', ') + '.' : 'Unarmed.');
+    if (ic) arms.push(ic + ' 枚拦截弹');
+    if (n('pd')) arms.push(n('pd') + ' 门点防御');
+    return d.params.name + ' 级' + roleZh(stock.role) + '，基于 ' + stock.name.split('-')[0] + ' 舰体。满箱时 ' + s.g.toFixed(2) + ' g，速度增量 ' + U.fmt.dv(s.dv) + '。' + (arms.length ? arms.join('、') + '。' : '无武装。');
   }
   function cost(d) { return Math.max(5, Math.round(BASES[d.base].cost * Math.pow(d.dryMass / CLASSES()[d.base].dryMass, 0.7))); }
   // range at which a beam's spot is half a metre across (the yard's measure of reach)
@@ -345,7 +345,7 @@
     const fireHeat = d.comps.reduce((a, c) => a + c.heat, 0);
     const draw = d.comps.reduce((a, c) => a + c.draw, 0);
     // Each row runs the sim's own sink law (physics.js sinkForecast: the panels are only as hot as the sink behind
-    // them) from where the row before it leaves the sink, so 'Burn and fire everything' starts at the burn's settle.
+    // them) from where the row before it leaves the sink, so '点火并全武器开火' 从点火开始's settle.
     let startLoad = 0;
     const row = (id, label, heatIn) => {
       const net = heatIn - heatOut;
@@ -362,36 +362,36 @@
       }
       return r;
     };
-    const heat = [row('idle', 'Coasting', d.idleHeat), row('burn', 'Full burn', d.idleHeat + d.driveHeat), row('fight', 'Burn and fire everything', d.idleHeat + d.driveHeat + fireHeat)];
+    const heat = [row('idle', '滑行', d.idleHeat), row('burn', '全力点火', d.idleHeat + d.driveHeat), row('fight', '点火并全武器开火', d.idleHeat + d.driveHeat + fireHeat)];
     const power = { draw, reactor: d.reactorPower, ratio: d.reactorPower > 0 ? draw / d.reactorPower : Infinity };
     const reachRows = [];
     for (const mnt of d.mounts) {
       if (mnt.kind === 'beam') {
         const r = reach(mnt);
-        reachRows.push({ name: mnt.name, kind: 'beam', text: U.fmt.dist(r) + ' before the spot passes 50 cm · ' + U.fmt.power(mnt.power * mnt.efficiency) + ' on target', r });
+        reachRows.push({ name: mnt.name, kind: 'beam', text: U.fmt.dist(r) + ' 内光斑不超过 50 厘米 · 命中 ' + U.fmt.power(mnt.power * mnt.efficiency), r });
       } else if (mnt.kind === 'coilgun') {
         const t200 = P.slugFlightTime(200e3, mnt.muzzleVelocity);
         const jinkR = mnt.muzzleVelocity * Math.sqrt((2 * 60) / 0.5);   // a target jinking at 0.5 m/s² moves a hull length (60 m) in the flight time
-        reachRows.push({ name: mnt.name, kind: 'coilgun', text: U.fmt.time(t200) + ' flight at 200 km · ' + U.fmt.si(0.5 * mnt.slugMass * mnt.muzzleVelocity * mnt.muzzleVelocity, 'J') + ' per slug · a jinking target is safe past ' + U.fmt.dist(jinkR), r: jinkR });
+        reachRows.push({ name: mnt.name, kind: 'coilgun', text: U.fmt.time(t200) + ' 飞到 200 公里 · 每发 ' + U.fmt.si(0.5 * mnt.slugMass * mnt.muzzleVelocity * mnt.muzzleVelocity, 'J') + ' · 规避的目标超过 ' + U.fmt.dist(jinkR) + ' 就打不中', r: jinkR });
       } else if (mnt.kind === 'launcher') {
         const i = mnt.interceptor, idv = P.tsiolkovsky(i.exhaustVelocity, i.dryMass + i.propMass, i.dryMass);
         const tr = P.transferWithBudget(1000e3, i.accel, idv);
-        reachRows.push({ name: mnt.name, kind: 'launcher', text: mnt.count + ' craft · ' + U.fmt.dv(idv) + ' each · 1 000 km in ' + U.fmt.time(tr.time), r: 2500e3 });
+        reachRows.push({ name: mnt.name, kind: 'launcher', text: mnt.count + ' 枚 · 每枚 ' + U.fmt.dv(idv) + ' · 1 000 公里要 ' + U.fmt.time(tr.time), r: 2500e3 });
       } else if (mnt.kind === 'pd') {
-        reachRows.push({ name: mnt.name, kind: 'pd', text: U.fmt.power(mnt.power * mnt.efficiency) + ' against incoming craft', r: 0 });
+        reachRows.push({ name: mnt.name, kind: 'pd', text: U.fmt.power(mnt.power * mnt.efficiency) + '，用来打来袭目标', r: 0 });
       }
     }
     const issues = [];
-    if (power.ratio > 1.0001) issues.push({ level: 'block', id: 'power', text: 'Firing together, the fittings ask ' + U.fmt.power(draw) + ' of a ' + U.fmt.power(d.reactorPower) + ' reactor. Fit a bigger reactor or drop a fitting.' });
-    if (dv < 5000) issues.push({ level: 'warn', id: 'dv', text: 'Only ' + U.fmt.dv(dv) + ' of delta-v. One intercept and the tanks are dry.' });
-    if (accel < 0.05 * g0) issues.push({ level: 'warn', id: 'accel', text: 'Full-tank acceleration is ' + (accel / g0).toFixed(3) + ' g. The ' + U.fmt.dist(DASH) + ' dash takes ' + U.fmt.time(dash.time) + '.' });
+    if (power.ratio > 1.0001) issues.push({ level: 'block', id: 'power', text: '全部一起开火时，附件要 ' + U.fmt.power(draw) + '，而反应堆只有 ' + U.fmt.power(d.reactorPower) + '。换一个大反应堆，或者去掉一个附件。' });
+    if (dv < 5000) issues.push({ level: 'warn', id: 'dv', text: '速度增量只剩 ' + U.fmt.dv(dv) + '。一次拦截就能把推进剂烧干。' });
+    if (accel < 0.05 * g0) issues.push({ level: 'warn', id: 'accel', text: '满箱时的加速度是 ' + (accel / g0).toFixed(3) + ' g。' + U.fmt.dist(DASH) + ' 冲刺要 ' + U.fmt.time(dash.time) + '。' });
     const quarterIn = d.idleHeat + 0.25 * d.driveHeat;   // what the drive makes once the sim has capped it
     if (heat[1].net > 0) {
       const stuck = quarterIn > heatOut;
-      issues.push({ level: heat[1].saturate < 300 || stuck ? 'warn' : 'note', id: 'heat', text: 'Full burn fills the sink in ' + U.fmt.time(heat[1].saturate) + '. The drive then drops to a quarter' + (stuck ? ' and stays there, because a quarter burn still makes more heat than the radiators shed.' : ' and climbs back as the sink drains.') + ' Fix it with more radiator area, a bigger sink or a smaller drive.' });
+      issues.push({ level: heat[1].saturate < 300 || stuck ? 'warn' : 'note', id: 'heat', text: '全力点火会在 ' + U.fmt.time(heat[1].saturate) + '。推进器随后降到四分之一' + (stuck ? '，并停在那里，因为四分之一推力产生的热仍多于散热板能排的。' : '，随着热沉排空再爬回来。') + ' 解决办法：加大散热面积、加大热沉，或者换更小的推进器。' });
     }
-    else if (heat[2].saturate < 120 && d.comps.some((c) => c.heat > 0)) issues.push({ level: 'note', id: 'fight', text: 'Burning while every fitting fires fills the sink in ' + U.fmt.time(heat[2].saturate) + '. Fight coasting, or in short bursts.' });
-    if (!d.mounts.length) issues.push({ level: 'note', id: 'unarmed', text: 'Unarmed. It can still board a hostile that has been stopped.' });
+    else if (heat[2].saturate < 120 && d.comps.some((c) => c.heat > 0)) issues.push({ level: 'note', id: 'fight', text: '一边点火一边全武器开火，热沉会在 ' + U.fmt.time(heat[2].saturate) + ' 内灌满。滑行着打，或者短促点射。' });
+    if (!d.mounts.length) issues.push({ level: 'note', id: 'unarmed', text: '无武装。但仍可登上已经停住的敌舰。' });
     const ic = d.mounts.filter((x) => x.kind === 'launcher').reduce((a, x) => a + x.count, 0);
     return {
       mass: m, dry: d.dryMass, prop: d.propMass, dv, dvStock: P.tsiolkovsky(stock.exhaustVelocity, stock.dryMass + stock.propMass, stock.dryMass),
@@ -420,59 +420,59 @@
     const more = (x, y) => y > x;
     switch (control) {
       case 'prop':
-        return (more(a.prop, b.prop) ? 'More propellant. ' : 'Less propellant. ') + 'Delta-v ' + arrow(U.fmt.dv(a.dv), U.fmt.dv(b.dv)) + '. Full-tank acceleration ' + arrow(fmtG(a.accel), fmtG(b.accel)) + ', hull ' + arrow(a.length + ' m', b.length + ' m') + '. The ' + U.fmt.dist(DASH) + ' dash takes ' + U.fmt.time(b.dash.time) + ', and the tanks pay for ' + (b.dash.count < 1 ? 'less than one of them.' : b.dash.count.toFixed(1) + ' of them.');
+        return (more(a.prop, b.prop) ? '更多推进剂。' : '更少推进剂。') + '速度增量 ' + arrow(U.fmt.dv(a.dv), U.fmt.dv(b.dv)) + '。满箱加速度 ' + arrow(fmtG(a.accel), fmtG(b.accel)) + '，舰体 ' + arrow(a.length + ' 米', b.length + ' 米') + '。跑一次 ' + U.fmt.dist(DASH) + ' 要 ' + U.fmt.time(b.dash.time) + '，花掉 ' + (b.dash.count < 1 ? '不到一箱。' : b.dash.count.toFixed(1) + ' 箱。');
       case 'thrust':
-        return (more(a.accel, b.accel) ? 'A bigger drive. ' : 'A smaller drive. ') + 'Acceleration ' + arrow(fmtG(a.accel), fmtG(b.accel)) + ', so the ' + U.fmt.dist(DASH) + ' dash takes ' + arrow(U.fmt.time(a.dash.time), U.fmt.time(b.dash.time)) + '. It weighs ' + (dMass > 0 ? fmtT(dMass) + ' more' : fmtT(-dMass) + ' less') + ' and its heat goes ' + arrow(U.fmt.power(d0.driveHeat), U.fmt.power(d1.driveHeat)) + '. Delta-v ' + arrow(U.fmt.dv(a.dv), U.fmt.dv(b.dv)) + '.';
+        return (more(a.accel, b.accel) ? '更大的推进器。' : '更小的推进器。') + '加速度 ' + arrow(fmtG(a.accel), fmtG(b.accel)) + '，所以跑一次 ' + U.fmt.dist(DASH) + ' 要 ' + arrow(U.fmt.time(a.dash.time), U.fmt.time(b.dash.time)) + '。重量' + (dMass > 0 ? '多 ' + fmtT(dMass) : '少 ' + fmtT(-dMass)) + '，它的热会 ' + arrow(U.fmt.power(d0.driveHeat), U.fmt.power(d1.driveHeat)) + '。速度增量 ' + arrow(U.fmt.dv(a.dv), U.fmt.dv(b.dv)) + '。';
       case 've':
-        return (more(d0.exhaustVelocity, d1.exhaustVelocity) ? 'Higher exhaust velocity. Every tonne of propellant buys more delta-v, ' : 'Lower exhaust velocity. Every tonne of propellant buys less delta-v, ') + arrow(U.fmt.dv(a.dv), U.fmt.dv(b.dv)) + '. The drive weighs ' + (dMass > 0 ? fmtT(dMass) + ' more' : fmtT(-dMass) + ' less') + ' and its heat goes ' + arrow(U.fmt.power(d0.driveHeat), U.fmt.power(d1.driveHeat)) + '.';
+        return (more(d0.exhaustVelocity, d1.exhaustVelocity) ? '更高的排气速度。每吨推进剂能买到更多速度增量，' : '更低的排气速度。每吨推进剂买到的速度增量更少，') + arrow(U.fmt.dv(a.dv), U.fmt.dv(b.dv)) + '。推进器重' + (dMass > 0 ? '多 ' + fmtT(dMass) : '少 ' + fmtT(-dMass)) + '，它的热会 ' + arrow(U.fmt.power(d0.driveHeat), U.fmt.power(d1.driveHeat)) + '。';
       case 'radiator':
-        return (more(a.heatOut, b.heatOut) ? 'More radiator area. ' : 'Less radiator area. ') + 'Heat shed ' + arrow(U.fmt.power(a.heatOut), U.fmt.power(b.heatOut)) + ', so at full burn the sink ' + heatWord(b.heat[1]) + '. The wings run ' + arrow(Math.round(a.radiatorSpan) + ' m', Math.round(b.radiatorSpan) + ' m') + ' each side and take ' + d1.radiatorDeployTime + ' s to stow. No armour covers them.';
+        return (more(a.heatOut, b.heatOut) ? '更大的散热面积。' : '更小的散热面积。') + '排热量 ' + arrow(U.fmt.power(a.heatOut), U.fmt.power(b.heatOut)) + '，所以全力点火时热沉 ' + heatWord(b.heat[1]) + '。翼板长度 ' + arrow(Math.round(a.radiatorSpan) + ' 米', Math.round(b.radiatorSpan) + ' 米') + ' 每侧，收起要 ' + d1.radiatorDeployTime + ' 秒。没有装甲盖住它们。';
       case 'sink': {
-        const rows = [[a.heat[1], b.heat[1], 'At full burn'], [a.heat[2], b.heat[2], 'With every fitting firing as well,']].filter((r) => r[0].net > 0 || r[1].net > 0);
-        const massClause = dMass > 0 ? fmtT(dMass) + ' more mass' : fmtT(-dMass) + ' saved';
-        if (!rows.length) return 'The radiators keep up at full burn and with every fitting firing, so the sink never fills. This change is ' + massClause + ' and nothing else.';
+        const rows = [[a.heat[1], b.heat[1], '全力点火时'], [a.heat[2], b.heat[2], '所有附件也一起开火时，']].filter((r) => r[0].net > 0 || r[1].net > 0);
+        const massClause = dMass > 0 ? fmtT(dMass) + ' 增重' : fmtT(-dMass) + ' 减重';
+        if (!rows.length) return '散热板在全力点火和全部附件开火时都排得掉，所以热沉不会满。这次改动只是' + massClause + '，别的什么都没变。';
         // one sentence per case: "At full burn it lasts 3m 12s → 8m 46s. With every fitting firing as well, it is full from the start."
         const span = (r) => {
           const label = r[2];
-          if (r[1].saturate < 1) return label + ' it is full from the start.';
+          if (r[1].saturate < 1) return label + '，它一开始就是满的。';
           const x = satWord(r[0]), y = satWord(r[1]);
-          return label + (x === y ? ' it still lasts ' + y : ' it lasts ' + x + ' \u2192 ' + y) + '.';
+          return label + (x === y ? '，它还能撑 ' + y : '它能撑 ' + x + ' \u2192 ' + y) + '。';
         };
-        return (more(d0.sinkCapacity, d1.sinkCapacity) ? 'A bigger heat sink holds out longer before the drive is capped. ' : 'A smaller heat sink fills sooner. ') + rows.map(span).join(' ') + ' That is ' + massClause + '.';
+        return (more(d0.sinkCapacity, d1.sinkCapacity) ? '更大的热沉能撑更久才压住推进器。' : '更小的热沉满得更快。') + rows.map(span).join(' ') + '这就是' + massClause + '。';
       }
       case 'reactor':
-        return (more(d0.reactorPower, d1.reactorPower) ? 'A bigger reactor. ' : 'A smaller reactor. ') + U.fmt.power(d1.reactorPower) + ' against the ' + U.fmt.power(b.power.draw) + ' the fittings ask for, ' + Math.round(b.power.ratio * 100) + ' % of it. Idle heat ' + arrow(U.fmt.power(d0.idleHeat), U.fmt.power(d1.idleHeat)) + '. That is ' + (dMass > 0 ? fmtT(dMass) + ' more mass.' : fmtT(-dMass) + ' saved.');
+        return (more(d0.reactorPower, d1.reactorPower) ? '更大的反应堆。' : '更小的反应堆。') + U.fmt.power(d1.reactorPower) + '，而附件要 ' + U.fmt.power(b.power.draw) + '，占它的 ' + Math.round(b.power.ratio * 100) + ' %。怠速产热 ' + arrow(U.fmt.power(d0.idleHeat), U.fmt.power(d1.idleHeat)) + '。这就是' + (dMass > 0 ? fmtT(dMass) + ' 增重。' : fmtT(-dMass) + ' 减重。');
       case 'nose': case 'flank': case 'tail': {
         const f = control;
-        return facingName(f) + ' armour ' + arrow(d0.armour[f] + ' cm', d1.armour[f] + ' cm') + (dMass > 0 ? ' adds ' + fmtT(dMass) : ' saves ' + fmtT(-dMass)) + '. ' + facingWhy(f) + ' Delta-v ' + arrow(U.fmt.dv(a.dv), U.fmt.dv(b.dv)) + ', acceleration ' + arrow(fmtG(a.accel), fmtG(b.accel)) + '.';
+        return facingName(f) + '装甲 ' + arrow(d0.armour[f] + ' 厘米', d1.armour[f] + ' 厘米') + (dMass > 0 ? '，增重 ' + fmtT(dMass) : '，减重 ' + fmtT(-dMass)) + '。' + facingWhy(f) + '速度增量 ' + arrow(U.fmt.dv(a.dv), U.fmt.dv(b.dv)) + '，加速度 ' + arrow(fmtG(a.accel), fmtG(b.accel)) + '。';
       }
       case 'base':
-        return 'Hull: ' + CLASSES()[d1.base].name + '. ' + CLASSES()[d1.base].blurb + ' The stock fit is loaded. Change anything.';
+        return '舰体：' + CLASSES()[d1.base].name + '。' + CLASSES()[d1.base].blurb + ' 标准配置已经装好，随便改。';
       case 'look':
-        return 'A change of look. The drawing changes and no number moves. Still ' + U.fmt.dv(b.dv) + ' at ' + fmtG(b.accel) + ', ' + fmtT(b.mass) + ' loaded.';
+        return '换个样子。图会变，数字一个都不动。仍然是 ' + U.fmt.dv(b.dv) + '，' + fmtG(b.accel) + '，载重 ' + fmtT(b.mass) + '。';
       case 'preset':
-        return 'Back to the stock ' + CLASSES()[d1.base].name + '. ' + U.fmt.dv(b.dv) + ' at ' + fmtG(b.accel) + ', ' + fmtT(b.mass) + ' loaded.';
+        return '换回标准 ' + CLASSES()[d1.base].name + '。' + U.fmt.dv(b.dv) + '，' + fmtG(b.accel) + '，载重 ' + fmtT(b.mass) + '。';
       default: {
         if (control && control.indexOf('slot:') === 0) {
           const added = d1.comps.filter((c) => !d0.comps.some((o) => o.key === c.key && o.catId === c.catId));
           const removed = d0.comps.filter((c) => !d1.comps.some((o) => o.key === c.key && o.catId === c.catId));
           const parts = [];
-          for (const c of added) parts.push(c.label + ' fitted: ' + fmtT(c.mass) + (c.draw ? ', draws ' + U.fmt.power(c.draw) : '') + (c.heat ? ', ' + U.fmt.power(c.heat) + ' of heat when firing' : '') + '.');
-          for (const c of removed) parts.push(c.label + ' removed: ' + fmtT(c.mass) + ' lighter.');
-          parts.push('The fittings now draw ' + Math.round(b.power.ratio * 100) + ' % of the reactor' + (b.power.ratio > 1 ? ', more than it can give' : '') + '. Delta-v ' + arrow(U.fmt.dv(a.dv), U.fmt.dv(b.dv)) + '.');
+          for (const c of added) parts.push(c.label + ' 装上：' + fmtT(c.mass) + (c.draw ? '，用电 ' + U.fmt.power(c.draw) : '') + (c.heat ? '，开火时产热 ' + U.fmt.power(c.heat) : '') + '。');
+          for (const c of removed) parts.push(c.label + ' 拆掉：' + fmtT(c.mass) + ' 更轻。');
+          parts.push('附件现在用掉 ' + Math.round(b.power.ratio * 100) + ' % 的反应堆功率' + (b.power.ratio > 1 ? '，超过它能给的' : '') + '. Delta-v ' + arrow(U.fmt.dv(a.dv), U.fmt.dv(b.dv)) + '.');
           return parts.join(' ');
         }
-        return 'Delta-v ' + U.fmt.dv(b.dv) + ', ' + fmtG(b.accel) + ' full-tank, ' + fmtT(b.mass) + ' loaded.';
+        return '速度增量 ' + U.fmt.dv(b.dv) + '，满箱加速度 ' + fmtG(b.accel) + '，满载质量 ' + fmtT(b.mass) + '。';
       }
     }
   }
-  function heatWord(h) { return h.net <= 0 ? 'never fills' : 'fills in ' + U.fmt.time(h.saturate); }
-  function satWord(h) { return h.net <= 0 ? 'indefinitely' : U.fmt.time(h.saturate); }
-  function facingName(f) { return f === 'nose' ? 'Nose' : f === 'flank' ? 'Flank' : 'Tail'; }
+  function heatWord(h) { return h.net <= 0 ? '不会满' : U.fmt.time(h.saturate) + ' 后满'; }
+  function satWord(h) { return h.net <= 0 ? '可以一直撑' : U.fmt.time(h.saturate); }
+  function facingName(f) { return f === 'nose' ? '舰首' : f === 'flank' ? '舷侧' : '舰尾'; }
   function facingWhy(f) {
-    if (f === 'nose') return 'The enemy sees the nose while you close on her or hold range nose-on.';
-    if (f === 'flank') return 'The flank is the largest face, and a turn shows it. Most of the armour mass goes here.';
-    return 'The tail carries the drive. It faces the enemy while you brake toward her or run from her.';
+    if (f === 'nose') return '接近或舰首对正保持距离时，敌人看到的是舰首。';
+    if (f === 'flank') return '舷侧是最大的一面，一转向就露出来。大部分装甲重量都花在这里。';
+    return '舰尾装着推进器。朝敌人反推或者从她面前逃跑时，这一面正对着她。';
   }
 
   // ------------------------------------------------------------------ persistence
@@ -551,15 +551,15 @@
       const mine = sc.ships.find((s) => s.player);
       sc.ships = sc.ships.filter((s) => !s.player || s === mine);
       Object.assign(mine, { cls: design.id, name: shipName(design, faction), id: 'yard_' + design.id });
-      sc.name = 'Trial · ' + design.name;
-      sc.intro = [{ speaker: 'Yard', text: design.name + ' on trial. ' + U.fmt.dv(design.summary.dv) + ' in the tanks, ' + design.summary.g.toFixed(2) + ' g. ' + (Object.keys(enemy).map((k) => enemy[k] + ' ' + k).join(', ')) + ' inbound at ' + U.fmt.dist((o.range || 1200) * 1e3) + '.', kind: 'info' }];
+      sc.name = '试飞 · ' + design.name;
+      sc.intro = [{ speaker: 'Yard', text: design.name + ' 出坞试飞。推进剂箱里有 ' + U.fmt.dv(design.summary.dv) + '，加速度 ' + design.summary.g.toFixed(2) + ' g。' + (Object.keys(enemy).map((k) => enemy[k] + ' ' + roleZh(k)).join('、')) + ' 正从 ' + U.fmt.dist((o.range || 1200) * 1e3) + ' 外过来。', kind: 'info' }];
       return sc;
     }
     // without the skirmish module: a bare deep-space scenario
     const ships = [Object.assign(toSpec(design, { faction }), { pos: { x: -600e3, y: 0 }, vel: { x: 0, y: 0 }, heading: 0, id: 'yard_' + design.id })];
     let k = 0;
     for (const cls in enemy) for (let i = 0; i < enemy[cls]; i++) ships.push({ id: 'foe' + k++, cls, faction: enemyFaction, ai: true, pos: { x: 600e3, y: k * 60e3 }, vel: { x: 0, y: 0 }, heading: Math.PI });
-    return { name: 'Trial · ' + design.name, body: null, sunAngle: 0.8, playerFaction: faction, ships, objectives: [{ id: 'n', text: 'Neutralise all hostile ships', type: 'neutralize', targets: 'hostiles' }], triggers: [] };
+    return { name: 'Trial · ' + design.name, body: null, sunAngle: 0.8, playerFaction: faction, ships, objectives: [{ id: 'n', text: '使所有敌舰失能', type: 'neutralize', targets: 'hostiles' }], triggers: [] };
   }
 
   // ------------------------------------------------------------------ test flight in the real sim
@@ -569,7 +569,7 @@
     seconds = seconds || 600;
     register(design);
     const spec = toSpec(design, { id: 'tf', pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 }, heading: 0, order: { type: 'manual', heading: 0, throttle: 1 } });
-    const sim = new OD.Sim({ name: 'Test flight', body: null, playerFaction: 'JC', ships: [spec], objectives: [] });
+    const sim = new OD.Sim({ name: '试飞', body: null, playerFaction: 'JC', ships: [spec], objectives: [] });
     const ship = sim.byId('tf');
     const mdot = design.thrust / design.exhaustVelocity;
     const m0 = design.dryMass + design.propMass;
@@ -751,31 +751,31 @@
 `;
 
   const TIPS = {
-    odc_thrust: { title: 'Drive thrust', body: 'How hard the drive pushes, in newtons. Acceleration is thrust over mass, so a bigger drive shortens every transfer. It also adds mass, and it puts more heat into the sink for every second it burns.', formula: 'a = F / m' },
-    odc_ve: { title: 'Exhaust velocity', body: 'How fast the drive throws propellant out the back. Double it and the same tanks buy twice the delta-v. The drive mass goes up with its square.', formula: 'Δv = vₑ · ln(m₀ / m₁)' },
-    odc_prop: { title: 'Propellant', body: 'Reaction mass in the tanks. Delta-v grows with the logarithm of the mass ratio, so doubling the propellant adds far less than double. The acceleration falls straight away, because the ship has to push the extra mass.', formula: 'Δv = vₑ · ln((m_dry + m_prop) / m_dry)' },
-    odc_radiator: { title: 'Radiator area', body: 'Heat leaves the ship only by radiating it. A square metre sheds about 100 kW from both faces at 1000 K, the warship standard. The freighter hull runs its panels at 900 K and sheds two-thirds of that. No armour covers a radiator, so more area means steadier heat and more to shoot at.', formula: 'P = 2 · A · ε · σ · T⁴' },
-    odc_sink: { title: 'Heat sink', body: 'A store of heat the ship can fill faster than the radiators empty it. A full sink holds the drive to a quarter and stops every mount, point defence included, until it drains. A bigger sink is more mass.', formula: 'time to full = (0.9 · capacity) / (heat in − heat out)' },
-    odc_reactor: { title: 'Reactor', body: 'Electrical power for lasers, coilguns and point defence. Fittings that fire together draw together, so the reactor has to cover the sum. Idle heat goes up with reactor size.' },
-    odc_armour: { title: 'Facing armour', body: 'Armour is rated in centimetres of plate on each face. A beam burns through it and a slug punches through it. The mass is thickness times the area of the face, and the flank is the largest face by far.' },
-    odc_fittings: { title: 'Fittings', body: 'Hardpoints on the hull. A spinal mount aims with the whole ship and takes the biggest optics. A turret swings. Rails carry coilguns, bays carry interceptors, and point defence shoots at incoming craft.' },
-    odc_dv: { title: 'Delta-v', body: 'The total change in velocity a full load of propellant buys. Every burn spends it, and only a port or a depot puts it back. The Moving rows show what one 10 000 km dash costs.', formula: 'Δv = vₑ · ln(m₀ / m₁)' },
-    odc_accel: { title: 'Acceleration', body: 'Thrust over mass with full tanks, and again with empty ones. Transfer time goes with one over the square root of it, so four times the acceleration halves the trip.', formula: 't = 2 · √(d / a)' },
-    odc_mass: { title: 'Loaded mass', body: 'Dry mass plus propellant. The dry mass is what the drive still has to push once the tanks are empty. The stacked bar shows where it goes.' },
-    odc_cost: { title: 'Requisition', body: 'What a yard charges for the hull, on the campaign scale where a stock frigate is 70. It follows the dry mass to the power 0.7, so a big hull costs less per tonne.' },
-    odc_massbar: { title: 'Mass budget', body: 'Where the dry mass goes. Structure is the hull, crew and systems every ship of the family carries. The rest is what you chose, and propellant is shown for scale.' },
-    odc_power: { title: 'Power budget', body: 'What every fitting draws when firing together, against the reactor. Past 100 % the design is not flight-ready.' },
-    odc_heat: { title: 'Heat balance', body: 'Heat in against heat out in three states: coasting on idle heat, full burn, and full burn while every fitting fires. It uses the same balance the ship flies with. "Sink full" is how long until the drive is capped.' },
-    odc_dash: { title: 'Reference dash', body: 'A 10 000 km burn-flip-burn at full-tank acceleration: the time, the delta-v and how many the tanks hold. A real transfer costs more, because the target is moving.', formula: 't = 2·√(d / a),  Δv = 2·√(d · a)' },
-    odc_turn: { title: 'Turn time', body: 'Seconds to swing the nose through 180°: accelerate, cruise at the turn-rate limit, then brake. A heavy hull turns slowly, and every flip in a transfer costs this much coasting.' },
-    odc_reach: { title: 'Reach', body: 'For a laser, the range where diffraction spreads the spot past half a metre. For a coilgun, the slug flight time and how far out a jinking target can still be hit. For a bay, what one interceptor can do on its own delta-v.', formula: 'spot = 2.44 · λ · R / D' },
-    odc_facing: { title: 'Facing', body: 'Which face the enemy sees depends on what the ship is doing: the nose while closing or holding range, the flank while turning, the tail while braking toward her. Thicken the face you plan to show.' },
-    odc_compare: { title: 'Against the stock hull', body: 'The same numbers for the hull family\'s stock fit. Read across to see what your choices bought and what they cost.' },
-    odc_view: { title: 'Views', body: 'Blueprint is the yard\'s own drawing, every part to scale and labelled. The rendered views show the hull as it looks on the map and in the hull view.' },
-    odc_state: { title: 'Show it', body: 'Pose the picture. Radiators out or stowed, the drive lit, the sink at any load to see the panels glow, and the camera in slow orbit.' },
-    odc_look: { title: 'Look', body: 'How the yard draws the ship: tank arrangement and finish, radiator layout, number of nozzles. None of it changes a number.' },
-    odc_preset: { title: 'Stock fit', body: 'Reload the hull family\'s stock design. Every stock ship in the story and the campaign is exactly one of these.' },
-    odc_fly: { title: 'Fly this design', body: 'Save it and take it out against a matched opponent in deep space. The ship you fly is built from exactly these numbers.' },
+    odc_thrust: { title: '推进器推力', body: '推进器推得多用力，单位是牛顿。加速度是推力除以质量，所以推进器越大，每次转移越短。但它也增加质量，而且每点火一秒就往热沉里多灌一份热。', formula: 'a = F / m' },
+    odc_ve: { title: '排气速度', body: '推进器把推进剂往后甩的速度。翻一倍，同样的箱子就能买到两倍的速度增量。推进器质量随它的平方增长。', formula: 'Δv = vₑ · ln(m₀ / m₁)' },
+    odc_prop: { title: '推进剂', body: '箱里的反应质量。速度增量随质量比的对数增长，所以推进剂翻倍，增加的量远不到一倍。加速度会立刻下降，因为船得推着多出来的质量走。', formula: 'Δv = vₑ · ln((m_dry + m_prop) / m_dry)' },
+    odc_radiator: { title: '散热面积', body: '热只能靠辐射离开舰体。在 1000 K 下，一平方米两面加起来大约排 100 千瓦，这是军舰的标准。货船舰体的板子只跑 900 K，排量只有三分之二。散热板没有装甲盖着，面积越大热越稳，也越好打。', formula: 'P = 2 · A · ε · σ · T⁴' },
+    odc_sink: { title: '热沉', body: '一个存热的容器，船往里灌热的速度可以比散热板排得快。热沉满了，推进器只剩四分之一，所有炮位停火——包括点防御——直到它排空。热沉越大，质量越大。', formula: '充满时间 = (0.9 · 容量) / (进热 − 出热)' },
+    odc_reactor: { title: '反应堆', body: '给激光、线圈炮和点防御供电。一起开火的部件一起取电，所以反应堆要盖住总和。反应堆越大，待机产热越高。' },
+    odc_armour: { title: '各面装甲', body: '装甲按每一面的钢板厘米数计。光束靠烧，弹丸靠撞。重量是厚度乘以那一面的面积，而舷侧是面积最大的一面。' },
+    odc_fittings: { title: '部件', body: '舰体上的挂点。轴射炮位靠整艘舰瞄准，能装最大的光学；炮塔可以转；轨道装线圈炮，发射舱装拦截弹，点防御打来袭的飞行器。' },
+    odc_dv: { title: '速度增量', body: '装满一箱推进剂能买到的总速度变化。每次点火都要花，只有港口或补给站能补回来。下面“机动”那几行写的是一次 10 000 公里冲刺的代价。', formula: 'Δv = vₑ · ln(m₀ / m₁)' },
+    odc_accel: { title: '加速度', body: '满箱时的推力除以质量，再算一次空箱的。转移时间与它的平方根成反比，所以加速度翻四倍，路上时间减半。', formula: 't = 2 · √(d / a)' },
+    odc_mass: { title: '满载质量', body: '干重加推进剂。干重是箱子空了以后推进器还得推的那部分。堆叠条显示它花在哪里。' },
+    odc_cost: { title: '征用点', body: '船坞为这型舰体开的价格，按战役的尺度算，一艘标准护卫舰是 70。它随干重的 0.7 次方增长，所以大舰体每吨更便宜。' },
+    odc_massbar: { title: '质量预算', body: '干重花在哪里。结构是这一族舰体都有的壳体、乘员和系统。其余是你选的，推进剂按比例画出来作参考。' },
+    odc_power: { title: '功率预算', body: '所有部件一起开火时取多少电，对比反应堆。超过 100 % 这个设计就还不能飞。' },
+    odc_heat: { title: '热平衡', body: '三种状态下的进热与出热：带待机热滑行、全力点火、以及全力点火同时所有部件开火。用的是舰船实际飞行时那套账。“热沉充满”是到推进器被压住还有多久。' },
+    odc_dash: { title: '参考基准', body: '以满箱加速度跑一次 10 000 公里的点火-掉头-反推：用时、速度增量，以及箱子够跑几次。真实转移更贵，因为目标在动。', formula: 't = 2·√(d / a),  Δv = 2·√(d · a)' },
+    odc_turn: { title: '转向时间', body: '把舰首转过 180° 要几秒：加速转、按角速度上限匀速转、再刹住。重的舰体转得慢，转移中每次掉头都要花这么多滑行时间。' },
+    odc_reach: { title: '射程', body: '对激光来说是衍射把光斑摊到半米以上的距离。对线圈炮来说是弹丸飞行时间，以及规避中的目标在多远处还能打中。对发射舱来说是一枚拦截弹靠自己的速度增量能做什么。', formula: 'spot = 2.44 · λ · R / D' },
+    odc_facing: { title: '受弹面', body: '敌人看到哪一面，取决于船在做什么：接近或保持距离时是舰首，转向时是舷侧，朝她反推时是舰尾。你打算露哪一面，就把哪一面加厚。' },
+    odc_compare: { title: '对比标准舰体', body: '同一族舰体标准配置的同样数字。横着读，就能看出你的选择买到了什么、花了什么。' },
+    odc_view: { title: '视图', body: '蓝图是船坞自己的图，每个部件按比例画、带标注。渲染视图显示的是它在地图和舰体视图里的样子。' },
+    odc_state: { title: '摆姿势', body: '摆出画面状态：散热板展开或收起、推进器点着、热沉任意负载看板子发亮，以及镜头缓慢环绕。' },
+    odc_look: { title: '外观', body: '船坞怎么画这艘船：推进剂箱的排布和外观、散热板形式、喷口数量。一个数字都不改。' },
+    odc_preset: { title: '标准配置', body: '重新载入这一族舰体的标准设计。剧情和战役里每一艘标准舰都是其中之一。' },
+    odc_fly: { title: '试飞这个设计', body: '保存它，带到深空里跟一个同等级的对手打一场。你飞的那艘船就是按这些数字造的。' },
   };
 
   let styleInjected = false;
@@ -807,23 +807,24 @@
 
   // ------------------------------------------------------------------ controls table
   const CONTROLS = [
-    { id: 'thrust', sec: 'drive', label: 'Thrust', tip: 'odc_thrust', rel: 'thrust', min: 0.3, max: 2.5, step: 0.05, get: (p) => p.thrust, set: (p, v) => { p.thrust = v; }, fmt: (v) => U.fmt.si(v, 'N') },
-    { id: 've', sec: 'drive', adv: true, label: 'Exhaust vel.', tip: 'odc_ve', min: 35e3, max: 70e3, step: 1e3, get: (p) => p.ve, set: (p, v) => { p.ve = v; }, fmt: (v) => U.fmt.num(v / 1e3, 3) + ' km/s' },
-    { id: 'prop', sec: 'prop', label: 'Propellant', tip: 'odc_prop', rel: 'propMass', min: 0.2, max: 2.5, step: 0.05, get: (p) => p.prop, set: (p, v) => { p.prop = v; }, fmt: (v) => U.fmt.mass(v) },
-    { id: 'radiator', sec: 'heat', label: 'Radiators', tip: 'odc_radiator', rel: 'radiatorArea', min: 0.25, max: 3, step: 0.05, get: (p) => p.radiator, set: (p, v) => { p.radiator = v; }, fmt: (v) => U.fmt.num(v, 3) + ' m²' },
-    { id: 'sink', sec: 'heat', adv: true, label: 'Heat sink', tip: 'odc_sink', rel: 'sinkCapacity', min: 0.5, max: 3, step: 0.05, get: (p) => p.sink, set: (p, v) => { p.sink = v; }, fmt: (v) => U.fmt.energy(v) },
-    { id: 'reactor', sec: 'heat', label: 'Reactor', tip: 'odc_reactor', rel: 'reactorPower', min: 0.5, max: 3, step: 0.05, get: (p) => p.reactor, set: (p, v) => { p.reactor = v; }, fmt: (v) => U.fmt.power(v) },
-    { id: 'nose', sec: 'armour', label: 'Nose', tip: 'odc_armour', min: 0, max: (s) => Math.max(6, s.armour.nose * 3), step: 1, get: (p) => p.armour.nose, set: (p, v) => { p.armour.nose = v; }, fmt: (v) => v + ' cm' },
-    { id: 'flank', sec: 'armour', label: 'Flank', tip: 'odc_armour', min: 0, max: (s) => Math.max(6, s.armour.flank * 3), step: 1, get: (p) => p.armour.flank, set: (p, v) => { p.armour.flank = v; }, fmt: (v) => v + ' cm' },
-    { id: 'tail', sec: 'armour', label: 'Tail', tip: 'odc_armour', min: 0, max: (s) => Math.max(6, s.armour.tail * 3), step: 1, get: (p) => p.armour.tail, set: (p, v) => { p.armour.tail = v; }, fmt: (v) => v + ' cm' },
+    { id: 'thrust', sec: 'drive', label: '推力', tip: 'odc_thrust', rel: 'thrust', min: 0.3, max: 2.5, step: 0.05, get: (p) => p.thrust, set: (p, v) => { p.thrust = v; }, fmt: (v) => U.fmt.si(v, 'N') },
+    { id: 've', sec: 'drive', adv: true, label: '排气速度', tip: 'odc_ve', min: 35e3, max: 70e3, step: 1e3, get: (p) => p.ve, set: (p, v) => { p.ve = v; }, fmt: (v) => U.fmt.num(v / 1e3, 3) + ' km/s' },
+    { id: 'prop', sec: 'prop', label: '推进剂', tip: 'odc_prop', rel: 'propMass', min: 0.2, max: 2.5, step: 0.05, get: (p) => p.prop, set: (p, v) => { p.prop = v; }, fmt: (v) => U.fmt.mass(v) },
+    { id: 'radiator', sec: 'heat', label: '散热板', tip: 'odc_radiator', rel: 'radiatorArea', min: 0.25, max: 3, step: 0.05, get: (p) => p.radiator, set: (p, v) => { p.radiator = v; }, fmt: (v) => U.fmt.num(v, 3) + ' m²' },
+    { id: 'sink', sec: 'heat', adv: true, label: '热沉', tip: 'odc_sink', rel: 'sinkCapacity', min: 0.5, max: 3, step: 0.05, get: (p) => p.sink, set: (p, v) => { p.sink = v; }, fmt: (v) => U.fmt.energy(v) },
+    { id: 'reactor', sec: 'heat', label: '反应堆', tip: 'odc_reactor', rel: 'reactorPower', min: 0.5, max: 3, step: 0.05, get: (p) => p.reactor, set: (p, v) => { p.reactor = v; }, fmt: (v) => U.fmt.power(v) },
+    { id: 'nose', sec: 'armour', label: '舰首', tip: 'odc_armour', min: 0, max: (s) => Math.max(6, s.armour.nose * 3), step: 1, get: (p) => p.armour.nose, set: (p, v) => { p.armour.nose = v; }, fmt: (v) => v + ' cm' },
+    { id: 'flank', sec: 'armour', label: '舷侧', tip: 'odc_armour', min: 0, max: (s) => Math.max(6, s.armour.flank * 3), step: 1, get: (p) => p.armour.flank, set: (p, v) => { p.armour.flank = v; }, fmt: (v) => v + ' cm' },
+    { id: 'tail', sec: 'armour', label: '舰尾', tip: 'odc_armour', min: 0, max: (s) => Math.max(6, s.armour.tail * 3), step: 1, get: (p) => p.armour.tail, set: (p, v) => { p.armour.tail = v; }, fmt: (v) => v + ' cm' },
   ];  const SECTIONS = [
-    { id: 'drive', title: 'Drive', tip: 'odc_thrust' },
-    { id: 'prop', title: 'Propellant', tip: 'odc_prop' },
-    { id: 'heat', title: 'Heat and power', tip: 'odc_heat' },
-    { id: 'armour', title: 'Armour', tip: 'odc_armour' },
+    { id: 'drive', title: '推进器', tip: 'odc_thrust' },
+    { id: 'prop', title: '推进剂', tip: 'odc_prop' },
+    { id: 'heat', title: '热量与功率', tip: 'odc_heat' },
+    { id: 'armour', title: '装甲', tip: 'odc_armour' },
   ];
   const MASS_COLORS = { structure: '#6f7f93', armour: '#9aa5b4', sink: '#3f80d8', radiators: '#c8503c', drive: '#f0a04b', reactor: '#8f7ce6', mounts: '#4fd1c5', tankage: '#8b7a4a', propellant: '#d9b45a' };
-  const MASS_LABEL = { structure: 'Structure', armour: 'Armour', sink: 'Heat sink', radiators: 'Radiators', drive: 'Drive', reactor: 'Reactor', mounts: 'Fittings', tankage: 'Tankage', propellant: 'Propellant' };
+  const MASS_LABEL = { structure: '结构', armour: '装甲', sink: '热沉', radiators: '散热板', drive: '推进器', reactor: '反应堆', mounts: '部件', tankage: '箱体', propellant: '推进剂' };
+  const roleZh = (role) => (OD.Ships && typeof OD.Ships.roleName === 'function' ? OD.Ships.roleName({ role }) : (role || ''));
 
   // ------------------------------------------------------------------ blueprint drawing
   function cssVar(el, name, fallback) { const v = getComputedStyle(el).getPropertyValue(name).trim(); return v || fallback; }
@@ -989,7 +990,7 @@
         } else if (c.group === 'pd') {
           const f = (pi + 0.5) / pdN, x = ly.tank.x0 + (ly.nose.x0 - ly.tank.x0) * f, side = pi % 2 === 0 ? 1 : -1, y = side * ly.b * 0.5;
           ctx.fillStyle = warn; ctx.beginPath(); ctx.moveTo(X(x), Y(y) - 4); ctx.lineTo(X(x) + 4, Y(y)); ctx.lineTo(X(x), Y(y) + 4); ctx.lineTo(X(x) - 4, Y(y)); ctx.closePath(); ctx.fill();
-          if (pi === pdN - 1) marks.push({ x, y, side, text: 'Point defence' + (pdN > 1 ? ' ×' + pdN : ''), kind: 'fit' });
+          if (pi === pdN - 1) marks.push({ x, y, side, text: '点防御' + (pdN > 1 ? ' ×' + pdN : ''), kind: 'fit' });
           pi++;
         }
       }
@@ -1014,12 +1015,12 @@
       keyOut = marks.map((m, i) => (i + 1) + ' ' + m.text);
       // parts: one row above the ship, one below, spaced left to right
       const parts = [
-        { x: (ly.drive.x0 + ly.drive.x1) / 2, y: ly.nozzleExit * 0.9, side: 1, text: 'Drive ' + U.fmt.si(d.thrust, 'N') + ' · ' + U.fmt.num(d.exhaustVelocity / 1e3, 3) + ' km/s' },
-        { x: (ly.rad.x0 + ly.rad.x1) / 2, y: ly.b * 0.5 + spanShown, side: 1, text: 'Radiators ' + U.fmt.num(d.radiatorArea, 3) + ' m²' },
-        { x: ly.nose.x0 + 0.5 * (ly.nose.x1 - ly.nose.x0), y: ly.b * 0.25, side: 1, text: 'Nose armour ' + d.armour.nose + ' cm' },
-        { x: (ly.reac.x0 + ly.reac.x1) / 2, y: -ly.b * 0.32, side: -1, text: 'Reactor ' + U.fmt.power(d.reactorPower) + ' · sink ' + U.fmt.energy(d.sinkCapacity) },
-        { x: (ly.tank.x0 + ly.tank.x1) / 2, y: -ly.b * 0.45, side: -1, text: ly.tanks + (ly.tanks > 1 ? ' tanks · ' : ' tank · ') + U.fmt.mass(d.propMass) },
-        { x: (ly.fwd.x0 + ly.fwd.x1) / 2, y: -ly.b * 0.5, side: -1, text: 'Flank ' + d.armour.flank + ' cm · tail ' + d.armour.tail + ' cm' },
+        { x: (ly.drive.x0 + ly.drive.x1) / 2, y: ly.nozzleExit * 0.9, side: 1, text: '主推进器 ' + U.fmt.si(d.thrust, 'N') + ' · ' + U.fmt.num(d.exhaustVelocity / 1e3, 3) + ' km/s' },
+        { x: (ly.rad.x0 + ly.rad.x1) / 2, y: ly.b * 0.5 + spanShown, side: 1, text: '散热板 ' + U.fmt.num(d.radiatorArea, 3) + ' 平方米' },
+        { x: ly.nose.x0 + 0.5 * (ly.nose.x1 - ly.nose.x0), y: ly.b * 0.25, side: 1, text: '舰首装甲 ' + d.armour.nose + ' 厘米' },
+        { x: (ly.reac.x0 + ly.reac.x1) / 2, y: -ly.b * 0.32, side: -1, text: '反应堆 ' + U.fmt.power(d.reactorPower) + ' · 热沉 ' + U.fmt.energy(d.sinkCapacity) },
+        { x: (ly.tank.x0 + ly.tank.x1) / 2, y: -ly.b * 0.45, side: -1, text: ly.tanks + ' 个箱 · ' + U.fmt.mass(d.propMass) },
+        { x: (ly.fwd.x0 + ly.fwd.x1) / 2, y: -ly.b * 0.5, side: -1, text: '舷侧 ' + d.armour.flank + ' 厘米 · 舰尾 ' + d.armour.tail + ' 厘米' },
       ];
       // Labels go left to right into up to three rows; a label that would overprint another is left out rather
       // than drawn on top of it, and the top rows stop short of the fittings key.
@@ -1049,7 +1050,7 @@
       const yd = Math.min(H - pad - 4, rowBottom + 22);
       ctx.strokeStyle = 'rgba(180,192,207,0.45)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(-ly.L / 2), yd); ctx.lineTo(X(ly.L / 2), yd); ctx.moveTo(X(-ly.L / 2), yd - 4); ctx.lineTo(X(-ly.L / 2), yd + 4); ctx.moveTo(X(ly.L / 2), yd - 4); ctx.lineTo(X(ly.L / 2), yd + 4); ctx.stroke();
       ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.fillText(d.length + ' m', X(0), yd - 8);
-      if (opts.caption !== false) { ctx.textAlign = 'left'; ctx.fillStyle = dim; ctx.fillText('BLUEPRINT · TOP VIEW · NOSE RIGHT', 10, H - 10); }
+      if (opts.caption !== false) { ctx.textAlign = 'left'; ctx.fillStyle = dim; ctx.fillText('蓝图 · 俯视 · 舰首朝右', 10, H - 10); }
     }
     ctx.restore();
     return { key: keyOut, keyDrawn: W >= 480 };
@@ -1117,22 +1118,22 @@
           '<select class="odc-saved" aria-label="Saved designs"></select></div>' +
       '</header>' +
       '<div class="odc-main">' +
-        '<section class="odc-controls" aria-label="Choices"></section>' +
-        '<section class="odc-stage" aria-label="The ship">' +
-          '<div class="odc-stagehead"><div class="odc-seg odc-views" role="group" aria-label="View" data-tip="odc_view"><button data-view="blueprint">Blueprint</button><button data-view="threequarter">Three-quarter</button><button data-view="side">Side</button><button data-view="top">Top</button></div>' +
+        '<section class="odc-controls" aria-label="选项"></section>' +
+        '<section class="odc-stage" aria-label="舰船">' +
+          '<div class="odc-stagehead"><div class="odc-seg odc-views" role="group" aria-label="视角" data-tip="odc_view"><button data-view="blueprint">蓝图</button><button data-view="threequarter">斜视</button><button data-view="side">侧视</button><button data-view="top">俯视</button></div>' +
             '<span class="odc-note odc-artnote"></span></div>' +
-          '<div class="odc-canvaswrap"><canvas class="odc-canvas" aria-label="The ship as configured"></canvas><div class="odc-caption"></div></div><div class="odc-key" hidden></div>' +
-          '<div class="odc-state" data-adv data-tip="odc_state"><label><input type="checkbox" data-pose="radiators" checked> Radiators out</label><label><input type="checkbox" data-pose="throttle"> Drive lit</label><label>Sink load <input type="range" data-pose="heat" min="0" max="1" step="0.05" value="0.15"></label><label><input type="checkbox" data-pose="spin"> Orbit camera</label><label><input type="checkbox" data-pose="labels" checked> Labels</label></div>' +
-          '<div class="odc-say" data-tone=""><div class="odc-say-head">Yard engineer</div><p class="odc-say-line"></p></div>' +
+          '<div class="odc-canvaswrap"><canvas class="odc-canvas" aria-label="按当前配置画出的舰船"></canvas><div class="odc-caption"></div></div><div class="odc-key" hidden></div>' +
+          '<div class="odc-state" data-adv data-tip="odc_state"><label><input type="checkbox" data-pose="radiators" checked> 散热板展开</label><label><input type="checkbox" data-pose="throttle"> 推进器点火</label><label>热沉负载 <input type="range" data-pose="heat" min="0" max="1" step="0.05" value="0.15"></label><label><input type="checkbox" data-pose="spin"> 环绕镜头</label><label><input type="checkbox" data-pose="labels" checked> 标注</label></div>' +
+          '<div class="odc-say" data-tone=""><div class="odc-say-head">船坞工程师</div><p class="odc-say-line"></p></div>' +
         '</section>' +
-        '<section class="odc-readout" aria-label="Readout"></section>' +
-        '<section class="odc-more" aria-label="Armour and the stock hull"></section>' +
+        '<section class="odc-readout" aria-label="读数"></section>' +
+        '<section class="odc-more" aria-label="装甲与标准舰体"></section>' +
       '</div>' +
       '<footer class="odc-foot"><div class="odc-issues" aria-live="polite"></div><div class="odc-actions">' +
-        (options.onFly ? '<button class="primary" data-act="fly" data-tip="odc_fly">Fly this design</button>' : '') +
-        '<button data-act="save">Save</button><button data-act="saveas">Save as new</button><button data-act="delete" class="danger">Delete</button>' +
-        '<button data-act="copy" data-adv class="ghost">Copy code</button><button data-act="paste" data-adv class="ghost">Paste code</button>' +
-        (options.onBack ? '<button data-act="back" data-esc>Back</button>' : '') +
+        (options.onFly ? '<button class="primary" data-act="fly" data-tip="odc_fly">试飞这个设计</button>' : '') +
+        '<button data-act="save">保存</button><button data-act="saveas">另存为新设计</button><button data-act="delete" class="danger">删除</button>' +
+        '<button data-act="copy" data-adv class="ghost">复制代码</button><button data-act="paste" data-adv class="ghost">粘贴代码</button>' +
+        (options.onBack ? '<button data-act="back" data-esc>返回</button>' : '') +
       '</div></footer>';
     const $ = (sel) => root.querySelector(sel);
     const $$ = (sel) => Array.from(root.querySelectorAll(sel));
@@ -1143,7 +1144,7 @@
     // ---------------------------------------------------------------- controls
     function controlsHTML() {
       const stock = CLASSES()[params.base], B = BASES[params.base];
-      let h = '<div class="odc-sec"><h4>Fit</h4><div class="odc-btnrow"><button class="sm" data-act="preset" data-tip="odc_preset">Stock fit</button><button class="sm ghost" data-act="random" data-adv>Surprise me</button></div><div class="odc-note">' + esc(stock.blurb) + '</div></div>';
+      let h = '<div class="odc-sec"><h4>装配</h4><div class="odc-btnrow"><button class="sm" data-act="preset" data-tip="odc_preset">标准配置</button><button class="sm ghost" data-act="random" data-adv>随机来一套</button></div><div class="odc-note">' + esc(stock.blurb) + '</div></div>';
       for (const sec of SECTIONS) {
         h += '<div class="odc-sec"><h4 data-tip="' + sec.tip + '">' + sec.title + '</h4>';
         for (const c of CONTROLS.filter((x) => x.sec === sec.id)) {
@@ -1180,9 +1181,9 @@
       for (const g of GROUPS) (params.slots[g] || []).forEach((cid, i) => { const sel = controlsEl.querySelector('[data-slot="' + g + i + '"]'); if (sel) sel.value = cid || ''; });
       for (const k in LOOK) { const sel = controlsEl.querySelector('[data-look="' + k + '"]'); if (sel) sel.value = (params.look && params.look[k]) || 'auto'; }
       const a = analyse(design);
-      const pn = controlsEl.querySelector('[data-val="propnote"]'); if (pn) pn.textContent = design.summary.tanks + (design.summary.tanks > 1 ? ' tanks. ' : ' tank. ') + U.fmt.dv(a.dv) + ' of delta-v. ' + U.fmt.time(a.burnTime) + ' of full burn to empty.';
-      const hn = controlsEl.querySelector('[data-val="heatnote"]'); if (hn) hn.textContent = 'Sheds ' + U.fmt.power(a.heatOut) + ' at ' + Math.round(a.radiatorTemp) + ' K. Full burn ' + (a.heat[1].net <= 0 ? 'runs cool' : 'fills the sink in ' + U.fmt.time(a.heat[1].saturate)) + '. Fittings draw ' + U.fmt.power(a.power.draw) + ' of ' + U.fmt.power(design.reactorPower) + '.';
-      const fn = controlsEl.querySelector('[data-val="fitnote"]'); if (fn) fn.textContent = design.comps.length ? design.comps.length + ' fitted · ' + U.fmt.mass(design.masses.mounts) + ' · ' + U.fmt.power(a.power.draw) + ' when everything fires' : 'Nothing fitted.';
+      const pn = controlsEl.querySelector('[data-val="propnote"]'); if (pn) pn.textContent = design.summary.tanks + ' 个箱。速度增量 ' + U.fmt.dv(a.dv) + '。全力点火 ' + U.fmt.time(a.burnTime) + ' 烧干。';
+      const hn = controlsEl.querySelector('[data-val="heatnote"]'); if (hn) hn.textContent = '在 ' + Math.round(a.radiatorTemp) + ' K 下排出 ' + U.fmt.power(a.heatOut) + '。全力点火时' + (a.heat[1].net <= 0 ? '温度不升' : '热沉 ' + U.fmt.time(a.heat[1].saturate) + ' 后充满') + '。部件取电 ' + U.fmt.power(a.power.draw) + ' / ' + U.fmt.power(design.reactorPower) + '。';
+      const fn = controlsEl.querySelector('[data-val="fitnote"]'); if (fn) fn.textContent = design.comps.length ? design.comps.length + ' 件 · ' + U.fmt.mass(design.masses.mounts) + ' · 全部开火时 ' + U.fmt.power(a.power.draw) : '未安装任何部件。';
     }
 
     // ---------------------------------------------------------------- readout
@@ -1190,56 +1191,56 @@
     function readoutHTML() {
       const d = design, a = analyse(d), s = stockDesign(d.base), as = analyse(s);
       let h = '<div class="odc-vitals">' +
-        '<div data-tip="odc_dv"><span class="k">Delta-v</span><span class="v">' + U.fmt.num(a.dv / 1e3, 3) + '<small>km/s</small></span><span class="s">stock ' + U.fmt.num(as.dv / 1e3, 3) + '</span></div>' +
-        '<div data-tip="odc_accel"><span class="k">Accel.</span><span class="v">' + a.g.toFixed(2) + ' g</span><span class="s">dry ' + a.gDry.toFixed(2) + ' g</span></div>' +
-        '<div data-tip="odc_mass"><span class="k">Loaded</span><span class="v">' + U.fmt.mass(a.mass) + '</span><span class="s">dry ' + U.fmt.mass(a.dry) + '</span></div>' +
-        '<div data-tip="odc_cost"><span class="k">Cost</span><span class="v">' + a.cost + '<small>rp</small></span><span class="s">stock ' + as.cost + '</span></div></div>';
+        '<div data-tip="odc_dv"><span class="k">速度增量</span><span class="v">' + U.fmt.num(a.dv / 1e3, 3) + '<small>km/s</small></span><span class="s">标准 ' + U.fmt.num(as.dv / 1e3, 3) + '</span></div>' +
+        '<div data-tip="odc_accel"><span class="k">加速度</span><span class="v">' + a.g.toFixed(2) + ' g</span><span class="s">干重 ' + a.gDry.toFixed(2) + ' g</span></div>' +
+        '<div data-tip="odc_mass"><span class="k">满载质量</span><span class="v">' + U.fmt.mass(a.mass) + '</span><span class="s">干重 ' + U.fmt.mass(a.dry) + '</span></div>' +
+        '<div data-tip="odc_cost"><span class="k">造价</span><span class="v">' + a.cost + '<small>rp</small></span><span class="s">标准 ' + as.cost + '</span></div></div>';
       // mass budget
       const total = a.mass;
       const segs = Object.keys(MASS_LABEL).map((k) => ({ k, v: k === 'propellant' ? d.propMass : d.masses[k] }));
-      h += '<div class="odc-sec"><h4 data-tip="odc_massbar">Mass budget</h4><div class="odc-bar">' + segs.map((sg) => '<i style="width:' + ((100 * sg.v) / total).toFixed(2) + '%;background:' + MASS_COLORS[sg.k] + '" title="' + MASS_LABEL[sg.k] + ' ' + U.fmt.mass(sg.v) + '"></i>').join('') + '</div>' +
+      h += '<div class="odc-sec"><h4 data-tip="odc_massbar">质量预算</h4><div class="odc-bar">' + segs.map((sg) => '<i style="width:' + ((100 * sg.v) / total).toFixed(2) + '%;background:' + MASS_COLORS[sg.k] + '" title="' + MASS_LABEL[sg.k] + ' ' + U.fmt.mass(sg.v) + '"></i>').join('') + '</div>' +
         '<div class="odc-legend">' + segs.map((sg) => '<span><span><i class="sw" style="background:' + MASS_COLORS[sg.k] + '"></i>' + MASS_LABEL[sg.k] + '</span><em>' + U.fmt.mass(sg.v) + '</em></span>').join('') + '</div></div>';
       // power
       const pr = a.power.ratio;
-      h += '<div class="odc-sec"><h4 data-tip="odc_power">Power</h4><div class="odc-kv"><span class="k">Fittings firing</span><span class="v ' + (pr > 1 ? 'crit' : pr > 0.85 ? 'warn' : 'good') + '">' + U.fmt.power(a.power.draw) + ' of ' + U.fmt.power(d.reactorPower) + ' · ' + Math.round(pr * 100) + ' %</span></div>' +
+      h += '<div class="odc-sec"><h4 data-tip="odc_power">功率</h4><div class="odc-kv"><span class="k">附件开火</span><span class="v ' + (pr > 1 ? 'crit' : pr > 0.85 ? 'warn' : 'good') + '">' + U.fmt.power(a.power.draw) + ' / ' + U.fmt.power(d.reactorPower) + ' · ' + Math.round(pr * 100) + ' %</span></div>' +
         '<div class="odc-bar"><i style="width:' + Math.min(100, pr * 100).toFixed(1) + '%;background:' + (pr > 1 ? 'var(--crit, #ff6b6b)' : 'linear-gradient(90deg, #8f7ce6, #b8aaff)') + '"></i>' + (pr > 1 ? '<b style="left:' + (100 / pr).toFixed(1) + '%"></b>' : '') + '</div></div>';
       // heat
-      h += '<div class="odc-sec"><h4 data-tip="odc_heat">Heat</h4><div class="odc-heat">' + a.heat.map((r) => '<div class="hr"><span class="k">' + r.label + '</span><span class="v ' + (r.net <= 0 ? 'good' : r.saturate < 300 ? 'crit' : r.saturate < 1200 ? 'warn' : '') + '">' + (r.net <= 0 ? (r.settle != null ? 'settles at ' + Math.round(r.settle * 100) + ' %' : 'steady') : 'sink full in ' + U.fmt.time(r.saturate)) + '</span><span class="m"><span>' + U.fmt.power(r.in) + ' made</span> · <span>' + U.fmt.power(r.out) + ' radiated</span>' + (r.start > 0.01 ? ' · <span>from ' + Math.round(r.start * 100) + ' %</span>' : '') + '</span></div>').join('') + '</div></div>';
+      h += '<div class="odc-sec"><h4 data-tip="odc_heat">热量</h4><div class="odc-heat">' + a.heat.map((r) => '<div class="hr"><span class="k">' + r.label + '</span><span class="v ' + (r.net <= 0 ? 'good' : r.saturate < 300 ? 'crit' : r.saturate < 1200 ? 'warn' : '') + '">' + (r.net <= 0 ? (r.settle != null ? '稳定在 ' + Math.round(r.settle * 100) + ' %' : '稳住了') : U.fmt.time(r.saturate) + ' 后热沉会满') + '</span><span class="m"><span>' + U.fmt.power(r.in) + ' made</span> · <span>' + U.fmt.power(r.out) + ' radiated</span>' + (r.start > 0.01 ? ' · <span>from ' + Math.round(r.start * 100) + ' %</span>' : '') + '</span></div>').join('') + '</div></div>';
       // moving
-      h += '<div class="odc-sec"><h4 data-tip="odc_dash">Moving</h4><div class="odc-kv">' +
-        '<span class="k">' + U.fmt.dist(DASH) + ' dash</span><span class="v">' + U.fmt.time(a.dash.time) + ' · ' + U.fmt.dv(a.dash.dv) + '</span>' +
-        '<span class="k">Dashes per tank</span><span class="v ' + cls3(a.dash.count, 3, 1.5) + '">' + a.dash.count.toFixed(1) + '</span>' +
-        '<span class="k">Peak speed there</span><span class="v">' + U.fmt.speed(a.dash.peakV) + '</span>' +
-        '<span class="k" data-tip="odc_turn">180° turn</span><span class="v">' + U.fmt.time(a.turn180) + '</span>' +
-        '<span class="k">Full burn to empty</span><span class="v">' + U.fmt.time(a.burnTime) + '</span>' +
-        '<span class="k">Hull</span><span class="v">' + d.length + ' m · ' + d.beam + ' m beam</span></div></div>';
+      h += '<div class="odc-sec"><h4 data-tip="odc_dash">机动</h4><div class="odc-kv">' +
+        '<span class="k">' + U.fmt.dist(DASH) + ' 冲刺</span><span class="v">' + U.fmt.time(a.dash.time) + ' · ' + U.fmt.dv(a.dash.dv) + '</span>' +
+        '<span class="k">每箱可冲刺次数</span><span class="v ' + cls3(a.dash.count, 3, 1.5) + '">' + a.dash.count.toFixed(1) + '</span>' +
+        '<span class="k">终点峰值速度</span><span class="v">' + U.fmt.speed(a.dash.peakV) + '</span>' +
+        '<span class="k" data-tip="odc_turn">掉头 180°</span><span class="v">' + U.fmt.time(a.turn180) + '</span>' +
+        '<span class="k">全力烧干</span><span class="v">' + U.fmt.time(a.burnTime) + '</span>' +
+        '<span class="k">舰体</span><span class="v">' + d.length + ' 米 · 光束 ' + d.beam + ' 米</span></div></div>';
       // reach
       const grouped = [];
       for (const r of a.reach) { const g = grouped.find((x) => x.text === r.text && x.kind === r.kind); if (g) { g.n++; g.names.push(r.name); } else grouped.push({ kind: r.kind, text: r.text, n: 1, names: [r.name] }); }
       const gname = (g) => (g.n === 1 ? g.names[0] : g.names[0].replace(/ (?:[A-Z]|\d+)$/, '') + ' ×' + g.n);
-      h += '<div class="odc-sec" data-adv><h4 data-tip="odc_reach">Reach</h4><div class="odc-reach">' + (grouped.length ? grouped.map((r) => '<div><b>' + esc(gname(r)) + '</b><span>' + esc(r.text) + '</span></div>').join('') : '<div><span>Nothing fitted.</span></div>') + '</div></div>';
+      h += '<div class="odc-sec" data-adv><h4 data-tip="odc_reach">射程</h4><div class="odc-reach">' + (grouped.length ? grouped.map((r) => '<div><b>' + esc(gname(r)) + '</b><span>' + esc(r.text) + '</span></div>').join('') : '<div><span>没有安装任何东西。</span></div>') + '</div></div>';
       // armour, and against the stock hull: carried under the picture in the middle column (odc-more)
       let m = '';
       const mx = Math.max(1, d.armour.nose, d.armour.flank, d.armour.tail);
       const fillA = (cm) => 'rgba(214,220,228,' + (0.12 + 0.7 * (cm / mx)).toFixed(2) + ')';
-      m += '<div class="odc-sec"><h4 data-tip="odc_facing">Armour</h4><div class="odc-facing"><svg viewBox="0 0 96 48" aria-hidden="true"><polygon points="4,14 20,14 20,34 4,34" style="fill:' + fillA(d.armour.tail) + '"/><polygon points="20,10 64,10 64,38 20,38" style="fill:' + fillA(d.armour.flank) + '"/><polygon points="64,12 92,24 64,36" style="fill:' + fillA(d.armour.nose) + '"/></svg>' +
-        '<div class="odc-kv"><span class="k">Nose</span><span class="v">' + d.armour.nose + ' cm</span><span class="k">Flank</span><span class="v">' + d.armour.flank + ' cm</span><span class="k">Tail</span><span class="v">' + d.armour.tail + ' cm</span><span class="k">Armour mass</span><span class="v">' + U.fmt.mass(d.masses.armour) + '</span></div></div></div>';
+      m += '<div class="odc-sec"><h4 data-tip="odc_facing">装甲</h4><div class="odc-facing"><svg viewBox="0 0 96 48" aria-hidden="true"><polygon points="4,14 20,14 20,34 4,34" style="fill:' + fillA(d.armour.tail) + '"/><polygon points="20,10 64,10 64,38 20,38" style="fill:' + fillA(d.armour.flank) + '"/><polygon points="64,12 92,24 64,36" style="fill:' + fillA(d.armour.nose) + '"/></svg>' +
+        '<div class="odc-kv"><span class="k">舰首</span><span class="v">' + d.armour.nose + ' 厘米</span><span class="k">舷侧</span><span class="v">' + d.armour.flank + ' 厘米</span><span class="k">舰尾</span><span class="v">' + d.armour.tail + ' 厘米</span><span class="k">装甲重量</span><span class="v">' + U.fmt.mass(d.masses.armour) + '</span></div></div></div>';
       // against stock
       const row = (k, v1, v2) => '<tr><td>' + k + '</td><td>' + v1 + '</td><td>' + v2 + '</td></tr>';
-      m += '<div class="odc-sec" data-adv><h4 data-tip="odc_compare">Against the stock ' + esc(CLASSES()[d.base].name.split('-')[0]) + '</h4><table class="odc-cmp"><tr><th>Measure</th><th>This</th><th>Stock</th></tr>' +
-        row('Delta-v', U.fmt.dv(a.dv), U.fmt.dv(as.dv)) + row('Acceleration', a.g.toFixed(2) + ' g', as.g.toFixed(2) + ' g') + row('Loaded mass', U.fmt.mass(a.mass), U.fmt.mass(as.mass)) + row('Heat shed', U.fmt.power(a.heatOut), U.fmt.power(as.heatOut)) +
-        row('Full burn, sink full', a.heat[1].net <= 0 ? 'never' : U.fmt.time(a.heat[1].saturate), as.heat[1].net <= 0 ? 'never' : U.fmt.time(as.heat[1].saturate)) + row('180° turn', U.fmt.time(a.turn180), U.fmt.time(as.turn180)) + row('Fittings', d.comps.length + ' · ' + U.fmt.power(a.power.draw), s.comps.length + ' · ' + U.fmt.power(as.power.draw)) + row('Cost', a.cost + ' rp', as.cost + ' rp') + '</table></div>';
+      m += '<div class="odc-sec" data-adv><h4 data-tip="odc_compare">对比标准 ' + esc(CLASSES()[d.base].name.split('-')[0]) + '</h4><table class="odc-cmp"><tr><th>项目</th><th>本设计</th><th>标准</th></tr>' +
+        row('速度增量', U.fmt.dv(a.dv), U.fmt.dv(as.dv)) + row('加速度', a.g.toFixed(2) + ' g', as.g.toFixed(2) + ' g') + row('满载质量', U.fmt.mass(a.mass), U.fmt.mass(as.mass)) + row('排热量', U.fmt.power(a.heatOut), U.fmt.power(as.heatOut)) +
+        row('全力点火，热沉充满', a.heat[1].net <= 0 ? '不会' : U.fmt.time(a.heat[1].saturate), as.heat[1].net <= 0 ? '不会' : U.fmt.time(as.heat[1].saturate)) + row('转 180°', U.fmt.time(a.turn180), U.fmt.time(as.turn180)) + row('部件', d.comps.length + ' · ' + U.fmt.power(a.power.draw), s.comps.length + ' · ' + U.fmt.power(as.power.draw)) + row('造价', a.cost + ' 征用点', as.cost + ' 征用点') + '</table></div>';
       return [h, m];
     }
     function renderReadout() { const r = readoutHTML(); readoutEl.innerHTML = r[0]; moreEl.innerHTML = r[1]; }
     function renderIssues() {
       const a = analyse(design);
-      const advice = (t) => (detail === 'essentials' ? t.replace('Fix it with more radiator area, a bigger sink or a smaller drive.', 'Fix it with more radiator area or a smaller drive. The heat sink slider is under Full.') : t);
+      const advice = (t) => (detail === 'essentials' ? t.replace('解决办法：加大散热面积、加大热沉，或者换更小的推进器。', '解决办法：加大散热面积，或者换更小的推进器。热沉滑块在“完整”里。') : t);
       // while Delete is armed, the line beside the keys says what it deletes: on a phone the engineer's box is a screen away
       issuesEl.innerHTML = delNote ? '<div class="odc-issue block">' + esc(delNote) + '</div>'
-        : a.issues.length ? a.issues.map((i) => '<div class="odc-issue ' + i.level + '">' + esc(advice(i.text)) + '</div>').join('') : '<div class="odc-issue note">Flight-ready. ' + esc(design.blurb) + '</div>';
+        : a.issues.length ? a.issues.map((i) => '<div class="odc-issue ' + i.level + '">' + esc(advice(i.text)) + '</div>').join('') : '<div class="odc-issue note">可以出航。' + esc(design.blurb) + '</div>';
       const fly = $('[data-act="fly"]');
-      if (fly) { fly.disabled = a.blocked; fly.title = a.blocked ? 'Fix the power budget first' : ''; }
+      if (fly) { fly.disabled = a.blocked; fly.title = a.blocked ? '先把功率预算修好' : ''; }
       const del = $('[data-act="delete"]'); if (del) del.disabled = !saved;
     }
     // the name field is as wide as the name, so "-class frigate" follows it the way the words are said
@@ -1255,7 +1256,7 @@
     function renderHeader() {
       $('.odc-nameinput').value = params.name;
       sizeName();
-      $('.odc-cls').textContent = '-class ' + CLASSES()[params.base].role;
+      $('.odc-cls').textContent = '级 · ' + roleZh(CLASSES()[params.base].role);
       const pill = $('.odc-state-pill');
       pill.textContent = dirty ? 'unsaved' : saved ? 'saved' : 'new';
       pill.className = 'odc-pill odc-state-pill' + (dirty ? ' warn' : '');
@@ -1268,7 +1269,7 @@
     function refreshSaved() {
       const sel = $('.odc-saved'); if (!sel) return;
       const all = records();
-      sel.innerHTML = '<option value="">' + (all.length ? all.length + ' saved design' + (all.length > 1 ? 's' : '') + '…' : 'No saved designs') + '</option>' + all.map((r) => '<option value="' + esc(r.id) + '"' + (r.id === id && saved ? ' selected' : '') + '>' + esc(r.name) + '</option>').join('');
+      sel.innerHTML = '<option value="">' + (all.length ? all.length + ' 个已保存设计…' : '没有已保存的设计') + '</option>' + all.map((r) => '<option value="' + esc(r.id) + '"' + (r.id === id && saved ? ' selected' : '') + '>' + esc(r.name) + '</option>').join('');
     }
     // a number keeps its unit on its line ("2.5 MW", "36 %"): the space between them does not break
     const KEEP_UNIT = /(\d) (?=(?:%|kt|kg|km\/s|m\/s|km|cm|m²|[kMG]?[WJN]|[tmsKg])(?![\w²]))/g;
@@ -1318,7 +1319,7 @@
         if (ok) {
           ctx.restore();
           if (plan) drawCallouts(ctx, W, o, plan, top, bottom);
-          cap.textContent = 'RENDERED · ' + (VIEW_NAME[view] || view).toUpperCase() + ' · ' + design.length + ' m'; artOk = true; setKey('');
+          cap.textContent = '实景 · ' + (VIEW_NAME[view] || view) + ' · ' + design.length + ' 米'; artOk = true; setKey('');
           if (pose.throttle > 0 || pose.spin) scheduleDraw();
           return;
         }
@@ -1326,7 +1327,7 @@
         for (let i = 0; i < 24; i++) ctx.restore();   // unwind whatever the art module left on the stack
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
         drawBlueprint(ctx, W, H, design, st, root, { caption: false });
-        cap.textContent = 'Blueprint shown. The rendered ' + (VIEW_NAME[view] || view) + ' view needs the ship-art module.'; setKey('');
+        cap.textContent = '现在显示的是蓝图。' + (VIEW_NAME[view] || view) + '视图需要舰船绘图模块。'; setKey('');
         return;
       }
       const bp = drawBlueprint(ctx, W, H, design, st, root, {});
@@ -1361,17 +1362,17 @@
       const comps = design.comps;
       const named = (g) => { const cs = comps.filter((x) => x.group === g); return cs.length ? cs[0].label + (cs.length > 1 ? ' ×' + cs.length : '') : null; };
       switch (c.label) {
-        case 'Beam turrets': return named('turret') || c.label;
-        case 'Rail pair': return named('rail') || c.label;
-        case 'Spinal beam': return named('spinal') || c.label;
-        case 'Point defence': return named('pd') || c.label;
-        case 'Launch cells': { const n = comps.filter((x) => x.group === 'bay').reduce((t, x) => t + (CAT[x.catId].count || 0), 0); return n ? 'Interceptors ×' + n : c.label; }
-        case 'Armour cap': return 'Nose armour ' + design.armour.nose + ' cm';
-        case 'Propellant tanks': return design.summary.tanks + (design.summary.tanks > 1 ? ' tanks · ' : ' tank · ') + U.fmt.mass(design.propMass);
-        case 'Radiators': return 'Radiators ' + U.fmt.num(design.radiatorArea, 3) + ' m²';
-        case 'Reactor': return 'Reactor ' + U.fmt.power(design.reactorPower);
-        case 'Drive': return 'Drive ' + U.fmt.si(design.thrust, 'N');
-        default: return c.label;
+        case 'Beam turrets': return named('turret') || '光束炮塔';
+        case 'Rail pair': return named('rail') || '线圈炮';
+        case 'Spinal beam': return named('spinal') || '轴射光束';
+        case 'Point defence': return named('pd') || '点防御';
+        case 'Launch cells': { const n = comps.filter((x) => x.group === 'bay').reduce((t, x) => t + (CAT[x.catId].count || 0), 0); return n ? '拦截弹 ×' + n : '发射舱'; }
+        case 'Armour cap': return '舰首装甲 ' + design.armour.nose + ' 厘米';
+        case 'Propellant tanks': return design.summary.tanks + ' 个箱 · ' + U.fmt.mass(design.propMass);
+        case 'Radiators': return '散热板 ' + U.fmt.num(design.radiatorArea, 3) + ' 平方米';
+        case 'Reactor': return '反应堆 ' + U.fmt.power(design.reactorPower);
+        case 'Drive': return '主推进器 ' + U.fmt.si(design.thrust, 'N');
+        default: return c.zh || c.label;
       }
     }
     // Part labels go in rows above and below the hull, each on a leader to its part: the parts in the upper
@@ -1379,7 +1380,7 @@
     const CALL_ROW = 13;
     function calloutPlan(ctx, W, viewArg, box) {
       let list = [];
-      try { list = (OD.ShipArt.callouts(design, { size: ART_PROBE, view: viewArg }) || []).map((c) => { const label = yardLabel(c); return { label, own: label !== c.label || c.label === 'Radiators', x: c.x, y: c.y }; }); } catch (e) { list = []; }
+      try { list = (OD.ShipArt.callouts(design, { size: ART_PROBE, view: viewArg }) || []).map((c) => { const label = yardLabel(c); return { label, own: label !== c.label || c.zh === '散热板', x: c.x, y: c.y }; }); } catch (e) { list = []; }
       if (!list.length) return null;
       const mono = cssVar(root, '--mono', '') || 'ui-monospace, Menlo, monospace';
       const font = (W < 400 ? '10px ' : '10.5px ') + mono;
@@ -1486,7 +1487,7 @@
       } else if (t.matches('[data-look]')) {
         const before = design; params.look = params.look || {}; params.look[t.dataset.look] = t.value; afterChange('look', before);
       } else if (t.matches('.odc-nameinput')) {
-        params.name = t.value.trim().slice(0, 24) || params.name; design = derive(params, id); dirty = true; sizeName(); $('.odc-cls').textContent = '-class ' + CLASSES()[params.base].role; renderIssues();
+        params.name = t.value.trim().slice(0, 24) || params.name; design = derive(params, id); dirty = true; sizeName(); $('.odc-cls').textContent = '级 · ' + roleZh(CLASSES()[params.base].role); renderIssues();
         const pill = $('.odc-state-pill'); pill.textContent = 'unsaved'; pill.className = 'odc-pill odc-state-pill warn';
       } else if (t.matches('[data-pose]')) {
         const k = t.dataset.pose;
@@ -1500,16 +1501,16 @@
     function deleteNote() {
       let built = null;
       try { const st = OD.Campaign && typeof OD.Campaign.load === 'function' ? OD.Campaign.load() : null; if (OD.Campaign) built = st && st.fleet ? st.fleet.filter((f) => f.cls === id) : []; } catch (e) { built = null; }
-      const what = built == null ? ' and every campaign ship built to it'
-        : built.length === 1 ? ' and ' + built[0].name + ', the campaign ship built to it'
-        : built.length > 1 ? ' and the ' + built.length + ' campaign ships built to it' : '';
+      const what = built == null ? '，以及所有按它建造的战役舰船'
+        : built.length === 1 ? '，以及 ' + built[0].name + '，那艘按它建造的战役舰船'
+        : built.length > 1 ? '，以及 ' + built.length + ' 艘按它建造的战役舰船' : '';
       const rec = records().find((r) => r.id === id);   // the saved name, which an edit in the name field has not changed yet
-      const name = rec ? rec.name + '-class ' + CLASSES()[rec.base].role : design.name;
-      return 'This deletes the ' + name + what + '. Press Confirm delete within 5 s.';
+      const name = rec ? rec.name + ' 级' + roleZh(CLASSES()[rec.base].role) : design.name;
+      return '这会删掉 ' + name + what + '。5 秒内按确认删除。';
     }
     function disarmDelete() {
       clearTimeout(delArmed); delArmed = 0;
-      const d = $('[data-act="delete"]'); if (d) { d.textContent = 'Delete'; d.classList.remove('armed'); }
+      const d = $('[data-act="delete"]'); if (d) { d.textContent = '删除'; d.classList.remove('armed'); }
       // both lines go back to what they said before the key was armed (the engineer's only if nothing has spoken since)
       if (!delNote) return;
       if (delSaid && sayLine.textContent === delSaid.shown) { sayLine.textContent = delSaid.text; sayEl.dataset.tone = delSaid.tone; }
@@ -1530,29 +1531,29 @@
       if (b.dataset.view) { view = b.dataset.view; renderHeader(); scheduleDraw(); return; }
       const act = b.dataset.act;
       if (act === 'preset') { const before = design, name = params.name; params = presetParams(params.base); params.name = name; design = derive(params, id); dirty = true; syncControls(); renderReadout(); renderIssues(); renderHeader(); scheduleDraw(); say(explain('preset', before, design), ''); }
-      else if (act === 'random') { const before = design; randomise(); afterChange('random', before); say('A random fit on the ' + CLASSES()[params.base].name + '. ' + explain('random', before, design), ''); }
+      else if (act === 'random') { const before = design; randomise(); afterChange('random', before); say('在 ' + CLASSES()[params.base].name + ' 上随机配了一套。' + explain('random', before, design), ''); }
       else if (act === 'save') { doSave(false); }
       else if (act === 'saveas') { doSave(true); }
       else if (act === 'delete') {
         if (!saved) return;
         if (!delArmed) {
-          b.textContent = 'Confirm delete'; b.classList.add('armed');
+          b.textContent = '确认删除'; b.classList.add('armed');
           delNote = deleteNote().replace(KEEP_UNIT, '$1\u00a0'); delSaid = { text: sayLine.textContent, tone: sayEl.dataset.tone || '' };
           say(delNote, 'crit'); delSaid.shown = sayLine.textContent; renderIssues();
           delArmed = setTimeout(disarmDelete, 5000); return;
         }
-        disarmDelete(); remove(id); const rest = records(); if (!(rest.length && loadDesign(rest[0].id))) { freshDesign(params.base); refreshSaved(); } refreshAll('Deleted. ' + (saved ? 'Now showing ' + design.name + '.' : 'A fresh ' + CLASSES()[params.base].name + '.')); toast('Design deleted'); }
+        disarmDelete(); remove(id); const rest = records(); if (!(rest.length && loadDesign(rest[0].id))) { freshDesign(params.base); refreshSaved(); } refreshAll('已删除。' + (saved ? '现在显示 ' + design.name + '。' : '新的 ' + CLASSES()[params.base].name + '。')); toast('设计已删除'); }
       else if (act === 'fly') { const a = analyse(design); if (a.blocked) { toast(a.issues.find((i) => i.level === 'block').text); return; } doSave(false, true); const sc = flyScenario(design, { faction }); if (options.onFly) options.onFly(design, sc); }
-      else if (act === 'copy') { const code = JSON.stringify({ odc: 1, params: normaliseParams(params) }); const done = () => toast('Design code copied'); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, () => window.prompt('Copy this design code:', code)); else window.prompt('Copy this design code:', code); }
-      else if (act === 'paste') { const s = window.prompt('Paste a design code:'); if (!s) return; try { const o = JSON.parse(s); const p = normaliseParams(o.params || o); const before = design; params = p; design = derive(params, id); dirty = true; buildControls(); renderReadout(); renderIssues(); renderHeader(); scheduleDraw(); say('Design code loaded. ' + explain('paste', before, design), ''); } catch (err) { toast('That is not a design code.'); } }
+      else if (act === 'copy') { const code = JSON.stringify({ odc: 1, params: normaliseParams(params) }); const done = () => toast('设计代码已复制'); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, () => window.prompt('复制这段设计代码：', code)); else window.prompt('复制这段设计代码：', code); }
+      else if (act === 'paste') { const s = window.prompt('粘贴设计代码：'); if (!s) return; try { const o = JSON.parse(s); const p = normaliseParams(o.params || o); const before = design; params = p; design = derive(params, id); dirty = true; buildControls(); renderReadout(); renderIssues(); renderHeader(); scheduleDraw(); say('设计代码已载入。' + explain('paste', before, design), ''); } catch (err) { toast('这不是设计代码。'); } }
       else if (act === 'back') { if (options.onBack) options.onBack(); }
     });
     function doSave(asNew, quiet) {
       if (asNew) { id = newId(); design = derive(params, id); }
-      if (!save(design)) { register(design); renderHeader(); toast('Could not save. This browser blocks storage, or the store is full. The design still flies this session.'); return false; }
+      if (!save(design)) { register(design); renderHeader(); toast('保存失败：浏览器禁用了存储，或者空间已满。这个设计在本次会话里还能飞。'); return false; }
       saved = true; dirty = false;
       refreshSaved(); renderHeader(); renderIssues();
-      if (!quiet) toast('Saved ' + design.name);
+      if (!quiet) toast('已保存 ' + design.name);
       if (options.onSave) options.onSave(design);
       return true;
     }
@@ -1576,8 +1577,8 @@
     else window.addEventListener('resize', () => { fitWidth(); scheduleDraw(); }, ac ? { signal: ac.signal } : false);
     if (artCanDraw(design)) view = 'threequarter';
     refreshAll();
-    say((saved ? 'Loaded ' + design.name + '. ' : 'A new design on the ' + CLASSES()[params.base].name + '. ') + 'Every slider moves the numbers and the drawing. This line says what the change bought and what it cost. ' + design.blurb, '');
-    $('.odc-artnote').textContent = artCanDraw(design) ? '' : 'Rendered views need the ship-art module. The blueprint is exact.';
+    say((saved ? '已载入 ' + design.name + '。' : '在 ' + CLASSES()[params.base].name + ' 上的新设计。') + '每个滑块都会同时改动数字和图纸。这一行说的是这次改动买到了什么、花了什么。' + design.blurb, '');
+    $('.odc-artnote').textContent = artCanDraw(design) ? '' : '渲染视图需要舰船绘图模块。蓝图本身是精确的。';
     // the display face may arrive after the first paint: measure the name again, and draw again with it
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!destroyed) { sizeName(); scheduleDraw(); } });
 

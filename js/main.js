@@ -120,8 +120,8 @@
       if (m.meta) h += '<p class="sub" style="font-size:12px;color:var(--dim)">' + esc(m.meta) + '</p>';
       if (m.sub) h += '<p class="sub">' + esc(m.sub) + '</p>';
       for (const t of m.paragraphs || []) h += '<p class="sub">' + esc(t) + '</p>';
-      if (m.sides && m.sides.length) h += '<p class="sub"><b>The two sides</b><br>' + m.sides.map((x) => '<b>' + esc(x.name) + '</b> ' + esc(x.text)).join('<br>') + '</p>';
-      if (m.sofar && m.sofar.length) h += '<p class="sub"><b>The war so far</b><br>' + m.sofar.map((x) => esc(x.n + '. ' + x.text)).join('<br>') + '</p>';
+      if (m.sides && m.sides.length) h += '<p class="sub"><b>双方</b><br>' + m.sides.map((x) => '<b>' + esc(x.name) + '</b> ' + esc(x.text)).join('<br>') + '</p>';
+      if (m.sofar && m.sofar.length) h += '<p class="sub"><b>战况</b><br>' + m.sofar.map((x) => esc(x.n + '. ' + x.text)).join('<br>') + '</p>';
       for (const c of m.comms || []) h += '<p class="sub">' + (c && c.speaker ? '<b>' + esc(c.speaker) + '</b> · ' : '') + esc(c && c.text != null ? c.text : c) + '</p>';
       if (m.body) h += '<p class="sub">' + esc(m.body) + '</p>';
       if (m.warLine) h += '<p class="sub">' + esc(m.warLine) + '</p>';
@@ -134,7 +134,7 @@
       if (rows.length) h += '<div class="menu-actions">' + rows.map((e) => btn(e, e.primary ? 'primary' : e.danger ? 'danger' : '', esc(e.label) + (e.sub ? '<small>' + esc(e.sub) + '</small>' : ''))).join('') + '</div>';
       const keys = (m.keys || []).filter(Boolean);
       if (keys.length) h += '<div class="actions">' + keys.map((k) => btn(k, k.primary ? 'primary' : '', esc(k.label) + (k.kbd ? '<kbd>' + esc(k.kbd) + '</kbd>' : ''))).join('') + '</div>';
-      if (!keys.some((k) => k.esc) && typeof m.onBack === 'function') h += btn({ esc: true, act: m.onBack }, '', 'Back', true);
+      if (!keys.some((k) => k.esc) && typeof m.onBack === 'function') h += btn({ esc: true, act: m.onBack }, '', '返回', true);
       const el = OD.UI.screen(name, h, { wide: name === 'briefing' || name === 'debrief' });
       this._domBridge = name;
       el.querySelectorAll('[data-bi]').forEach((b) => b.addEventListener('click', () => {
@@ -157,16 +157,16 @@
       this.running = false; this.sim = null;
       if (!this.demo || this.demo.kind !== 'menu') this.demo = this.makeDemo();
       const entries = [
-        { label: 'Story', sub: 'The war, in eight chapters. Chapter 1 teaches you to fly.', primary: true, act: () => this.storySelect() },
-        { label: 'Campaign', sub: 'Eleven places around Jupiter, one fleet. Damage carries between battles.', act: () => this.openCampaign() },
-        { label: 'Skirmish', sub: 'Pick both fleets, where they meet and how far apart they start.', act: () => OD.Skirmish.screen(this) },
-        OD.Configurator ? { label: 'Ship configurator', sub: 'Design a hull. Fly it in skirmish and buy it at campaign yards.', act: () => this.configurator() } : null,
-        { label: 'How to play', sub: 'The controls and the ideas behind them, in two minutes.', act: () => this.help(() => this.showMenu()) },
+        { label: '剧情', sub: '八章讲完这场战争。第一章教你开船。', primary: true, act: () => this.storySelect() },
+        { label: '战役', sub: '木星周围十一处地点，一支舰队。战斗之间的损伤会保留。', act: () => this.openCampaign() },
+        { label: '遭遇战', sub: '自选双方舰队、交战地点和开局距离。', act: () => OD.Skirmish.screen(this) },
+        OD.Configurator ? { label: '舰船设计台', sub: '设计一型舰体。在遭遇战里试飞，在战役船坞里采购。', act: () => this.configurator() } : null,
+        { label: '玩法说明', sub: '两分钟讲完操作和背后的道理。', act: () => this.help(() => this.showMenu()) },
       ].filter(Boolean);
       const show = this.showcase, t0 = performance.now();
       this.bridge('menu', {
-        eyebrow: 'Jovian system · 2211',
-        sub: 'The moons of Jupiter have left the Inner Systems Authority, and you have a corvette. Ships coast unless they burn, every burn spends delta-v, and the heat from the drive and the beams fills a sink until the radiators shed it. A drive plume shows across the system, so nothing out here hides.',
+        eyebrow: '木星系统 · 2211',
+        sub: '木星的卫星已经脱离内星系管理局，而你手里只有一艘护卫艇。不点火的船只会一直滑行，每次点火都要花速度增量；推进器和光束产生的热积在热沉里，只能靠散热板排掉。尾焰在整个星系都看得见，这里没有藏身之处。',
         entries,
         settings: {
           text: { value: () => OD.UI.textSize, set: (v) => OD.UI.setTextSize(v, true) },
@@ -190,7 +190,7 @@
     installDesigns() {
       const C = OD.Configurator; if (!C) return;
       try { if (typeof C.installSaved === 'function') C.installSaved(); else if (typeof C.install === 'function') C.install(); }
-      catch (e) { OD.Render.lastError = 'configurator install: ' + (e && e.message); }
+      catch (e) { OD.Render.lastError = '舰船设计台装载失败：' + (e && e.message); }
     },
     // Mounts the configurator in a DOM screen; opts.base / opts.designId pick the hull, the callbacks say where to go.
     mountConfigurator(opts) {
@@ -209,17 +209,17 @@
           onDone: (design) => { this.installDesigns(); leave(() => (opts.onDone || opts.onBack)(design)); },
           onCancel: () => leave(() => opts.onBack()),
         }) || null;
-      } catch (e) { OD.Render.lastError = 'configurator: ' + (e && e.message); OD.UI.toast('The configurator could not open.'); opts.onBack(); return; }
+      } catch (e) { OD.Render.lastError = 'configurator: ' + (e && e.message); OD.UI.toast('舰船设计台打不开。'); opts.onBack(); return; }
       // Esc leaves the yard unless the configurator put its own [data-esc] key in the root
       if (!el.querySelector('[data-esc]')) { const b = document.createElement('button'); b.hidden = true; b.dataset.esc = ''; b.addEventListener('click', () => leave(() => opts.onBack())); el.querySelector('.card').appendChild(b); }
     },
     configurator(designId) {
-      if (!OD.Configurator || typeof OD.Configurator.mount !== 'function') { OD.UI.toast('The ship configurator is not loaded.'); return; }
+      if (!OD.Configurator || typeof OD.Configurator.mount !== 'function') { OD.UI.toast('舰船设计台没有载入。'); return; }
       this.sim = null; this.running = false;
       if (!this.demo || this.demo.kind !== 'menu') this.demo = this.makeDemo();
       this.mountConfigurator({
         designId,
-        onSave: (design) => OD.UI.toast((design && design.name ? design.name : 'Your design') + ' saved. It is in the skirmish lists and at the campaign yards now.', 4200),
+        onSave: (design) => OD.UI.toast((design && design.name ? design.name : '你的设计') + ' 已保存。它现在出现在遭遇战列表和战役船坞里。', 4200),
         onFly: (design, scenario) => this.startScenario(scenario, { mode: 'Skirmish', onEnd: () => this.configurator(design && design.id), onBack: () => this.configurator(design && design.id) }),
         onBack: () => this.showMenu(),
       });
@@ -231,12 +231,12 @@
       this.sim = null; this.running = false;
       if (!this.demo || this.demo.kind !== 'menu') this.demo = this.makeDemo();
       this.bridge('chapters', {
-        eyebrow: 'Story', title: 'Eight chapters',
-        sub: 'Eight missions, March to July 2211. You start in the corvette Larkspur and finish in the cruiser Harkness.',
-        chapters: chapters.map((c, i) => ({ n: c.n, title: c.title, sub: String(c.location).replace(/(\d) (?=\d{3}\b)/g, '$1\u00a0').replace(/(\d) (km\b)/g, '$1\u00a0$2') + ' · ' + String(c.date).replace(/ /g, '\u00a0') + (i === 0 ? ' · guided tour' : ''), done: !!done[c.id], locked: !(i === 0 || done[chapters[i - 1].id] || prog.unlockAll), act: () => this.showBriefing(i) })),
+        eyebrow: '剧情', title: '八章',
+        sub: '八次任务，从 2211 年 3 月到 7 月。你从护卫艇 Larkspur 出发，最后坐上巡洋舰 Harkness。',
+        chapters: chapters.map((c, i) => ({ n: c.n, title: c.title, sub: String(c.location).replace(/(\d) (?=\d{3}\b)/g, '$1\u00a0').replace(/(\d) (km\b)/g, '$1\u00a0$2') + ' · ' + String(c.date).replace(/ /g, '\u00a0') + (i === 0 ? ' · 引导教学' : ''), done: !!done[c.id], locked: !(i === 0 || done[chapters[i - 1].id] || prog.unlockAll), act: () => this.showBriefing(i) })),
         keys: [
-          { id: 'k:war', label: 'The war so far', kbd: 'W', hot: 'w', act: () => this.showSituation({ back: () => this.storySelect(), backLabel: 'Back to the chapters' }) },
-          { id: 'k:back', label: 'Back', kbd: 'Esc', esc: true, act: () => this.showMenu() },
+          { id: 'k:war', label: '战况', kbd: 'W', hot: 'w', act: () => this.showSituation({ back: () => this.storySelect(), backLabel: '返回章节列表' }) },
+          { id: 'k:back', label: '返回', kbd: 'Esc', esc: true, act: () => this.showMenu() },
         ],
         onBack: () => this.showMenu(),
       });
@@ -271,16 +271,16 @@
       const next = opts.next || null;
       if (!this.sim && (!this.demo || this.demo.kind !== 'menu')) this.demo = this.makeDemo();
       this.bridge('situation', {
-        mode: 'Situation', eyebrow: 'Jovian system · 2211', title: 'The war', meta: 'The Compact against the Authority',
+        mode: 'Situation', eyebrow: '木星系统 · 2211', title: '战况', meta: '盟约对抗管理局',
         paragraphs: (S.situation || []).slice(),
         sides: S.sides || [],
-        sofar, sofarTitle: 'The war so far',
-        note: sofar.length ? '' : (opts.chapter == null || opts.chapter === 0 ? 'Chapter 1 is a fortnight before the Declaration. Nobody is shooting yet.' : ''),
+        sofar, sofarTitle: '战况',
+        note: sofar.length ? '' : (opts.chapter == null || opts.chapter === 0 ? '第一章发生在《宣言》签署前两周。还没有人开火。' : ''),
         flagship: { name: 'JCS Larkspur', cls: 'corvette', faction: 'JC' },
         flagshipCaption: ['JCS Larkspur', (OD.Ships.CLASSES.corvette || {}).name || 'corvette'],
         keys: [
-          { id: 'k:next', label: next ? (opts.nextLabel || 'Continue') : (opts.backLabel || 'Back'), kbd: '⏎', primary: true, enter: true, esc: !next, sound: 'confirm', act: next || back },
-          next ? { id: 'k:back', label: 'Back', kbd: 'Esc', esc: true, act: back } : null,
+          { id: 'k:next', label: next ? (opts.nextLabel || '继续') : (opts.backLabel || '返回'), kbd: '⏎', primary: true, enter: true, esc: !next, sound: 'confirm', act: next || back },
+          next ? { id: 'k:back', label: '返回', kbd: 'Esc', esc: true, act: back } : null,
         ].filter(Boolean),
         onBack: back,
       });
@@ -298,8 +298,8 @@
         paragraphs: c.brief, comms: c.comms, objectives: scenario.objectives.filter((o) => !o.hidden), ships: this.shipList(scenario),
         flagship: flag, flagshipCaption: flag ? [flag.name, OD.Ships.CLASSES[flag.cls].name] : [],
         keys: [
-          { id: 'k:launch', label: 'Launch', kbd: '⏎', primary: true, enter: true, sound: 'confirm', act: () => this.startScenario(scenario, { mode: 'Story', chapter: i }) },
-          { id: 'k:back', label: 'Back', kbd: 'Esc', esc: true, act: () => this.storySelect() },
+          { id: 'k:launch', label: '出击', kbd: '⏎', primary: true, enter: true, sound: 'confirm', act: () => this.startScenario(scenario, { mode: 'Story', chapter: i }) },
+          { id: 'k:back', label: '返回', kbd: 'Esc', esc: true, act: () => this.storySelect() },
         ],
         onBack: () => this.storySelect(),
       });
@@ -320,14 +320,14 @@
     // Whether a refit is on offer here, and the line under the keys that says so.
     refitInfo(ctx) {
       if (!OD.Configurator || typeof OD.Configurator.mount !== 'function') return { ok: false, note: '' };
-      if (ctx.mode !== 'Campaign') return { ok: true, note: 'Refit opens the yard on this hull. A saved design of the same hull family flies in this ship\'s place for one mission, and she keeps her name.' };
+      if (ctx.mode !== 'Campaign') return { ok: true, note: '改装会打开这型舰体的设计台。同族的已保存设计可以替这艘舰出一次任务，舰名不变。' };
       const st = OD.Campaign && OD.Campaign.load ? OD.Campaign.load() : null;
       if (!st) return { ok: false, note: '' };
       const node = (OD.Campaign.NODES || []).find((n) => n.id === st.fleetAt), rec = st.nodes && st.nodes[st.fleetAt];
       const own = rec && rec.owner === 'JC', yard = node && (node.kind === 'yard' || node.kind === 'port');
-      if (!node || !own || !yard) return { ok: false, note: 'Refits are done at a Compact yard or port. ' + (node ? node.name.split(' · ')[0] + (own ? ' has no slipway.' : ' is not ours.') : '') };
+      if (!node || !own || !yard) return { ok: false, note: '改装只能在盟约的船坞或港口做。' + (node ? node.name.split(' · ')[0] + (own ? ' 没有船台。' : ' 不归我们。') : '') };
       const spent = (this._refits || []).reduce((a, r) => a + r.cost, 0);
-      return { ok: true, note: 'A refit here costs the requisition difference. ' + (st.rp - spent) + ' RP available.', rp: st.rp - spent, state: st };
+      return { ok: true, note: '在这里改装的代价是征用点差额。可用 ' + (st.rp - spent) + ' 点征用点。', rp: st.rp - spent, state: st };
     },
     openHangar(scenario, ctx, sel) {
       this.sim = null; this.running = false;
@@ -337,15 +337,15 @@
       const h = this._hangar = { scenario, ctx, sel: Math.max(0, Math.min(own.length - 1, sel || 0)) };
       const refit = this.refitInfo(ctx);
       const model = {
-        eyebrow: 'Pre-launch · ' + ctx.mode + (ctx.chapter != null ? ' · chapter ' + (ctx.chapter + 1) : ''), title: scenario.name,
+        eyebrow: '出击前 · ' + ({ Story: '剧情', Campaign: '战役', Skirmish: '遭遇战', Harness: '测试' }[ctx.mode] || ctx.mode) + (ctx.chapter != null ? ' · 第 ' + (ctx.chapter + 1) + ' 章' : ''), title: (ctx.chapter != null && OD.Story && OD.Story.chapters[ctx.chapter]) ? OD.Story.chapters[ctx.chapter].title : scenario.name,
         ships: own, sel: h.sel, onSelect: (i) => { h.sel = i; model.sel = i; },
         note: refit.note,
         keys: [
-          { id: 'k:inspect', label: 'Inspect', kbd: 'I', hot: 'i', act: () => this.inspect(h.sel) },
-          refit.ok ? { id: 'k:refit', label: 'Refit', kbd: 'R', hot: 'r', act: () => this.refit(h.sel) } : null,
-          ctx.fleetRefit ? { id: 'k:launch', label: 'Back to the map', kbd: '⏎', primary: true, enter: true, esc: true, sound: 'confirm', act: () => this.commitFleetRefit() }
-            : { id: 'k:launch', label: 'Launch', kbd: '⏎', primary: true, enter: true, sound: 'confirm', disabled: !own.length, act: () => this.startScenario(scenario, { ...ctx, hangarDone: true }) },
-          ctx.fleetRefit ? null : { id: 'k:back', label: 'Back', kbd: 'Esc', esc: true, act: () => this.hangarBack(ctx) },
+          { id: 'k:inspect', label: '检视', kbd: 'I', hot: 'i', act: () => this.inspect(h.sel) },
+          refit.ok ? { id: 'k:refit', label: '改装', kbd: 'R', hot: 'r', act: () => this.refit(h.sel) } : null,
+          ctx.fleetRefit ? { id: 'k:launch', label: '返回地图', kbd: '⏎', primary: true, enter: true, esc: true, sound: 'confirm', act: () => this.commitFleetRefit() }
+            : { id: 'k:launch', label: '出击', kbd: '⏎', primary: true, enter: true, sound: 'confirm', disabled: !own.length, act: () => this.startScenario(scenario, { ...ctx, hangarDone: true }) },
+          ctx.fleetRefit ? null : { id: 'k:back', label: '返回', kbd: 'Esc', esc: true, act: () => this.hangarBack(ctx) },
         ],
         onBack: () => this.hangarBack(ctx),
       };
@@ -358,7 +358,7 @@
       if (!state || !OD.Campaign) return false;
       const def = (OD.Campaign.NODES || []).find((n) => n.id === state.fleetAt);
       const scenario = { name: (def ? def.name.split(' · ')[0] : 'Fleet') + ' · slipway', playerFaction: 'JC', objectives: [], ships: (state.fleet || []).map((f) => ({ id: f.id, name: f.name, cls: f.cls, faction: 'JC', player: true, propFraction: f.propFraction, hull: f.hull, systems: { ...(f.systems || {}) }, pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 } })) };
-      if (!scenario.ships.length) { OD.UI.toast('No ships to refit.'); return false; }
+      if (!scenario.ships.length) { OD.UI.toast('没有可改装的舰船。'); return false; }
       this._hangar = null; this._refits = [];
       this.openHangar(scenario, { mode: 'Campaign', fleetRefit: true });
       return true;
@@ -370,7 +370,7 @@
         let spent = 0;
         for (const r of refits) { const f = (st.fleet || []).find((x) => x.id === r.id); if (f) { f.cls = r.cls; spent += r.cost; } }
         st.rp = Math.max(0, (st.rp || 0) - spent);
-        st.log.push('Refit paid: ' + spent + ' RP.');
+        st.log.push('改装已付款：' + spent + ' 点征用点。');
         OD.Campaign.save(st);
       }
       this.openCampaign();
@@ -391,11 +391,11 @@
       const spec = own[i], cls = OD.Ships.CLASSES[spec.cls] || {};
       const back = () => this.openHangar(h.scenario, h.ctx, h.sel);
       this.bridge('inspect', {
-        ship: spec, eyebrow: 'Hull view · ' + (i + 1) + ' of ' + own.length, title: spec.name, sub: (cls.name || spec.cls) + '. ' + (cls.blurb || ''), view: 'three-quarter',
+        ship: spec, eyebrow: '舰体视图 · 第 ' + (i + 1) + ' / ' + own.length + ' 艘', title: spec.name, sub: (cls.name || spec.cls) + '。' + (cls.blurb || ''), view: 'three-quarter',
         keys: [
-          own.length > 1 ? { id: 'k:prev', label: '◀ Prev', kbd: '[', hot: '[', act: () => this.inspect(i - 1) } : null,
-          own.length > 1 ? { id: 'k:next', label: 'Next ▶', kbd: ']', hot: ']', act: () => this.inspect(i + 1) } : null,
-          { id: 'k:back', label: 'Back to the hangar', kbd: 'Esc', esc: true, act: back },
+          own.length > 1 ? { id: 'k:prev', label: '◀ 上一艘', kbd: '[', hot: '[', act: () => this.inspect(i - 1) } : null,
+          own.length > 1 ? { id: 'k:next', label: '下一艘 ▶', kbd: ']', hot: ']', act: () => this.inspect(i + 1) } : null,
+          { id: 'k:back', label: '返回机库', kbd: 'Esc', esc: true, act: back },
         ],
         onBack: back,
       });
@@ -411,19 +411,19 @@
         this.installDesigns();
         if (!design || !design.id || !OD.Ships.CLASSES[design.id]) return false;
         const fam = design.base || design.artBase || design.id;
-        if (fam !== base) { OD.UI.toast(spec.name + ' is a ' + base + ' hull; ' + (design.name || 'that design') + ' is built on a ' + fam + '. Refits keep to the hull family.', 4500); return false; }
+        if (fam !== base) { OD.UI.toast(spec.name + ' 是' + base + '舰体；' + (design.name || '那个设计') + ' 建在' + fam + '上。改装只能在同一舰体族里换。', 4500); return false; }
         if (design.id === spec.cls) return true;
         if (h.ctx.mode === 'Campaign') {
           const info = this.refitInfo(h.ctx); if (!info.ok) { OD.UI.toast(info.note); return false; }
           const cost = Math.max(0, this.classCost(design.id) - this.classCost(spec._stockCls || spec.cls));
-          if (cost > info.rp) { OD.UI.toast('That refit costs ' + cost + ' RP and you have ' + info.rp + '.', 4000); return false; }
+          if (cost > info.rp) { OD.UI.toast('这次改装要花 ' + cost + ' 点征用点，你只有 ' + info.rp + ' 点。', 4000); return false; }
           this._refits = (this._refits || []).filter((r) => r.id !== spec.id);
           this._refits.push({ id: spec.id, cls: design.id, cost });
         }
         if (!spec._stockCls) spec._stockCls = spec.cls;
         spec.cls = design.id; spec._refit = true; // name and id stay; the mission flies the design
         if (this.demo) this.demo.stale = true;
-        OD.UI.toast(spec.name + ' refitted as ' + (design.name || design.id) + ' for this mission.', 3500);
+        OD.UI.toast(spec.name + ' 在本次任务中改装成 ' + (design.name || design.id) + '。', 3500);
         return true;
       };
       this.mountConfigurator({
@@ -444,7 +444,7 @@
         let spent = 0;
         for (const r of refits) { const f = (st.fleet || []).find((x) => x.id === r.id); if (f) { f.cls = r.cls; spent += r.cost; } }
         st.rp = Math.max(0, (st.rp || 0) - spent);
-        if (spent) st.log.push('Refit paid: ' + spent + ' RP.');
+        if (spent) st.log.push('改装已付款：' + spent + ' 点征用点。');
         OD.Campaign.save(st);
         if (OD.UI.currentScreen === 'campaign') OD.Campaign.screen(this, st);
       };
@@ -457,11 +457,11 @@
         this.demo = this.makePreview(scenario);
         const flag = this.flagship(scenario.ships);
         this.bridge('briefing', {
-          mode: ctx.mode, eyebrow: ctx.mode, title: ctx.brief.title, meta: ctx.brief.meta || '', paragraphs: ctx.brief.text, comms: [],
+          mode: ctx.mode, eyebrow: ({ Story: '剧情', Campaign: '战役', Skirmish: '遭遇战', Harness: '测试' }[ctx.mode] || ctx.mode), title: ctx.brief.title, meta: ctx.brief.meta || '', paragraphs: ctx.brief.text, comms: [],
           objectives: scenario.objectives.filter((o) => !o.hidden), ships: this.shipList(scenario), flagship: flag, flagshipCaption: flag ? [flag.name, OD.Ships.CLASSES[flag.cls].name] : [],
           keys: [
-            { id: 'k:launch', label: 'Engage', kbd: '⏎', primary: true, enter: true, sound: 'confirm', act: () => this.startScenario(scenario, { ...ctx, briefShown: true }) },
-            ctx.mode === 'Campaign' ? { id: 'k:back', label: 'Back to the map', kbd: 'Esc', esc: true, act: () => this.openCampaign() } : null,
+            { id: 'k:launch', label: '出击', kbd: '⏎', primary: true, enter: true, sound: 'confirm', act: () => this.startScenario(scenario, { ...ctx, briefShown: true }) },
+            ctx.mode === 'Campaign' ? { id: 'k:back', label: '返回地图', kbd: 'Esc', esc: true, act: () => this.openCampaign() } : null,
           ],
           onBack: ctx.mode === 'Campaign' ? () => this.openCampaign() : null,
         });
@@ -480,7 +480,7 @@
       OD.UI.closeScreen();
       OD.UI.showHud(true);
       OD.UI.setDetail(pref('od.detail', 'essentials'));
-      OD.UI.setTitle(this.ctx.mode + (this.ctx.chapter != null ? ' · ' + (this.ctx.chapter + 1) : ''), scenario.name);
+      OD.UI.setTitle(({ Story: '剧情', Campaign: '战役', Skirmish: '遭遇战', Harness: '测试' }[this.ctx.mode] || this.ctx.mode) + (this.ctx.chapter != null ? ' · ' + (this.ctx.chapter + 1) : ''), (this.ctx.chapter != null && OD.Story && OD.Story.chapters[this.ctx.chapter]) ? OD.Story.chapters[this.ctx.chapter].title : scenario.name);
       OD.UI.resetLog(this.sim);
       // The ideal transfer for the first rendezvous, so the debrief can say how close the flying came to it.
       const rv = (scenario.objectives || []).find((o) => o.type === 'rendezvous');
@@ -498,26 +498,26 @@
       const own = sim.ships.filter((s) => s.faction === sim.playerFaction && !s.captured && s.role !== 'station');
       const dv = own.reduce((a, s) => a + s.stats.dvSpent, 0), lost = own.filter((s) => s.destroyed || s.captured || s.disabled).length, prizes = sim.ships.filter((s) => s.captured && s.faction === sim.playerFaction).length;
       const stats = [
-        { k: 'Mission time', v: U.fmt.time(sim.time), n: sim.time, f: U.fmt.time },
-        { k: 'Delta-v spent', v: U.fmt.dv(dv), n: dv, f: U.fmt.dv },
-        { k: 'Ships lost or out of the fight', v: String(lost), n: lost, f: (x) => String(Math.round(x)) },
-        { k: 'Prizes taken', v: String(prizes), n: prizes, f: (x) => String(Math.round(x)) },
+        { k: '任务用时', v: U.fmt.time(sim.time), n: sim.time, f: U.fmt.time },
+        { k: '消耗速度增量', v: U.fmt.dv(dv), n: dv, f: U.fmt.dv },
+        { k: '损失或退出战斗的舰船', v: String(lost), n: lost, f: (x) => String(Math.round(x)) },
+        { k: '俘获战利品', v: String(prizes), n: prizes, f: (x) => String(Math.round(x)) },
       ];
       // the crew (v13): wounded and lost across our hulls, only when there were any
       // read through the crew module's record, which settles a destroyed hull's people even when the fight ended
       // on the frame she was lost (the scan of 2026-09-22 saw "6 wounded, 4 lost" once for two hulls lost with 48 aboard)
       const crewOf = (s) => (s.crew && OD.Crew && typeof OD.Crew.toRecord === 'function' ? OD.Crew.toRecord(s) : s.crew) || null;
       { const w = own.reduce((a, s) => { const c = crewOf(s); return a + (c ? Math.round(c.wounded || 0) : 0); }, 0), l = own.reduce((a, s) => { const c = crewOf(s); return a + (c ? Math.round(c.lost || 0) : 0); }, 0);
-        if (w + l > 0) stats.push({ k: 'Crew', v: [w > 0 ? w + ' wounded' : '', l > 0 ? l + ' lost' : ''].filter(Boolean).join(', '), n: w + l, f: (x) => String(Math.round(x)) }); }
-      if (ctx.idealDv && ctx.firstDv != null) stats.push({ k: 'First transfer', v: U.fmt.dv(ctx.firstDv) + ' · textbook ' + U.fmt.dv(ctx.idealDv) + ' in flat space' });
+        if (w + l > 0) stats.push({ k: '船员', v: [w > 0 ? w + ' 人受伤' : '', l > 0 ? l + ' 人阵亡' : ''].filter(Boolean).join('，'), n: w + l, f: (x) => String(Math.round(x)) }); }
+      if (ctx.idealDv && ctx.firstDv != null) stats.push({ k: '首次转移', v: U.fmt.dv(ctx.firstDv) + ' · 无重力理想值 ' + U.fmt.dv(ctx.idealDv) });
       // one line per player ship from the damage module: the parts that are not sound
       const reports = own.map((s) => {
         let bad = [];
         if (OD.Damage && typeof OD.Damage.report === 'function') { try { bad = (OD.Damage.report(s) || []).filter((r) => r.state !== 'ok'); } catch (e) { bad = []; } }
-        const parts = bad.slice(0, 3).map((r) => r.name + ' ' + r.state).join(' · ') + (bad.length > 3 ? ' · ' + (bad.length - 3) + ' more' : '');
+        const parts = bad.slice(0, 3).map((r) => r.name + ' ' + r.state).join(' · ') + (bad.length > 3 ? ' · 另有 ' + (bad.length - 3) + ' 处' : '');
         // the people (v13): wounded and lost this fight, from the crew record
-        const c = crewOf(s), people = c && (c.wounded > 0 || c.lost > 0) ? ' · ' + [c.wounded > 0 ? Math.round(c.wounded) + ' wounded' : '', c.lost > 0 ? Math.round(c.lost) + ' lost' : ''].filter(Boolean).join(', ') : '';
-        const text = s.destroyed ? 'lost' : (s.captured ? 'taken by a boarding party' : (parts || (s.hull < 0.995 ? 'armour and hull only' : 'no damage')) + ' · hull ' + Math.round(s.hull * 100) + ' %' + people);
+        const c = crewOf(s), people = c && (c.wounded > 0 || c.lost > 0) ? ' · ' + [c.wounded > 0 ? Math.round(c.wounded) + ' 人受伤' : '', c.lost > 0 ? Math.round(c.lost) + ' 人阵亡' : ''].filter(Boolean).join('，') : '';
+        const text = s.destroyed ? '损失' : (s.captured ? '被登舰俘获' : (parts || (s.hull < 0.995 ? '仅装甲和舰体受损' : '无损伤')) + ' · 舰体 ' + Math.round(s.hull * 100) + ' %' + people);
         return { name: s.name, text, hurt: bad.length > 0 || s.hull < 0.999 || !!people, lost: s.destroyed || s.captured };
       });
       // every objective with its state, and the one line that says what lost it
@@ -530,11 +530,11 @@
         const gone = (s) => !!(s && (s.destroyed || s.captured || s.disabled));
         const own = failed.ship ? sim.byId(failed.ship) : null, tgt = failed.target ? sim.byId(failed.target) : null;
         const sh = gone(own) ? own : gone(tgt) ? tgt : null;
-        const word = sh ? (sh.destroyed ? (sh.lostHow || 'was destroyed') : sh.captured ? 'was boarded and taken' : 'was disabled') : '';
-        why = 'Lost at ' + U.fmt.time(failed.failedAt != null ? failed.failedAt : sim.time) + (sh ? ', when ' + sh.name + ' ' + word : ', when the objective "' + failed.text + '" failed') + '.';
+        const word = sh ? (sh.destroyed ? (sh.lostHow || '被击毁') : sh.captured ? '被登舰俘获' : '失能') : '';
+        why = '在 ' + U.fmt.time(failed.failedAt != null ? failed.failedAt : sim.time) + ' 失败' + (sh ? '，' + sh.name + ' ' + word : '，目标“' + failed.text + '”未达成') + '。';
       } else if (outcome === 'defeat') {
         const gone = own.filter((s) => s.destroyed || s.captured || s.disabled);
-        why = gone.length ? 'Lost at ' + U.fmt.time(sim.time) + '. ' + gone.map((s) => s.name).join(', ') + (gone.length > 1 ? ' were' : ' was') + ' out of the fight, with no ship left to finish the mission.' : '';
+        why = gone.length ? '在 ' + U.fmt.time(sim.time) + ' 失败。' + gone.map((s) => s.name).join('、') + ' 退出战斗，没有舰船能完成任务。' : '';
       }
       let body = '', warLine = '', next = '', keys = [], model = null;
       if (ctx.mode === 'Story') {
@@ -551,16 +551,16 @@
         keys = [
           nc ? { id: 'k:next', label: 'Next: ' + nc.title, kbd: '⏎', primary: true, enter: true, act: () => this.showBriefing(ctx.chapter + 1) } : null,
           { id: 'k:retry', label: outcome === 'victory' ? 'Replay' : 'Retry', primary: !nc, enter: !nc, act: () => this.showBriefing(ctx.chapter) },
-          { id: 'k:war', label: 'The war so far', kbd: 'W', hot: 'w', act: () => this.showSituation({ chapter: ctx.chapter, backLabel: 'Back to the debrief', back: () => { if (model) this.bridge('debrief', model); } }) },
+          { id: 'k:war', label: '战况', kbd: 'W', hot: 'w', act: () => this.showSituation({ chapter: ctx.chapter, backLabel: '返回战报', back: () => { if (model) this.bridge('debrief', model); } }) },
           { id: 'k:chapters', label: 'Chapters', kbd: 'Esc', esc: true, act: () => this.storySelect() },
         ];
       } else {
         // Continue fires once: the console closes and the sim is dropped before the campaign map (a DOM screen) opens
-        keys = [{ id: 'k:cont', label: 'Continue', kbd: '⏎', primary: true, enter: true, esc: true, act: () => { const f = ctx.onEnd; ctx.onEnd = null; this.leaveBridge(); this.sim = null; this.running = false; if (f) f(outcome, sim); else this.showMenu(); } }];
+        keys = [{ id: 'k:cont', label: '继续', kbd: '⏎', primary: true, enter: true, esc: true, act: () => { const f = ctx.onEnd; ctx.onEnd = null; this.leaveBridge(); this.sim = null; this.running = false; if (f) f(outcome, sim); else this.showMenu(); } }];
       }
       this.running = false;
       model = {
-        eyebrow: ctx.mode + ' · debrief', outcome, title: outcome === 'victory' ? 'Objectives complete' : 'Mission lost', body, warLine, next, why, objectives, stats, reports, keys,
+        eyebrow: ({ Story: '剧情', Campaign: '战役', Skirmish: '遭遇战', Harness: '测试' }[ctx.mode] || ctx.mode) + ' · 战报', outcome, title: outcome === 'victory' ? '目标达成' : '任务失败', body, warLine, next, why, objectives, stats, reports, keys,
         onBack: () => { const k = keys.find((x) => x && x.esc); if (k) k.act(); },
       };
       this.bridge('debrief', model);
@@ -574,12 +574,12 @@
       const ctx = this.ctx || {};
       const story = ctx.mode === 'Story' && ctx.chapter != null && !!OD.Story; // campaign and skirmish have no chapter to place
       this.bridge('pause', {
-        eyebrow: 'Paused', title: this.sim.name, sub: (ctx.mode || '') + (ctx.chapter != null ? ' · chapter ' + (ctx.chapter + 1) : '') + ' · ship time ' + U.fmt.clock(this.sim.time),
+        eyebrow: '已暂停', title: (ctx.chapter != null && OD.Story && OD.Story.chapters[ctx.chapter]) ? OD.Story.chapters[ctx.chapter].title : this.sim.name, sub: ({ Story: '剧情', Campaign: '战役', Skirmish: '遭遇战', Harness: '测试' }[ctx.mode] || ctx.mode || '') + (ctx.chapter != null ? ' · 第 ' + (ctx.chapter + 1) + ' 章' : '') + ' · 舰上时间 ' + U.fmt.clock(this.sim.time),
         entries: [
-          { label: 'Resume', sub: 'Back to the mission at ' + (w === 1 ? 'real time' : w + '\u00d7') + '.', primary: true, act: resume },
-          story ? { label: 'Situation', sub: 'Who you are fighting and why, and where the war stands now.', act: () => this.showSituation({ chapter: ctx.chapter, backLabel: 'Back to the pause menu', back: () => { this.leaveBridge(); this.pauseMenu(); } }) } : null,
-          { label: 'How to play', sub: 'The controls and the ideas behind them, in two minutes.', act: () => this.help(() => this.pauseMenu()) },
-          { label: 'Abandon mission', sub: ctx.mode === 'Campaign' ? 'Counts as a defeat. Damage taken so far stays on the fleet.' : 'Back to the main console.', danger: true, act: () => { this.leaveBridge(); this.running = false; const f = ctx.onEnd, sim = this.sim; if (ctx.mode === 'Campaign' && f) { ctx.onEnd = null; sim.outcome = 'defeat'; this.sim = null; f('defeat', sim); } else this.showMenu(); } },
+          { label: '继续', sub: '按' + (w === 1 ? '实时' : ' ' + w + '×') + '回到任务。', primary: true, act: resume },
+          story ? { label: '局势', sub: '在跟谁打、为什么打，以及战争现在走到哪一步。', act: () => this.showSituation({ chapter: ctx.chapter, backLabel: '返回暂停菜单', back: () => { this.leaveBridge(); this.pauseMenu(); } }) } : null,
+          { label: '玩法说明', sub: '两分钟讲完操作和背后的道理。', act: () => this.help(() => this.pauseMenu()) },
+          { label: '放弃任务', sub: ctx.mode === 'Campaign' ? '算作失败。已经受到的损伤会留在舰队上。' : '返回主控台。', danger: true, act: () => { this.leaveBridge(); this.running = false; const f = ctx.onEnd, sim = this.sim; if (ctx.mode === 'Campaign' && f) { ctx.onEnd = null; sim.outcome = 'defeat'; this.sim = null; f('defeat', sim); } else this.showMenu(); } },
         ].filter(Boolean),
         onBack: resume,
       });
@@ -678,7 +678,7 @@
       if (!s && big(sel)) s = sel;
       if (!s) return;
       cam.follow = s.id; this._followedAtZoom = true;
-      if (OD.UI.toast) OD.UI.toast('Following ' + s.name + ' at this zoom. F releases her.', 3500);
+      if (OD.UI.toast) OD.UI.toast('在这个缩放下跟随 ' + s.name + '。按 F 解除跟随。', 3500);
     },
     restoreWarp(now) {
       if (!this._warpBefore || now < this._warpRestoreAt) return;
@@ -740,7 +740,7 @@
       // A long transfer gets one line about time warp; the game slows itself for the flip and the arrival.
       if (OD.Guide && (order.type === 'intercept' || order.type === 'keeprange')) {
         const p = OD.Guide.plan(this.sim, ship);
-        if (p.active && p.time > 180) OD.UI.toast('About ' + U.fmt.time(p.time) + ' of ship time. Press Skip ahead, or 16\u00d7, to run it. Time drops back to 1\u00d7 for the flip and the arrival.', 5000);
+        if (p.active && p.time > 180) OD.UI.toast('大约要 ' + U.fmt.time(p.time) + ' 的舰上时间。按快进，或者 16\u00d7，把它跑完。掉头和到达前时间会自动降回 1\u00d7。', 5000);
       }
     },
     quickOrder(type) {
@@ -860,7 +860,7 @@
     },
     click(x, y, button, shift, prevId) {
       const s = this.shipAt(x, y, prevId);
-      if (!s) { if (!this._missToast) { this._missToast = true; OD.UI.toast('Click a ship, or its name, to select or target it. Drag to move the map and scroll to zoom.', 3500); } return null; }
+      if (!s) { if (!this._missToast) { this._missToast = true; OD.UI.toast('点一艘舰船或它的名字，就能选中或设为目标。拖动可以平移地图，滚轮缩放。', 3500); } return null; }
       const own = s.faction === this.sim.playerFaction;
       if (button === 2) {
         const sel = OD.UI.selected ? this.sim.byId(OD.UI.selected) : null;
@@ -869,22 +869,22 @@
         const cls = OD.Ships.CLASSES[sel.cls];
         const order = this.sim.isHostile(s, sel) ? { type: 'keeprange', target: s.id, range: cls.doctrine.range || 200e3 } : { type: 'intercept', target: s.id, range: 2000 };
         this.sim.setOrder(sel.id, order); this.onOrder(sel, order);
-        OD.UI.toast(sel.name + ': ' + (order.type === 'keeprange' ? 'keep ' + U.fmt.dist(order.range) + ' from ' : 'intercept ') + s.name);
+        OD.UI.toast(sel.name + '：' + (order.type === 'keeprange' ? '与 ' + s.name + ' 保持 ' + U.fmt.dist(order.range) : '拦截 ' + s.name));
         return s.id;
       }
       if (own) { this.select(s.id, shift); }
-      else if (OD.UI.selected) { this.setTarget(s.id); OD.UI.toast('Target: ' + s.name); }
+      else if (OD.UI.selected) { this.setTarget(s.id); OD.UI.toast('目标：' + s.name); }
       return s.id;
     },
 
-    // Time warp drops to 1× just before the selected ship flips, starts braking or arrives, so the moment is seen.
+    // Time warp drops to 1× just before the selected ship starts braking, arrives or is about to hit ground, so the moment is seen.
     slowForEvents() {
       if (this.warp <= 1 || !OD.Guide || !OD.UI.selected) return;
       const ship = this.sim.byId(OD.UI.selected); if (!ship) return;
       const p = OD.Guide.plan(this.sim, ship);
       if (!p.active) return;
       const target = p.order.target ? this.sim.byId(p.order.target) : null;
-      const events = [['flip', p.flip, 'Flip. The nose swings round, and from here the drive brakes instead of pushing.'], ['brake', p.brake, 'Braking tail-first' + (target ? ' toward ' + target.name : '') + '.'], ['arrive', p.arrive, 'Arriving' + (target ? '. Matching speed with ' + target.name : '') + '.'], ['crash', p.crash, 'On this track she reaches the surface. Burn to raise it.']];
+      const events = [['brake', p.brake, '掉头反推' + (target ? '，朝 ' + target.name : '') + '。'], ['arrive', p.arrive, '到达' + (target ? '，正在与 ' + target.name + ' 匹配速度' : '') + '。'], ['crash', p.crash, '这条轨迹会撞上地面。点火把近点抬起来。']];
       for (const [name, ev, text] of events) {
         if (!ev) continue;
         const eta = OD.Guide.eta(this.sim, p, ev);
@@ -892,7 +892,6 @@
         const key = ship.id + ':' + name + ':' + Math.round((this.sim.time + eta) / 30);
         if (this._slowed[key]) continue;
         this._slowed[key] = true;
-        if (name === 'brake' && Object.keys(this._slowed).some((k) => k.startsWith(ship.id + ':flip:') && Math.abs(+k.split(':')[2] - Math.round((this.sim.time + eta) / 30)) <= 2)) continue;
         this.pullWarp(1, 6000);
         OD.UI.toast(text, 4500);
         return;

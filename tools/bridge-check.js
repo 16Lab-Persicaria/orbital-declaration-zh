@@ -30,14 +30,14 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
   st = await cur();
   check('Story opens the chapters', st.screen === 'chapters', st.screen);
   const warKey = await page.evaluate(() => { const r = OD.Bridge.state.hits.find((x) => x.id === 'k:war'); return r ? { label: r.label, hot: r.hot } : null; });
-  check('the chapters screen offers "The war so far"', !!warKey && /war so far/i.test(warKey.label), JSON.stringify(warKey));
+  check('the chapters screen offers "The war so far"', !!warKey && /战况/.test(warKey.label), JSON.stringify(warKey));
   const wk = await keyAt('k:war'); await page.mouse.click(wk.x, wk.y); await page.waitForTimeout(200);
   st = await cur();
   check('the key opens the situation screen', st.screen === 'situation', st.screen);
   const sit = await page.evaluate(() => ({ paras: OD.Bridge.model.paragraphs || [], sides: (OD.Bridge.model.sides || []).map((x) => x.name), keys: (OD.Bridge.model.keys || []).map((x) => x.label), mirror: Array.from(document.querySelectorAll('#bridgeA11y button')).map((b) => b.textContent) }));
   check('two or three short sentences on who, whom and why', sit.paras.length >= 2 && sit.paras.length <= 3 && /Halvorsen/.test(sit.paras[0]) && sit.paras.join(' ').length < 600, JSON.stringify(sit.paras).slice(0, 160));
-  check('the situation names both sides', /Jovian Compact/.test(sit.sides.join('|')) && /Inner Systems Authority/.test(sit.sides.join('|')), JSON.stringify(sit.sides));
-  check('a Continue or Back key, mirrored for the keyboard', /Continue|Back to /.test(sit.keys.join('|')) && sit.mirror.some((b) => /Continue|Back to /.test(b)), JSON.stringify(sit.keys) + ' ' + JSON.stringify(sit.mirror));
+  check('the situation names both sides', /木星盟约/.test(sit.sides.join('|')) && /内星系管理局/.test(sit.sides.join('|')), JSON.stringify(sit.sides));
+  check('a Continue or Back key, mirrored for the keyboard', /继续|返回/.test(sit.keys.join('|')) && sit.mirror.some((b) => /继续|返回/.test(b)), JSON.stringify(sit.keys) + ' ' + JSON.stringify(sit.mirror));
   await page.keyboard.press('Escape'); await page.waitForTimeout(150);
   st = await cur();
   check('Esc backs out to the chapters', st.screen === 'chapters', st.screen);
@@ -47,16 +47,16 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
   await page.keyboard.press('Enter'); await page.waitForTimeout(250);
   st = await cur();
   const brief1 = await page.evaluate(() => ({ title: OD.Bridge.model.title, first: (OD.Bridge.model.paragraphs || [])[0] || '' }));
-  check('Continue reaches chapter 1\'s briefing', st.screen === 'briefing' && brief1.title === 'Cold Equations', st.screen + ' ' + brief1.title);
+  check('Continue reaches chapter 1\'s briefing', st.screen === 'briefing' && brief1.title === '冷酷方程', st.screen + ' ' + brief1.title);
   check('the brief opens with who, where and why', /Halvorsen/.test(brief1.first) && /Callisto/.test(brief1.first) && /Larkspur/.test(brief1.first), brief1.first.slice(0, 120));
   await page.evaluate(() => OD.Game.showBriefing(5)); await page.waitForTimeout(200);
   const b6 = await page.evaluate(() => ({ screen: OD.Bridge.current, first: (OD.Bridge.model.paragraphs || [])[0] || '' }));
   check('a later chapter goes straight to its briefing', b6.screen === 'briefing', b6.screen);
-  check('every brief opens with who and where', /You are|Authority/.test(b6.first) && /Europa|Conamara/.test(b6.first), b6.first.slice(0, 120));
+  check('every brief opens with who and where', /你是|管理局/.test(b6.first) && /Europa|Conamara/.test(b6.first), b6.first.slice(0, 120));
   // a story chapter's pause screen carries Situation; skirmish does not
   await page.evaluate(() => { OD.harness.start(0, { mode: 'Story', chapter: 0, hangarDone: true }); OD.Game.running = true; OD.Game.pauseMenu(); }); await page.waitForTimeout(150);
   let entries = await page.evaluate(() => (OD.Bridge.model.entries || []).map((e) => e.label));
-  check('a story pause offers Situation', entries.includes('Situation'), JSON.stringify(entries));
+  check('a story pause offers Situation', entries.includes('局势'), JSON.stringify(entries));
   await page.keyboard.press('2'); await page.waitForTimeout(200);
   st = await cur();
   check('pause · Situation opens the screen', st.screen === 'situation', st.screen);
@@ -65,7 +65,7 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
   check('Esc returns to the pause screen', st.screen === 'pause', st.screen);
   await page.evaluate(() => { OD.Bridge.close(); OD.harness.start(OD.Skirmish.build({ player: 'JC', env: 'deep', range: 600, playerShips: { corvette: 1 }, enemyShips: { corvette: 1 }, seed: 4 }), { mode: 'Skirmish' }); OD.Game.running = true; OD.Game.pauseMenu(); }); await page.waitForTimeout(150);
   entries = await page.evaluate(() => (OD.Bridge.model.entries || []).map((e) => e.label));
-  check('a skirmish pause has no Situation entry', !entries.includes('Situation'), JSON.stringify(entries));
+  check('a skirmish pause has no Situation entry', !entries.includes('局势'), JSON.stringify(entries));
   // the debrief says what the result changed for the war
   await page.evaluate(() => { OD.Bridge.close(); OD.harness.start(0, { mode: 'Story', chapter: 0, hangarDone: true }); OD.Game.sim.outcome = 'defeat'; OD.Game.endScenario(); }); await page.waitForTimeout(200);
   const deb = await page.evaluate(() => ({ screen: OD.Bridge.current, body: OD.Bridge.model.body, warLine: OD.Bridge.model.warLine, title: OD.Bridge.model.title }));
@@ -81,7 +81,7 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
   st = await cur();
   check('Engage opens the hangar', st.screen === 'hangar', st.screen);
   const note = await page.evaluate(() => OD.Bridge.model.note);
-  check('hangar says refits need a Compact yard or port', /yard or port/.test(note || ''), note);
+  check('hangar says refits need a Compact yard or port', /船坞或港口/.test(note || ''), note);
   const refitKey = await keyAt('k:refit');
   check('no Refit key at a hostile yard', !refitKey);
   await page.keyboard.press('Enter'); await page.waitForTimeout(300);
@@ -114,7 +114,7 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
     await page.click('#cfgRoot [data-act="back"]'); await page.waitForTimeout(200);
     st = await cur();
     const sub = await page.evaluate(() => { const r = OD.Bridge.state.hits.find((x) => x.id === 'hg:0'); return r && r.sub; });
-    check('Back returns to the hangar with the refit marked', st.screen === 'hangar' && /refit/.test(sub || ''), st.screen + ' ' + sub);
+    check('Back returns to the hangar with the refit marked', st.screen === 'hangar' && /改装/.test(sub || ''), st.screen + ' ' + sub);
     await page.keyboard.press('Enter'); await page.waitForTimeout(300);
     const flown = await page.evaluate(() => ({ cls: OD.Game.sim.playerShips().map((s) => s.cls), custom: OD.Game.sim.playerShips().map((s) => !!OD.Ships.CLASSES[s.cls].custom) }));
     check('the mission flies the design', flown.custom[0] === true, JSON.stringify(flown));
@@ -125,8 +125,8 @@ const check = (name, ok, detail) => { console.log((ok ? '  ok   ' : '  FAIL ') +
   await page.evaluate(() => OD.Game.showMenu()); await page.waitForTimeout(120);
   if (hasCfg) await page.evaluate(() => { for (const d of OD.Configurator.list()) OD.Configurator.remove(d.id || d); });
   const mirror = await page.evaluate(() => ({ menu: !!document.getElementById('menu'), buttons: Array.from(document.querySelectorAll('#bridgeA11y button')).map((b) => b.textContent.slice(0, 20)) }));
-  check('#menu mirror holds the console entries', mirror.menu && mirror.buttons.some((b) => /Story/.test(b)) && mirror.buttons.some((b) => /Skirmish/.test(b)), JSON.stringify(mirror.buttons));
-  await page.evaluate(() => { const b = Array.from(document.querySelectorAll('#bridgeA11y button')).find((x) => /Skirmish/.test(x.textContent)); b.focus(); b.click(); }); await page.waitForTimeout(120);
+  check('#menu mirror holds the console entries', mirror.menu && mirror.buttons.some((b) => /剧情/.test(b)) && mirror.buttons.some((b) => /遭遇战/.test(b)), JSON.stringify(mirror.buttons));
+  await page.evaluate(() => { const b = Array.from(document.querySelectorAll('#bridgeA11y button')).find((x) => /遭遇战/.test(x.textContent)); b.focus(); b.click(); }); await page.waitForTimeout(120);
   st = await cur();
   check('mirror button opens the skirmish board', st.screen === 'skirmish', st.screen);
   await page.keyboard.press('Escape'); await page.waitForTimeout(100);

@@ -60,8 +60,8 @@
     return 'convoy';
   };
   const CH2_DEFEAT = {
-    convoy: 'The freighters were lost. The Authority has its incident, and the inner planets will be told the Compact shot first.',
-    larkspur: 'Larkspur is out of the fight over Ganymede. Ochre Sky and Pale Harbour are running for Galileo Regio with no escort.',
+    convoy: '货船没了。管理局有了它要的事件，内行星会被告知是盟约先开的火。',
+    larkspur: 'Larkspur 在 Ganymede (木卫三) 上空退出战斗。Ochre Sky 和 Pale Harbour 正毫无护航地奔向 Galileo Regio (伽利略区)。',
   };
   // ------------------------------------------------------------ how a fight ended (the debriefs)
   // A debrief is read over the fight it is about, so every sentence that says what happened to a hull
@@ -85,46 +85,46 @@
   const rangeFromUs = (sim, s) => { let best = 0; for (const p of playerShips(sim)) { const d = U.dist(p.pos, s.pos); if (!best || d < best) best = d; } return best ? kmAbout(best) : ''; };
   // What put her out of the fight, in the words engagement.js disables a hull with: a wrecked drive, or
   // a hull too far open to manoeuvre with.
-  const adriftWhy = (s) => ((s.systems && s.systems.drive <= 0) ? 'with her drive wrecked.' : 'at ' + pctOf(s.hull) + ' hull integrity.');
+  const adriftWhy = (s) => ((s.systems && s.systems.drive <= 0) ? '推进器报废。' : '舰体完整度 ' + pctOf(s.hull) + '。');
   // Why her computer broke off, in the words sim.js logs the drive-off with.
-  const brokeOffWhy = (s) => (s.hull < 0.35 ? 'with her hull at ' + pctOf(s.hull)
-    : (s.systems && s.systems.drive < 0.3) ? 'with her drive at ' + pctOf(s.systems.drive)
-    : 'with her tanks near dry');
+  const brokeOffWhy = (s) => (s.hull < 0.35 ? '舰体只剩 ' + pctOf(s.hull)
+    : (s.systems && s.systems.drive < 0.3) ? '推进器只剩 ' + pctOf(s.systems.drive)
+    : '推进剂快见底');
   // One sentence for how a hostile ended, with the number that says it.
   const endedAs = (sim, id, name) => {
     const s = sim && sim.byId(id);
-    if (!s) return name + ' is out of the fight.';
-    if (s.captured) return name + ' was boarded and taken.';
-    if (s.destroyed) return name + ' came apart. Her hull went to 0 %.';
-    if (s.disabled) return name + ' is out of the fight and adrift ' + adriftWhy(s);
+    if (!s) return name + ' 退出了战斗。';
+    if (s.captured) return name + ' 被登舰俘获。';
+    if (s.destroyed) return name + ' 解体了，舰体归零。';
+    if (s.disabled) return name + ' 退出战斗，失控漂流，' + adriftWhy(s);
     if (s.drivenOff) {
       const R = rangeFromUs(sim, s);
-      return name + ' broke off ' + brokeOffWhy(s) + ' and ran. ' +
-        (R ? 'She is ' + R + ' out and still opening.' : 'She is past 1 500 km and still opening.') +
-        ' She is out of this fight.';
+      return name + ' 脱离，' + brokeOffWhy(s) + '，掉头跑了。' +
+        (R ? '她在 ' + R + ' 外，还在拉开。' : '她已在一千五百公里外，还在拉开。') +
+        ' 她退出了这场战斗。';
     }
-    return name + ' is still flying.';
+    return name + ' 还在飞。';
   };
   // The same in four words, for a line that covers more than one hull.
   const endedShort = (sim, id, name) => {
     const s = sim && sim.byId(id);
-    if (!s) return name + ' is out of the fight';
-    if (s.captured) return name + ' was taken';
-    if (s.destroyed) return name + ' came apart';
-    if (s.disabled) return name + ' is adrift';
-    if (s.drivenOff) return name + ' broke off and ran';
-    return name + ' is still flying';
+    if (!s) return name + ' 退出了战斗';
+    if (s.captured) return name + ' 被俘获';
+    if (s.destroyed) return name + ' 解体了';
+    if (s.disabled) return name + ' 失控漂流';
+    if (s.drivenOff) return name + ' 脱离跑了';
+    return name + ' 还在飞';
   };
   // One of ours, in the same terms, for the debriefs that say what a ship of ours came home as.
   const ourEnd = (s, name) => {
-    if (!s) return name + ' is out of the fight.';
-    if (s.destroyed) return name + ' was lost.';
-    if (s.captured) return name + ' was boarded and taken.';
-    if (s.disabled) return name + ' is out of the fight and adrift ' + adriftWhy(s);
-    if (s.hull < 0.995) return name + ' is at ' + pctOf(s.hull) + ' hull integrity and still flying.';
-    return 'Nothing got through ' + name + '\'s armour.';
+    if (!s) return name + ' 退出了战斗。';
+    if (s.destroyed) return name + ' 没了。';
+    if (s.captured) return name + ' 被登舰俘获。';
+    if (s.disabled) return name + ' 退出战斗，失控漂流，' + adriftWhy(s);
+    if (s.hull < 0.995) return name + ' 只剩 ' + pctOf(s.hull) + ' 舰体完整度，还在飞。';
+    return '没有东西穿过去 ' + name + ' 的装甲。';
   };
-  const COUNT = ['none', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'];
+  const COUNT = ['零', '一', '二', '三', '四', '五', '六', '七', '八'];
   // The range at which her beams burn through the facet of ours she is looking at, from the same ladder the map draws.
   const theirBurnThrough = (sim, ownId, foeId) => {
     const e = E(), me = sim.byId(ownId), foe = sim.byId(foeId);
@@ -141,25 +141,25 @@
 
   const chapters = [
     {
-      n: 1, id: 'cold-equations', title: 'Cold Equations', location: 'Callisto orbit', date: '14 March 2211',
+      n: 1, id: 'cold-equations', title: '冷酷方程', simName: 'Cold Equations', location: 'Callisto (木卫四) 轨道', date: '2211 年 3 月 14 日',
       brief: [
-        'You are Commander Halvorsen of the Jovian Compact, in orbit over Callisto with the corvette JCS Larkspur. The moons vote on the Declaration in a fortnight, and the Inner Systems Authority has been stopping Compact ships for inspection all winter. Nobody is shooting yet.',
-        'Forty minutes ago the tanker JCV Long Meridian lost her drive on a coast out of Valhalla Station. Her nineteen crew are alive. She is falling along an ellipse that reaches the surface of Callisto in under two hours, and the Compact cannot spare a tanker.',
-        'Go and get her. Larkspur has full tanks, 51 km/s of delta-v. Delta-v is the speed your tanks can still add or take away, and every burn spends some of it. An approach only counts if you end up moving with the other ship, not just beside her. The ship pushes the way its nose points, so to slow down you turn round and burn the other way.',
+        '你是木星盟约的指挥官 Halvorsen，带着护卫艇 JCS Larkspur 驻在 Callisto (木卫四) 轨道上。再有两周，各卫星就要对《宣言》投票；整个冬天，内星系管理局一直在拦停盟约的船做检查。目前还没有人开火。',
+        '四十分钟前，油轮 JCV Long Meridian 在离开 Valhalla Station (瓦尔哈拉站) 后的滑行段上失去了主推进器。船上十九名船员还活着。她正沿一条椭圆轨道下坠，不到两小时就会撞上 Callisto (木卫四) 表面，而盟约抽不出第二艘油轮。',
+        '去把她带回来。Larkspur 的推进剂是满的，有 51 公里/秒的速度增量。速度增量就是你的推进剂还能加出来或减掉的速度，每次点火都要花掉一些。只有最后和目标同速同向，才算真正靠上去，光在旁边不算。舰只朝舰首方向推，所以想减速，得先掉头，再朝反方向点火。',
       ],
-      comms: [say('Navigation', 'Long Meridian is on the plot with no drive plume. She has nothing aboard to stop herself with. If we do not go and stop her, she is on the surface in two hours.')],
+      comms: [say('Navigation', 'Long Meridian 在海图上了，没有尾焰。她船上没有任何东西能让自己停下来。如果我们不去拦住她，两小时后她就到地面了。')],
       // Nobody tows her: the rendezvous trigger gives her drive back and the player flies her home, so
       // the line says what the objective actually measured.
-      victory: 'Long Meridian is inside 100 km of Valhalla Station with her drive running again. Her nineteen crew are aboard. The tanker will fly again.',
+      victory: 'Long Meridian 已经回到 Valhalla Station (瓦尔哈拉站) 100 公里内，主推进器重新点着了。十九名船员都在船上。这艘油轮还能再飞。',
       // Two ways to lose it: the tanker on the surface, or Larkspur gone with the tanker still falling.
       get defeat() {
-        const sim = endSim('Cold Equations');
+        const sim = endSim(chapters[0].simName);
         const m = sim && sim.byId('meridian'), l = sim && sim.byId('larkspur');
-        const advice = ' Burn earlier, and keep enough delta-v to brake with at the end.';
+        const advice = ' 早点开始减速，并且留够最后反推用的速度增量。';
         if (m && !m.destroyed && isOut(l)) {
-          return 'Larkspur is out of the fight over Callisto. Long Meridian is still falling, and nothing else out here can reach her in time.' + advice;
+          return 'Larkspur 在 Callisto (木卫四) 上空退出战斗。Long Meridian 还在下坠，这里没有别的船来得及救她。' + advice;
         }
-        return 'Long Meridian came down on Callisto with her nineteen crew aboard.' + advice;
+        return 'Long Meridian 带着十九名船员坠毁在 Callisto (木卫四) 上。' + advice;
       },
       build() {
         const body = B.callisto;
@@ -172,58 +172,58 @@
             { id: 'valhalla', name: 'Valhalla Station', cls: 'station', faction: 'JC', orbit: { altitude: km(1800), angle: -0.9 } },
           ],
           objectives: [
-            { id: 'rv', text: 'Pull alongside JCV Long Meridian and hold within 5 km at under 10 m/s', type: 'rendezvous', ship: 'larkspur', target: 'meridian', range: 5000, speed: 10, hold: 30 },
-            { id: 'home', text: 'Bring JCV Long Meridian within 100 km of Valhalla Station', type: 'reach', ship: 'meridian', target: 'valhalla', range: km(100), speed: 80, hold: 5, inactive: true },
+            { id: 'rv', text: '靠到 JCV Long Meridian 旁边，保持在 5 公里内、相对速度低于 10 米/秒', type: 'rendezvous', ship: 'larkspur', target: 'meridian', range: 5000, speed: 10, hold: 30 },
+            { id: 'home', text: '把 JCV Long Meridian 带到 Valhalla Station (瓦尔哈拉站) 100 公里内', type: 'reach', ship: 'meridian', target: 'valhalla', range: km(100), speed: 80, hold: 5, inactive: true },
           ],
-          intro: [say('Navigation', 'Long Meridian is on the plot with no drive plume. She has nothing aboard to stop herself with. If we do not go and stop her, she is on the surface in two hours.')],
+          intro: [say('Navigation', 'Long Meridian 在海图上了，没有尾焰。她船上没有任何东西能让自己停下来。如果我们不去拦住她，两小时后她就到地面了。')],
           triggers: [
             // The stakes, on the map: where and when the tanker comes down if nobody burns.
             { when: { time: 0.5 }, actions: [{ fn: (sim) => {
               const m = sim.byId('meridian'); if (!m) return;
               const pts = sim.predictPath(m, 5 * 3600, 600);
-              if (pts.length < 600) { const last = pts[pts.length - 1]; sim.flags.impactT = pts.length * 30; sim.markers.push({ id: 'impact', pos: last, color: '#ff6b6b', radius: km(60), label: 'Long Meridian comes down here' }); }
-            } }, { log: { speaker: 'Navigation', text: 'She reaches the surface in about two hours if nobody burns. The red circle is where.' } }] },
-            { when: (sim) => { const mk = sim.markers.find((x) => x.id === 'impact'); if (mk && sim.flags.impactT != null) { const left = sim.flags.impactT - sim.time; mk.label = 'Long Meridian comes down here' + (left > 0 ? ' in ' + U.fmt.time(left) : ''); } return false; }, actions: [] },
+              if (pts.length < 600) { const last = pts[pts.length - 1]; sim.flags.impactT = pts.length * 30; sim.markers.push({ id: 'impact', pos: last, color: '#ff6b6b', radius: km(60), label: 'Long Meridian 会落在这里' }); }
+            } }, { log: { speaker: 'Navigation', text: '如果没人点火，她大约两小时后会到地面。红圈就是落点。' } }] },
+            { when: (sim) => { const mk = sim.markers.find((x) => x.id === 'impact'); if (mk && sim.flags.impactT != null) { const left = sim.flags.impactT - sim.time; mk.label = 'Long Meridian 会落在这里' + (left > 0 ? '，' + U.fmt.time(left) + ' 后' : ''); } return false; }, actions: [] },
             // Guided tour, six steps.
-            { when: { time: 1 }, actions: [{ hint: { id: 't2', step: [1, 5], text: 'JCV Long Meridian is falling toward Callisto with no drive. ' + (touch() ? 'Tap' : 'Click') + ' her on the map to make her Larkspur\'s target. Larkspur is your ship, her panel is ' + (narrow() ? 'below the map' : 'on the right') + ', and every order she takes goes to whatever she has targeted.', mark: 'meridian', markLabel: touch() ? 'tap to target' : 'click to target', until: (sim) => { const s = sim.byId('larkspur'); return s && s.target === 'meridian'; } } }] },
-            { when: (sim) => { const s = sim.byId('larkspur'); return s && s.target === 'meridian'; }, actions: [{ hint: { id: 't3', step: [2, 5], text: 'The Intercept button now reads about 18 minutes and 12 km/s, out of the 51 km/s in Larkspur\'s tanks. ' + (touch() ? 'Tap Intercept.' : 'Press Intercept, or the I key.') + ' The autopilot points the nose at her and burns, turns round halfway, and burns the other way to stop alongside her.', anchor: '[data-order="intercept"]', until: (sim) => sim.flags.orderedIntercept } }] },
-            { when: (sim) => sim.flags.orderedIntercept, actions: [{ hint: { id: 't4', step: [3, 5], text: 'Larkspur is burning, and her plotted path is drawn ahead of her. The bright part is the burn. The ring is where she flips. The blue-grey part is braking tail-first. Press 16\u00d7 or Skip ahead to run the clock. Time drops back to 1\u00d7 by itself for the flip and the arrival, so you will not miss them.', anchor: '#warp', until: (sim) => !!sim.flags.flipHint } }] },
-            { when: (sim) => { const s = sim.byId('larkspur'); return s && s.order.type === 'intercept' && s.stats.dvSpent > 1500 && Math.abs(U.angleDiff(s.cmdHeading, s.heading)) > 2.5 && !sim.flags.flipHint; }, actions: [{ flag: 'flipHint' }, { log: { speaker: 'Navigation', text: 'Flip complete. We are braking tail-first from here.' } }, { hint: { id: 't5', step: [4, 5], text: 'Halfway. The nose has swung round and the drive now faces Long Meridian, so from here every second takes speed off instead of adding it. Watch the delta-v bar in the panel. The hatched part is what the rest of the plan still costs, and it shrinks as she pays.', anchor: '#shipPanel', until: (sim) => sim.objectives[0].done } }] },
-            { when: { objective: 'rv' }, actions: [{ fn: (sim) => { const m = sim.byId('meridian'); if (m) { m.systems.drive = 1; if (OD.Damage && OD.Damage.repair) { try { OD.Damage.repair(m, 1); } catch (e) { /* the tanker flies either way */ } } m.faction = 'JC'; m.player = true; m.ai = false; m.order = { type: 'hold' }; m.target = 'valhalla'; } sim.markers = sim.markers.filter((x) => x.id !== 'impact'); if (OD.Game && OD.Game.sim === sim) OD.Game.select('meridian'); } }, { log: { speaker: 'JCV Long Meridian', text: 'Larkspur, your engineers have our drive back. She is heavy and slow, and she is yours to steer.' } }, { activate: 'home' }, { hint: { id: 't6', step: [5, 5], text: 'Long Meridian has her drive back. She is selected now, with Valhalla Station already her target, so press Intercept. She is a freighter at 2.5 m/s\u00b2 against Larkspur\'s 13, so the trip is slow. Skip ahead runs the clock to the next event.', anchor: '[data-order="intercept"]', until: (sim) => { const m = sim.byId('meridian'); return m && m.order.type === 'intercept'; } } }] },
-            { when: (sim) => { const m = sim.byId('meridian'); return m && m.order.type === 'intercept' && !sim.flags.fullHint; }, actions: [{ flag: 'fullHint' }, { hint: { id: 't7', text: 'Long Meridian is on her way home. Every mission works the same way. Pick a target, choose an order, and pay for it in delta-v. Press D, or the Essentials button at the top of the panel, to show the rest of her numbers.', anchor: '#pDetail' } }] },
+            { when: { time: 1 }, actions: [{ hint: { id: 't2', step: [1, 5], text: 'JCV Long Meridian 没有推进器，正朝 Callisto (木卫四) 下坠。' + '点地图上的她，把她设成 Larkspur 的目标。Larkspur 是你的船，她的面板在' + (narrow() ? '地图下方' : '右侧') + '，她收到的每条指令都发给当前目标。', mark: 'meridian', markLabel: touch() ? '点按设为目标' : '点击设为目标', until: (sim) => { const s = sim.byId('larkspur'); return s && s.target === 'meridian'; } } }] },
+            { when: (sim) => { const s = sim.byId('larkspur'); return s && s.target === 'meridian'; }, actions: [{ hint: { id: 't3', step: [2, 5], text: '拦截按钮现在显示大约 18 分钟、12 公里/秒，而 Larkspur 的推进剂箱里有 51 公里/秒。' + (touch() ? '点拦截。' : '按拦截，或者按 I 键。') + ' 自动驾驶会把舰首对准她点火，半路掉头，再朝反方向点火，最后并排停住。', anchor: '[data-order="intercept"]', until: (sim) => sim.flags.orderedIntercept } }] },
+            { when: (sim) => sim.flags.orderedIntercept, actions: [{ hint: { id: 't4', step: [3, 5], text: 'Larkspur 正在点火，她的规划路径画在前方。亮的部分是点火段，圈是掉头点，蓝灰段是掉头反推。按 16× 或快进把时间跑起来。掉头和到达前时间会自动降回 1×，不会错过。', anchor: '#warp', until: (sim) => !!sim.flags.flipHint } }] },
+            { when: (sim) => { const s = sim.byId('larkspur'); return s && s.order.type === 'intercept' && s.stats.dvSpent > 1500 && Math.abs(U.angleDiff(s.cmdHeading, s.heading)) > 2.5 && !sim.flags.flipHint; }, actions: [{ flag: 'flipHint' }, { log: { speaker: 'Navigation', text: '掉头完成。从现在起掉头反推。' } }, { hint: { id: 't5', step: [4, 5], text: '过半了。舰首已经转过去，推进器现在正对 Long Meridian，所以从这一刻起，每一秒都在减速而不是加速。看面板里的速度增量条：斜纹那一段是这份计划接下来还要花的，随着她付出会越来越短。', anchor: '#shipPanel', until: (sim) => sim.objectives[0].done } }] },
+            { when: { objective: 'rv' }, actions: [{ fn: (sim) => { const m = sim.byId('meridian'); if (m) { m.systems.drive = 1; if (OD.Damage && OD.Damage.repair) { try { OD.Damage.repair(m, 1); } catch (e) { /* the tanker flies either way */ } } m.faction = 'JC'; m.player = true; m.ai = false; m.order = { type: 'hold' }; m.target = 'valhalla'; } sim.markers = sim.markers.filter((x) => x.id !== 'impact'); if (OD.Game && OD.Game.sim === sim) OD.Game.select('meridian'); } }, { log: { speaker: 'JCV Long Meridian', text: 'Larkspur，你们的轮机员把我们的推进器修好了。她又重又慢，现在交给你操纵。' } }, { activate: 'home' }, { hint: { id: 't6', step: [5, 5], text: 'Long Meridian 的推进器修好了。她现在已被选中，目标也已经设成 Valhalla Station，所以直接按拦截。她是货船，加速度 2.5 米/秒²，而 Larkspur 是 13，所以这趟很慢。快进会把时间直接跑到下一事件。', anchor: '[data-order="intercept"]', until: (sim) => { const m = sim.byId('meridian'); return m && m.order.type === 'intercept'; } } }] },
+            { when: (sim) => { const m = sim.byId('meridian'); return m && m.order.type === 'intercept' && !sim.flags.fullHint; }, actions: [{ flag: 'fullHint' }, { hint: { id: 't7', text: 'Long Meridian 正在返航。每次任务都是同一套：选目标、下指令、用速度增量付账。按 D，或者面板顶上的“精简”按钮，把其余数字显示出来。', anchor: '#pDetail' } }] },
             // The sink number the panel is showing at this moment leads the hint, so the two agree.
             { when: (sim) => { const s = sim.byId('larkspur'); return s && s.thermalLoad() > 0.45 && !sim.flags.heatHint; }, actions: [{ flag: 'heatHint' }, { fn: (sim) => {
               const s = sim.byId('larkspur'); if (!s) return;
               sim.hint({ id: 'h5', anchor: '#shipPanel',
-                text: 'Your sink is at ' + Math.round(s.thermalLoad() * 100) + ' % and climbing on this burn. With the radiators out it holds steady. In a fight you stow them with X and the sink fills. A full sink holds the drive to a quarter and stops every mount, point defence included, until it drains.',
+                text: '你的热沉在 ' + Math.round(s.thermalLoad() * 100) + ' %，而且这次点火还在往上走。散热板展开时它就稳住了。战斗中按 X 收起散热板，热沉就会灌满。热沉满了，推进器只剩四分之一，所有炮位停火——包括点防御——直到它排空。',
                 until: (s2) => { const t = s2.byId('larkspur'); return !t || t.thermalLoad() < 0.3 || s2.time > 1500; } });
             } }] },
-            logAt(60, 'Valhalla Control', 'Larkspur, Control. You are clear to manoeuvre. Long Meridian has nineteen people aboard.'),
+            logAt(60, 'Valhalla Control', 'Larkspur，这里是控制中心。你可以机动了。Long Meridian 上有十九个人。'),
           ],
         };
       },
     },
     {
-      n: 2, id: 'picket-line', title: 'Picket Line', location: 'Ganymede orbit', date: '2 April 2211',
+      n: 2, id: 'picket-line', title: '警戒线', simName: 'Picket Line', location: 'Ganymede (木卫三) 轨道', date: '2211 年 4 月 2 日',
       brief: [
-        'You are over Ganymede in JCS Larkspur, covering two Compact freighters out of Galileo Regio. The Declaration is three days old. The Inner Systems Authority has not recognised it and calls its ships out here customs enforcement.',
-        'The Authority corvette ISV Sabre has shadowed these convoys for a week. This morning she crossed the bow of a loaded hauler close enough to scorch paint. Put Larkspur between Sabre and the freighters and take her out of the fight. Disable her, or close to under 3 km at under 25 m/s and put a boarding party across. Either way the freighters come home.',
-        'Sabre is running cold. At a thousand kilometres she is a contact on your board, a bearing and a rough range, and you are the same to her. Light a drive and the plume gives the other one a firing solution, from any range. Whoever burns first is seen first.',
-        'She has been lying on the convoy route since before dawn with her radiators stowed, so her heat sink is about 30 per cent full. Larkspur starts empty. A long fight goes to the ship with the emptier sink.',
+        '你正带着 JCS Larkspur 在 Ganymede (木卫三) 上空，为两艘从 Galileo Regio (伽利略区) 出来的盟约货船护航。《宣言》签署才三天。内星系管理局不承认它，把派到这里的舰船叫作海关执法。',
+        '管理局的护卫艇 ISV Sabre 已经跟了这支船队一个星期。今天早上，她横穿一艘满载货船的船首，近到把漆都烤焦了。把 Larkspur 挡在 Sabre 和货船之间，把她打出这场战斗。打瘫她，或者靠到 3 公里内、相对速度低于 25 米/秒，派班组登舰。不管哪种，货船都要回家。',
+        'Sabre 正冷冷地滑行。在一千公里外，她在你的面板上只是一个接触：一个方位和大致距离，你对她也是一样。一点火，尾焰就给了对方射击解算，多远都一样。谁先点火，谁先被看见。',
+        '她从天亮前就趴在货船航线上，散热板收着，所以热沉大约有 30 % 满。Larkspur 出发时是空的。拖得越久，对热沉更空的那艘越有利。',
       ],
-      comms: [say('Galileo Regio', 'Sabre is armed and her captain has orders we have not seen. Keep your nose toward her. Larkspur carries 20 cm of armour on the nose and 8 on the flanks. Stow the radiators when she gets close, and do not light the drive unless you mean it.')],
+      comms: [say('Galileo Regio', 'Sabre 是武装的，她的舰长手里有我们没见过的命令。舰首始终对着她。Larkspur 舰首有 20 厘米装甲，舷侧 8 厘米。她靠近时把散热板收起来，不是真要打就别点火。')],
       // Sabre can end this chapter four ways — taken, wrecked, adrift or driven off — and the freighters
       // are still on their way when it ends, so the line says which one happened and does not send the
       // convoy home early.
       get victory() {
         const sim = endSim('Picket Line');
         const t = sim && sim.byId('sabre');
-        const head = sim ? endedAs(sim, 'sabre', 'Sabre') : 'Sabre is out of the fight.';
-        const convoy = ' Ochre Sky and Pale Harbour are still flying, on their way to Galileo Regio.';
+        const head = sim ? endedAs(sim, 'sabre', 'Sabre') : 'Sabre 退出了战斗。';
+        const convoy = ' Ochre Sky 和 Pale Harbour 还在飞，正前往 Galileo Regio (伽利略区)。';
         // What the Compact did to her: boarded her, put beams through her, or pushed her off the route.
-        const last = t && t.captured ? ' The Compact has taken an Authority warship, and both governments know what that means.'
-          : !t || t.hull < 0.995 ? ' The Compact has fired on an Authority warship, and both governments know what that means.'
-          : ' The Compact has pushed an Authority warship off a Compact convoy, and both governments know what that means.';
+        const last = t && t.captured ? ' 盟约俘获了一艘管理局军舰，两国政府都明白这意味着什么。'
+          : !t || t.hull < 0.995 ? ' 盟约向一艘管理局军舰开了火，两国政府都明白这意味着什么。'
+          : ' 盟约把一艘管理局军舰从盟约船队前逼退，两国政府都明白这意味着什么。';
         return head + convoy + last;
       },
       // main.js reads chapter.defeat when it builds the debrief, so the sentence is picked from the fight
@@ -233,7 +233,7 @@
         const sim = endSim('Picket Line');
         const t = sim && sim.byId('sabre');
         // She is only still on the picket line if she is still flying and fit to fight.
-        return CH2_DEFEAT.larkspur + ' ' + (isDone(t) ? endedAs(sim, 'sabre', 'Sabre') : 'ISV Sabre is still on the picket line.');
+        return CH2_DEFEAT.larkspur + ' ' + (isDone(t) ? endedAs(sim, 'sabre', 'Sabre') : 'ISV Sabre 仍在警戒线上。');
       },
       build() {
         const body = B.ganymede;
@@ -255,44 +255,44 @@
             // The two minutes are the window for the prize: the card that offers the boarding comes up
             // when she stops manoeuvring, and the player still has to read it and order the run. An
             // intercept ordered on her inside that window holds the chapter open (the trigger below).
-            { id: 'sabre', text: 'Neutralise ISV Sabre (disable or board)', type: 'neutralize', targets: ['sabre'], hold: 120 },
-            { id: 'p1', text: 'JCV Ochre Sky survives', type: 'protect', ship: 'hauler1' },
-            { id: 'p2', text: 'JCV Pale Harbour survives', type: 'protect', ship: 'hauler2' },
+            { id: 'sabre', text: '使 ISV Sabre 失能（打瘫或登舰）', type: 'neutralize', targets: ['sabre'], hold: 120 },
+            { id: 'p1', text: 'JCV Ochre Sky 存活', type: 'protect', ship: 'hauler1' },
+            { id: 'p2', text: 'JCV Pale Harbour 存活', type: 'protect', ship: 'hauler2' },
           ],
-          intro: [say('Galileo Regio', 'Sabre is armed and her captain has orders we have not seen. Keep your nose toward her, and stow the radiators when she gets close.')],
+          intro: [say('Galileo Regio', 'Sabre 是武装的，她的舰长手里有我们没见过的命令。舰首始终对着她，她靠近时把散热板收起来。')],
           triggers: [
             hintFrom({ time: 2 }, (sim) => {
               const s = sim.byId('larkspur'), t = sim.byId('sabre');
               const R = s && t ? kmAbout(U.dist(s.pos, t.pos)) : '1 000 km';
               return { id: 'h1', anchor: '#shipPanel',
-                text: 'Sabre is the ? on the map, ' + R + ' out. A contact is a bearing and a rough range. She is somewhere on the line drawn through the ?. ' + (touch() ? 'Tap' : 'Click') + ' her to make her the target. The Track row then grades our picture of her, from contact, to track, to a solution good enough to aim by.',
+                text: 'Sabre 就是地图上的那个 ?，' + R + ' 外。接触就是一个方位和大致距离。她在那条穿过 ? 的线上的某处。点她，把她设成目标。跟踪那一行会给我们对她的图像分级：接触、跟踪，再到好到可以瞄准的解算。',
                 until: (s2) => { const a = s2.byId('larkspur'); return (a && a.target === 'sabre' && s2.time > 8) || s2.time > 240; } };
             }),
             hintFrom((sim) => sim.time > 12 && trackQ(sim, 'sabre') < 2.7, (sim) => {
               const R = coldSolutionRange(sim, 'larkspur');
               return { id: 'h1b', anchor: '#shipPanel',
-                text: 'Cold, Sabre needs to be inside ' + (R > 0 ? kmAbout(R) : '350 km') + ' to aim at you. Light the drive and she has a solution from any range. Keep the cruise capped on the way in.',
+                text: '冷着，Sabre 必须进到 ' + (R > 0 ? kmAbout(R) : '350 km') + ' 瞄准你。一点火，她就能在任意距离拿到解算。进场时把巡航速度压住。',
                 until: (s2) => !!s2.flags.decisionAnswered || s2.time > 300 };
             }),
             // The band's keys are their own hint, on the first card the navigator raises.
-            hintAt((sim) => hasDecision(sim), 'h1k', 'The navigator has put a decision on the band. Keys 1, 2 and 3 answer it, Esc leaves it for later, and the lit option is her own pick.', '#decision', (sim) => !!sim.flags.decisionAnswered || sim.time > 900),
-            hintAt((sim) => trackQ(sim, 'sabre') >= 2.7 && sim.time > 20, 'h1c', touch() ? 'We have a solution on Sabre, so the beams and the coilgun can aim. Hold a finger on her to keep range, or tap her and press Keep range in the panel, and Larkspur holds her doctrine range of 250 km.' : 'We have a solution on Sabre, so the beams and the coilgun can aim. Right-click her to keep range, and Larkspur holds her doctrine range of 250 km.', '#shipPanel', (sim) => sim.time > 600 || trackQ(sim, 'sabre') < 2.7),
-            hintAt((sim) => trackQ(sim, 'sabre') >= 2.7 && sim.time > 45, 'h1e', 'The "They see" row names the armour face Sabre is looking at. Larkspur carries 20 cm on the nose and 4 on the tail, so keep the nose to her.', '#shipPanel', (sim) => sim.time > 700 || trackQ(sim, 'sabre') < 2.7),
+            hintAt((sim) => hasDecision(sim), 'h1k', '导航官在决策栏上放了一个选择。按 1、2、3 作答，Esc 留到稍后，亮着的那个是她自己的建议。', '#decision', (sim) => !!sim.flags.decisionAnswered || sim.time > 900),
+            hintAt((sim) => trackQ(sim, 'sabre') >= 2.7 && sim.time > 20, 'h1c', touch() ? '我们对 Sabre 有解算了，光束和线圈炮可以瞄准。手指按住她就能保持距离，或者点选她、在面板里按保持距离，Larkspur 会守在她这条战术条令规定的 250 公里上。' : '我们对 Sabre 有解算了，光束和线圈炮可以瞄准。右键点她就能保持距离，Larkspur 会守在她这条战术条令规定的 250 公里上。', '#shipPanel', (sim) => sim.time > 600 || trackQ(sim, 'sabre') < 2.7),
+            hintAt((sim) => trackQ(sim, 'sabre') >= 2.7 && sim.time > 45, 'h1e', '“对方看到”那一行写的是 Sabre 正对着的我方装甲面。Larkspur 舰首 20 厘米、舰尾 4 厘米，所以舰首始终朝她。', '#shipPanel', (sim) => sim.time > 700 || trackQ(sim, 'sabre') < 2.7),
             hintFrom((sim) => seenQ(sim, 'larkspur') >= 2.7 && sim.time > 20, (sim) => {
               const R = theirBurnThrough(sim, 'larkspur', 'sabre');
               return { id: 'h1d', anchor: '#shipPanel',
-                text: 'Sabre holds a solution on us, from our drive plume or our hot radiators. A burn cannot be hidden once it is running, so finish it. Stow the radiators with X before she is inside ' + (R > 0 ? kmAbout(R) : '190 km') + ', where her beams burn through them.',
+                text: 'Sabre 对我们有解算，靠的是我们的尾焰或者炽热的散热板。点火一旦开始就藏不住，所以点完就收。在她进到 ' + (R > 0 ? kmAbout(R) : '190 km') + ' 之前，按 X 收起散热板，她的光束在那里能烧穿它们。',
                 until: (s2) => seenQ(s2, 'larkspur') < 2.7 || s2.time > 400 };
             }),
             // The crossing is priced from the two fit crews, the way the sim charges it (OD.Sim.boardingPlan).
             hintFrom((sim) => { const t = sim.byId('sabre'); return !!(t && t.neutralised() && !t.captured && !t.destroyed); }, (sim) => {
               const t = sim.byId('sabre'), s = sim.byId('larkspur');
               const plan = OD.Sim && typeof OD.Sim.boardingPlan === 'function' && s && t ? OD.Sim.boardingPlan(s, t) : null;
-              const across = plan && plan.known ? (plan.thrownBack ? 'Her ' + plan.theirs + ' fit crew against our ' + plan.ours + ' would throw a boarding party back: finish her with fire instead.' : 'A boarding party crosses in ' + U.fmt.time(plan.time) + ' against her ' + plan.theirs + ' fit crew.') : 'A boarding party crosses in about 90 s against a crew the size of ours, longer against a bigger one.';
-              return { id: 'h2', text: 'Sabre is disabled and the objective is met. To take her as a prize, intercept her and hold inside 3 km at under 25 m/s. ' + across + ' The chapter stays open while the run is flying and while the party is across.', anchor: '#shipPanel', until: (sim2) => { const t2 = sim2.byId('sabre'); return !t2 || t2.captured || t2.destroyed || !!sim2.outcome; } };
+              const across = plan && plan.known ? (plan.thrownBack ? '她那边能动的有 ' + plan.theirs + ' 人，我们这边 ' + plan.ours + ' 人，会把登舰班组打回来：改用火力打沉她。' : '登舰班组过去要 ' + U.fmt.time(plan.time) + '，对方能动的有 ' + plan.theirs + ' 人。') : '对方船员和我们差不多时，登舰班组过去大约要 90 秒；更多就更久。';
+              return { id: 'h2', text: 'Sabre 已失能，目标达成。想把她当战利品俘获，就拦截她，保持在 3 公里内、相对速度低于 25 米/秒。' + across + ' 在班组飞过去和登舰期间，本章不会结束。', anchor: '#shipPanel', until: (sim2) => { const t2 = sim2.byId('sabre'); return !t2 || t2.captured || t2.destroyed || !!sim2.outcome; } };
             }),
-            hintAt((sim) => sim.time > 30 && hasAction(sim, 'fire_full') && (sim.time > 600 || (() => { const s = sim.byId('larkspur'), t = sim.byId('sabre'); return !!(s && t && U.dist(s.pos, t.pos) < km(800)); })()), 'h3', 'Fire control is at the bottom of the panel, and Larkspur\'s weapons are free. W holds or frees them, and B picks the beam mode. Full fires every beam and fills the heat sink. Sustained throttles the beams to what the radiators can shed, so she can fire all day. The ticks on the line to Sabre mark where each side\'s beams burn through.', '#pEng', (sim) => !!sim.flags.fireKeyUsed || sim.time > 700),
-            { when: (sim) => { const s = sim.byId('larkspur'), t = sim.byId('sabre'); return !!(s && t && (seenQ(sim, 'larkspur') >= 2.7 || U.dist(s.pos, t.pos) < km(500) || sim.time > 900)); }, actions: [{ flag: 'sabreAwake' }, { fn: (sim) => { const t = sim.byId('sabre'); if (t && !t.neutralised()) { t.ai = true; t.radiators.deployed = true; } } }, { log: { speaker: 'Navigation', text: 'Sabre has seen us. Her radiators are extending and her drive is warming.', kind: 'warn' } }] },
+            hintAt((sim) => sim.time > 30 && hasAction(sim, 'fire_full') && (sim.time > 600 || (() => { const s = sim.byId('larkspur'), t = sim.byId('sabre'); return !!(s && t && U.dist(s.pos, t.pos) < km(800)); })()), 'h3', '火控在面板底部，Larkspur 的武器已经放开。按 W 收住或放开，按 B 选光束模式。全力让每门光束都开火，热沉会灌满。持续把光束压到散热板排得掉的程度，所以她能一直打。到 Sabre 那条线上的刻度，标出双方各自的光束能烧穿。', '#pEng', (sim) => !!sim.flags.fireKeyUsed || sim.time > 700),
+            { when: (sim) => { const s = sim.byId('larkspur'), t = sim.byId('sabre'); return !!(s && t && (seenQ(sim, 'larkspur') >= 2.7 || U.dist(s.pos, t.pos) < km(500) || sim.time > 900)); }, actions: [{ flag: 'sabreAwake' }, { fn: (sim) => { const t = sim.byId('sabre'); if (t && !t.neutralised()) { t.ai = true; t.radiators.deployed = true; } } }, { log: { speaker: 'Navigation', text: 'Sabre 看见我们了。她的散热板正在展开，推进器在预热。', kind: 'warn' } }] },
             // Sabre works on whatever she can hurt. While Larkspur is inside the range where Sabre's beams burn
             // through the face Larkspur is showing her, she leaves the freighters and fights the warship, flown
             // by hand (ai off) so the hull she is shooting at does not change back every two seconds. Open that
@@ -318,15 +318,15 @@
                 if (f.sabreInAt == null) f.sabreInAt = sim.time;
                 if (!f.sabreOnUs && sim.time - f.sabreInAt >= 20) {
                   f.sabreOnUs = true; t.ai = false; t.radiators.auto = true;
-                  sim.addLog('Sabre has left the freighters and turned onto us. She is ' + kmAbout(U.dist(s.pos, t.pos)) + ' off, inside the range where her beams burn through the face we are showing her.', 'Navigation', 'warn');
-                  sim.hint({ id: 'h4', anchor: '#shipPanel', text: 'Press V for the hull view. It draws Larkspur as she is now, with her radiators, her mounts and her plume in the state they are really in. Zoom in on the map and you see the same ship.' });
+                  sim.addLog('Sabre 离开货船，转向我们。她在 ' + kmAbout(U.dist(s.pos, t.pos)) + ' 外，已经进入她能烧穿我们当前受弹面的距离。', 'Navigation', 'warn');
+                  sim.hint({ id: 'h4', anchor: '#shipPanel', text: '按 V 打开舰体视图。它画的是 Larkspur 此刻的样子：散热板、炮位、尾焰都是它们的真实状态。在地图上放大也是一样的船。' });
                 }
               } else {
                 f.sabreInAt = null;
                 if (f.sabreOutAt == null) f.sabreOutAt = sim.time;
                 if (f.sabreOnUs && sim.time - f.sabreOutAt >= 30) {
                   f.sabreOnUs = false; t.ai = true;
-                  sim.addLog('Sabre has gone back to the freighters. Her beams do not reach the face we are showing her.', 'Navigation', 'info');
+                  sim.addLog('Sabre 回到货船那边了。她的光束够不到我们当前的受弹面。', 'Navigation', 'info');
                 }
               }
               if (f.sabreOnUs) {
@@ -370,7 +370,7 @@
               if (across || closing || sim.time - f.boardRunFrom < f.boardRunCap) { o.metAt = sim.time; f.boardRunLapsed = false; return false; }
               if (!f.boardRunLapsed) {
                 f.boardRunLapsed = true;
-                sim.addLog('The prize run ran out of clock. ' + runner.name + ' is still ' + kmAbout(R) + ' from Sabre.', 'Marines', 'warn');
+                sim.addLog('俘获行动超时了。' + runner.name + ' 离 Sabre 还有 ' + kmAbout(R) + '。', 'Marines', 'warn');
               }
               return false;
             }, actions: [] },
@@ -379,21 +379,21 @@
       },
     },
     {
-      n: 3, id: 'radiator-weather', title: 'Radiator Weather', location: 'Europa, Conamara Station', date: '19 April 2211',
+      n: 3, id: 'radiator-weather', title: '散热板天气', simName: 'Radiator Weather', location: 'Europa (木卫二)，Conamara Station (科纳马拉站)', date: '2211 年 4 月 19 日',
       brief: [
-        'You are over Europa with JCS Larkspur and the frigate JCS Anselm. Conamara Station is the ice farm that supplies half of Ganymede with water, and two Inner Systems Authority frigates have parked over it.',
-        'They have held their fire for nine hours, waiting for the sink to fill. With hostiles that close, Conamara has kept its radiators stowed all that time, and its heat sink is at 88 per cent. In about an hour it is full, and then the station has to extend the radiators under their beams. They open fire on the station as soon as you arrive. Break the siege.',
-        'The same clock runs on your own ships. Radiators only shed heat while they are out, and while they are out they are the thinnest thing on the hull. Every minute with them stowed fills your sink. A full sink holds the drive to a quarter and stops every mount, point defence included, until it drains.',
+        '你带着 JCS Larkspur 和护卫舰 JCS Anselm 在 Europa (木卫二) 上空。Conamara Station (科纳马拉站) 是给半个 Ganymede (木卫三) 供水的冰场，两艘内星系管理局护卫舰停在了它上方。',
+        '她们已经压了九个小时的火，等着热沉灌满。敌人这么近，Conamara 一直收着散热板，热沉已经到了 88 %。再过大约一小时就满了，到时候空间站只能当着她们的光束把散热板展开。你一到，她们就会对空间站开火。打破这场围困。',
+        '你自己的船也在这个时钟里。散热板只有展开时才排热，而展开时它又是舰体上最薄的东西。收着的每一分钟，热沉都在涨。热沉满了，推进器只剩四分之一，所有炮位停火——包括点防御——直到它排空。',
       ],
-      comms: [say('Conamara Station', 'Compact ships, Conamara. They will open fire on us now that you are here. The sink is at eighty-eight per cent, so we can keep the radiators in for about an hour. After that we have to extend them under their beams.')],
+      comms: [say('Conamara Station', '盟约的船，这里是 Conamara。你们一到，她们就会对我们开火。热沉已经到 88 %，所以散热板还能再收大约一小时。之后我们只能当着她们的光束展开。')],
       // Either frigate can end adrift, wrecked, taken or driven off, so the line names each one's ending.
       get victory() {
         const sim = endSim('Radiator Weather');
-        const tail = ' Conamara can extend its radiators again. Ganymede keeps its water.';
-        if (!sim) return 'Both Authority frigates are out of the fight.' + tail;
+        const tail = ' Conamara 可以重新展开散热板了。Ganymede (木卫三) 保住了它的水。';
+        if (!sim) return '两艘管理局护卫舰都退出了战斗。' + tail;
         const a = sim.byId('isa1'), b = sim.byId('isa2');
         const head = a && b && a.disabled && b.disabled && !a.destroyed && !b.destroyed
-          ? 'Tenacity and Vigil are both out of the fight and adrift.'
+          ? 'Tenacity 和 Vigil 都退出了战斗，正在失控漂流。'
           : endedShort(sim, 'isa1', 'Tenacity') + '. ' + endedShort(sim, 'isa2', 'Vigil') + '.';
         return head + tail;
       },
@@ -403,10 +403,10 @@
         const st = sim && sim.byId('conamara');
         if (st && !isOut(st) && ableShips(sim) === 0) {
           const live = ['isa1', 'isa2'].filter((id) => !isDone(sim.byId(id))).length;
-          return 'Larkspur and Anselm are both out of the fight over Europa. Conamara Station still has its radiators stowed and its sink is at ' + pctOf(st.thermalLoad()) + '.' +
-            (live ? ' ' + COUNT[live] + (live === 1 ? ' Authority frigate is' : ' Authority frigates are') + ' still over it.' : '');
+          return 'Larkspur 和 Anselm 都在 Europa (木卫二) 上空退出了战斗。Conamara Station 的散热板还收着，热沉在 ' + pctOf(st.thermalLoad()) + '.' +
+            (live ? ' ' + COUNT[live] + ' 艘管理局护卫舰还在上空。' : '');
         }
-        return 'Conamara Station is lost, and with it half of Ganymede\'s water for the season.';
+        return 'Conamara Station 没了，Ganymede (木卫三) 这一季的水也去了一半。';
       },
       build() {
         const body = B.europa;
@@ -420,34 +420,34 @@
             { id: 'isa2', name: 'ISV Vigil', cls: 'frigate', faction: 'ISA', ai: true, orbit: { altitude: km(2700), angle: 0.1 }, propFraction: 0.85 },
           ],
           objectives: [
-            { id: 'n', text: 'Neutralise both Authority frigates', type: 'neutralize', targets: ['isa1', 'isa2'] },
-            { id: 'p', text: 'Conamara Station survives', type: 'protect', ship: 'conamara' },
+            { id: 'n', text: '使两艘管理局护卫舰失能', type: 'neutralize', targets: ['isa1', 'isa2'] },
+            { id: 'p', text: 'Conamara Station 存活', type: 'protect', ship: 'conamara' },
           ],
-          intro: [say('Conamara Station', 'Compact ships, Conamara. They will open fire on us now that you are here. The sink is at eighty-eight per cent, so we can keep the radiators in for about an hour. After that we have to extend them under their beams.')],
+          intro: [say('Conamara Station', '盟约的船，这里是 Conamara。你们一到，她们就会对我们开火。热沉已经到 88 %，所以散热板还能再收大约一小时。之后我们只能当着她们的光束展开。')],
           triggers: [
-            hintAt({ time: 2 }, 'h1', touch() ? 'You have two ships this time, Larkspur and Anselm. Tap one of them on the map to select her. An order goes only to the ship you have selected, so give each ship her own.' : 'You have two ships this time, Larkspur and Anselm. Tab switches between them, and shift-click adds a ship to the selection so one order goes to both.', '#fleetList'),
-            hintAt({ time: 20 }, 'h2', 'The Heat section shows your sink filling. Radiators only shed heat while they are out, so extend them' + (touch() ? '' : ' with X') + ' whenever nothing is shooting at you, and stow them before a beam can reach them.', '#shipPanel'),
-            hintAt((sim) => sim.time > 60 && hasAction(sim, 'aim_radiators') && hostileRadiatorsOut(sim, km(450)), 'h3', 'That frigate has her radiators out to keep her own sink down. Press T to set the aim point to Radiators. Radiators are the thinnest part of any hull, and a frigate that loses hers has to sit in her own heat.', '#pEng'),
-            { when: (sim) => sim.objectives[0].done, actions: [{ fn: (sim) => { const st = sim.byId('conamara'); if (st) { st.radiators.auto = true; st.radiators.deployed = true; } } }, { log: { speaker: 'Conamara Station', text: 'Radiators extending. Sink is falling already. Thank you, Compact.' } }] },
+            hintAt({ time: 2 }, 'h1', touch() ? '这次你有两艘船，Larkspur 和 Anselm。在地图上点其中一艘来选中它。指令只发给选中的船，所以每艘要分别下令。' : '这次你有两艘船，Larkspur 和 Anselm。按 Tab 在两艘之间切换，Shift 点击可以把一艘加进选择，一条指令就发给两艘。', '#fleetList'),
+            hintAt({ time: 20 }, 'h2', '热量区显示热沉在涨。散热板只有展开时才排热，所以没有炮火打来时就展开' + (touch() ? '' : ' with X') + '，光束够得着之前再收起来。', '#shipPanel'),
+            hintAt((sim) => sim.time > 60 && hasAction(sim, 'aim_radiators') && hostileRadiatorsOut(sim, km(450)), 'h3', '那艘护卫舰把散热板展开了，好压住自己的热沉。按 T 把瞄准部位设成散热板。散热板是舰体上最薄的部分，护卫舰一旦丢了散热板，就得坐在自己的热里。', '#pEng'),
+            { when: (sim) => sim.objectives[0].done, actions: [{ fn: (sim) => { const st = sim.byId('conamara'); if (st) { st.radiators.auto = true; st.radiators.deployed = true; } } }, { log: { speaker: 'Conamara Station', text: '散热板展开中。热沉已经开始下降。谢谢，盟约。' } }] },
           ],
         };
       },
     },
     {
-      n: 4, id: 'slugs-in-the-dark', title: 'Slugs in the Dark', location: 'Io, Loki approach', date: '3 May 2211',
+      n: 4, id: 'slugs-in-the-dark', title: '黑暗中的弹丸', simName: 'Slugs in the Dark', location: 'Io (木卫一)，Loki 接近航线', date: '2211 年 5 月 3 日',
       brief: [
-        'You are on the Loki approach at Io with Larkspur, Anselm and the new destroyer JCS Bastion. The Authority destroyer ISV Coriolis carries the heaviest coilguns out here, and she has used them on three Compact haulers this week. One of them had people aboard.',
-        'A slug is unguided. Coriolis fires it at where you will be if you hold your course, and at 300 km a 4.5 km/s slug takes 67 seconds to arrive. So do not hold your course. Jink, spend the propellant, and close to where your own beams and Bastion can answer.',
+        '你在 Io (木卫一) 的 Loki 接近航线上，带着 Larkspur、Anselm 和新驱逐舰 JCS Bastion。管理局驱逐舰 ISV Coriolis 带着这里最重的线圈炮，这一周已经用它打过三艘盟约货船。其中一艘上有活人。',
+        '弹丸不带制导。Coriolis 会朝“你保持航向就会到达的位置”开火，而在 300 公里上，4.5 公里/秒的弹丸要飞 67 秒。所以别保持航向。规避、花推进剂，靠近到自己的光束和 Bastion 能还手的距离。',
       ],
-      comms: [say('JCS Bastion', 'Bastion is with you. She is 180 metres of destroyer and she turns slowly, so she holds a straight line and takes the hits. You two do the jinking.')],
+      comms: [say('JCS Bastion', '这里是 Bastion，跟着你们。她是一百八十米的驱逐舰，转得慢，所以走直线挨打。规避交给你们俩。')],
       // Coriolis ends this chapter adrift, wrecked, taken, or driven off past 1 500 km with her hull
       // opened up (sim.js drivenOffStep), and a hull that is still flying is not called adrift. Bastion
       // only took a hit in the endings where something got through her armour, so her sentence is read
       // off her hull.
       get victory() {
         const sim = endSim('Slugs in the Dark');
-        const tail = ' The Io approaches are open.';
-        if (!sim) return 'Coriolis is out of the fight.' + tail;
+        const tail = ' Io (木卫一) 的接近航线打开了。';
+        if (!sim) return 'Coriolis 退出了战斗。' + tail;
         return endedAs(sim, 'coriolis', 'Coriolis') + ' ' + ourEnd(sim.byId('bastion'), 'Bastion') + tail;
       },
       // Larkspur is out of the fight in every way this chapter is lost (she is the protect objective),
@@ -455,10 +455,10 @@
       get defeat() {
         const sim = endSim('Slugs in the Dark');
         const c = sim && sim.byId('coriolis');
-        if (!sim) return 'The task group is off the Loki approach, and Coriolis still holds the Io approaches.';
-        return 'Larkspur is out of the fight on the Loki approach. ' +
-          (isDone(c) ? endedAs(sim, 'coriolis', 'Coriolis') + ' The Compact paid for the approach with its corvette.'
-            : 'Coriolis still holds the Io approaches.');
+        if (!sim) return '任务编队被逐出 Loki 接近航线，Coriolis 仍然控制着 Io (木卫一) 的接近航线。';
+        return 'Larkspur 在 Loki 接近航线上退出了战斗。' +
+          (isDone(c) ? endedAs(sim, 'coriolis', 'Coriolis') + ' 盟约用一艘护卫艇换来了这条接近航线。'
+            : 'Coriolis 仍然控制着 Io (木卫一) 的接近航线。');
       },
       build() {
         const body = B.io;
@@ -472,85 +472,85 @@
             { id: 'isa2', name: 'ISV Lark', cls: 'corvette', faction: 'ISA', ai: true, orbit: { altitude: km(3300), angle: 0.24 }, propFraction: 0.9 },
           ],
           objectives: [
-            { id: 'n', text: 'Neutralise ISV Coriolis', type: 'neutralize', targets: ['coriolis'] },
-            { id: 'n2', text: 'Neutralise ISV Lark', type: 'neutralize', targets: ['isa2'], optional: true },
-            { id: 'pl', text: 'JCS Larkspur comes home', type: 'protect', ship: 'larkspur' },
+            { id: 'n', text: '使 ISV Coriolis 失能', type: 'neutralize', targets: ['coriolis'] },
+            { id: 'n2', text: '使 ISV Lark 失能', type: 'neutralize', targets: ['isa2'], optional: true },
+            { id: 'pl', text: 'JCS Larkspur 返航', type: 'protect', ship: 'larkspur' },
           ],
-          intro: [say('JCS Bastion', 'Bastion is with you. She turns slowly, so she holds a straight line and takes the hits. You two do the jinking.')],
+          intro: [say('JCS Bastion', '这里是 Bastion，跟着你们。她转得慢，所以走直线挨打。规避交给你们俩。')],
           triggers: [
-            hintAt({ time: 2 }, 'h1', touch() ? 'Coriolis will hold 600 km all day, and at that range your beams barely mark her armour. Give each of your three ships the same order, one ship at a time: tap the ship, tap Coriolis, type 200 in the Range box and tap Keep range. Then they hold her together. Turn Jink on for Larkspur and Anselm, so her slugs arrive where you were.' : 'Coriolis will hold 600 km all day, and at that range your beams barely mark her armour. Shift-click all three ships, click Coriolis, type 200 in the Range box and press Keep range, so they hold her together. Turn jinking on for Larkspur and Anselm with J, so her slugs arrive where you were.', '#shipPanel'),
-            hintAt({ time: 40 }, 'h2', 'Coriolis fires her slugs at where you will be, not at where you are. Press P and read the slug flight time at this range. At 300 km it is 67 s, and any burn inside that time takes you off the aim point.', '#btnPhysics'),
-            hintAt((sim) => sim.time > 60 && trackQ(sim, 'coriolis') < 2.5, 'h2b', 'We have a track on Coriolis but not a solution, so our coilgun cannot lead her. Hers cannot lead us either. That is why she is quiet. Closing sharpens the picture for both sides. The active sensor (S) buys a solution at once and hands her one on us.', '#shipPanel', (sim) => trackQ(sim, 'coriolis') >= 2.5 || sim.time > 500),
-            hintAt((sim) => inbound(sim, 'slug'), 'h3', 'Slugs are inbound. Each one on the map carries its time of arrival, and reads "will miss" once its target has moved off the aim point. The Threats band at the top of the panel counts them. Jinking (J) spends propellant and moves you off the aim point before the slug arrives.', '#shipPanel'),
+            hintAt({ time: 2 }, 'h1', touch() ? 'Coriolis 会整天守在 600 公里，那个距离上你的光束几乎打不动她的装甲。给三艘船下同一条指令，一艘一艘来：点船、点 Coriolis、在距离框里输 200、点保持距离。然后她们就一起压住她。给 Larkspur 和 Anselm 打开规避，让她的弹丸落空。' : 'Coriolis 会整天守在 600 公里，那个距离上你的光束几乎打不动她的装甲。Shift 点击三艘船，点 Coriolis，距离框输 200，按保持距离，她们就一起压住她。按 J 给 Larkspur 和 Anselm 打开规避，让她的弹丸落空。', '#shipPanel'),
+            hintAt({ time: 40 }, 'h2', 'Coriolis 朝你“将会在的位置”开火，不是现在的位置。按 P 看这个距离上的弹丸飞行时间。300 公里是 67 秒，这段时间里任何点火都会让你离开瞄准点。', '#btnPhysics'),
+            hintAt((sim) => sim.time > 60 && trackQ(sim, 'coriolis') < 2.5, 'h2b', '我们对 Coriolis 有跟踪但没有解算，所以线圈炮没法打提前量。她的也一样。所以她很安静。拉近距离会让双方的图像都变清楚。主动传感器（S）能立刻拿到解算，同时也把我们的解算交给她。', '#shipPanel', (sim) => trackQ(sim, 'coriolis') >= 2.5 || sim.time > 500),
+            hintAt((sim) => inbound(sim, 'slug'), 'h3', '弹丸来袭。地图上每一发都带到达时间，目标离开瞄准点后会显示“将落空”。面板顶部的威胁栏在数它们。规避（J）会花推进剂，在弹丸到达前把你挪开。', '#shipPanel'),
           ],
         };
       },
     },
     {
-      n: 5, id: 'hard-burn', title: 'Hard Burn', location: 'Deep space, outbound from Io', date: '11 May 2211',
+      n: 5, id: 'hard-burn', title: '全力点火', simName: 'Hard Burn', location: '深空，自 Io (木卫一) 出发', date: '2211 年 5 月 11 日',
       brief: [
-        'You are outbound from Io in JCS Larkspur, alone. The Authority raider ISV Tamarind hit the hauler JCV Kestrel Moon this morning and ran with her cargo. She is 7 800 km ahead and burning outward. Past 60 000 km no transfer your tanks can buy will catch her.',
-        'Larkspur has full tanks and the same acceleration Tamarind has. A stern chase means matching her speed and beating it, closing the distance, and still holding the delta-v to brake alongside. The brake at the end is about four minutes of burning tail-first, with your drive pointed at her.',
-        'Kestrel Moon hurt her first. Tamarind\'s bays are empty, half her mounts are down and her hull is at 60 per cent. Go in hard, brake hard and keep the pass short. A capped approach only leaves you coasting inside her reach while she runs for the line.',
+        '你带着 JCS Larkspur 从 Io (木卫一) 出发，单独一艘。管理局的袭击舰 ISV Tamarind 今早袭击了货船 JCV Kestrel Moon，带着货跑了。她在一万公里外，正向外点火。越过 60 000 公里，你的推进剂买不到任何能追上她的转移。',
+        'Larkspur 推进剂是满的，加速度和 Tamarind 一样。尾追意味着先匹配她的速度再超过，缩短距离，最后还要留着速度增量在并排时反推。最后那次反推大约要掉头烧四分钟，推进器正对着她。',
+        'Kestrel Moon 先伤了她。Tamarind 的发射舱是空的，一半炮位哑了，舰体只剩 60 %。硬冲进去，狠狠反推，把这次交会压短。压着速度接近，只会让你在她的射程里滑行，而她直奔逃逸线。',
       ],
-      comms: [say('Navigation', 'She will run until she thinks we have quit. Tamarind is a corvette at sixty per cent tanks, so she cannot afford this any more than we can.')],
+      comms: [say('Navigation', '她会一直跑到以为我们放弃为止。Tamarind 是护卫艇，推进剂只剩六成，她比我们更耗不起。')],
       // A wreck takes the cargo with her, so the cargo sentence is read off the hull it is aboard.
       get victory() {
         const sim = endSim('Hard Burn');
         const t = sim && sim.byId('tamarind');
-        const tail = ' The Authority has lost a raider it cannot replace out here.';
-        if (!t) return 'Tamarind is out of the fight inside the escape line.' + tail;
-        if (t.destroyed) return 'Tamarind came apart inside the escape line. Kestrel Moon\'s cargo went with her.' + tail;
-        if (t.captured) return 'Tamarind was boarded and taken inside the escape line. Kestrel Moon\'s cargo is aboard her.' + tail;
-        return 'Tamarind is out of the fight and adrift inside the escape line, ' + adriftWhy(t) + ' Kestrel Moon\'s cargo is still aboard her.' + tail;
+        const tail = ' 管理局在这里少了一艘补不回来的袭击舰。';
+        if (!t) return 'Tamarind 在逃逸线内退出了战斗。' + tail;
+        if (t.destroyed) return 'Tamarind 在逃逸线内解体，Kestrel Moon 的货跟她一起没了。' + tail;
+        if (t.captured) return 'Tamarind 在逃逸线内被登舰俘获。Kestrel Moon 的货还在她船上。' + tail;
+        return 'Tamarind 在逃逸线内退出战斗，失控漂流，' + adriftWhy(t) + ' Kestrel Moon 的货还在她船上。' + tail;
       },
       // Either she crossed the line, or Larkspur is out of the fight with the raider still inside it.
       get defeat() {
         const sim = endSim('Hard Burn');
         const t = sim && sim.byId('tamarind');
         if (t && !isDone(t) && ableShips(sim) === 0) {
-          return 'Larkspur is out of the fight in deep space, and nothing else of ours is out here. Tamarind is still running with Kestrel Moon\'s cargo aboard.';
+          return 'Larkspur 在深空退出战斗，这里没有我们别的船了。Tamarind 带着 Kestrel Moon 的货还在跑。';
         }
-        return 'Tamarind crossed the escape line 60 000 km out, and took Kestrel Moon\'s cargo with her.';
+        return 'Tamarind 在 60 000 公里处越过了逃逸线，带着 Kestrel Moon 的货跑了。';
       },
       build() {
         return {
           name: 'Hard Burn', body: null, sunAngle: 1.0, playerFaction: 'JC',
-          markers: [{ pos: { x: 0, y: 0 }, radius: km(60000), label: 'escape line 60 000 km', color: '#ff5d5d' }],
+          markers: [{ pos: { x: 0, y: 0 }, radius: km(60000), label: '逃逸线 60 000 公里', color: '#ff5d5d' }],
           ships: [
             { id: 'larkspur', name: 'JCS Larkspur', cls: 'corvette', faction: 'JC', player: true, crew: { xp: 2 }, pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 }, heading: 0.3 },
             { id: 'tamarind', name: 'ISV Tamarind', cls: 'corvette', faction: 'ISA', ai: true, behaviour: 'flee', reserveDv: 27000, pos: { x: km(7200), y: km(3000) }, vel: { x: 2000, y: 900 }, heading: 0.4, propFraction: 0.6, hull: 0.6, systems: { weapons: 0.5, sensors: 0.8 }, noMounts: ['launcher'] },
           ],
           objectives: [
-            { id: 'n', text: 'Neutralise ISV Tamarind before she crosses the escape line', type: 'neutralize', targets: ['tamarind'] },
-            { id: 'esc', text: 'ISV Tamarind stays inside 60 000 km', type: 'escapeFail', ship: 'tamarind', point: { x: 0, y: 0 }, range: km(60000), hidden: true },
+            { id: 'n', text: '在 ISV Tamarind 越过逃逸线前使她失能', type: 'neutralize', targets: ['tamarind'] },
+            { id: 'esc', text: 'ISV Tamarind 留在 60 000 公里内', type: 'escapeFail', ship: 'tamarind', point: { x: 0, y: 0 }, range: km(60000), hidden: true },
           ],
-          intro: [say('Navigation', 'She will run until she thinks we have quit. Tamarind is a corvette at sixty per cent tanks, so she cannot afford this any more than we can.')],
+          intro: [say('Navigation', '她会一直跑到以为我们放弃为止。Tamarind 是护卫艇，推进剂只剩六成，她比我们更耗不起。')],
           triggers: [
-            hintAt({ time: 2 }, 'h1', 'Tamarind is running and every minute costs you distance. Target her, read the Transfer estimate and press Intercept now. Leave Cruise on Fastest, because a capped approach leaves you coasting inside her reach while she makes for the line.', '#shipPanel'),
-            { when: (sim) => { const t = sim.byId('tamarind'); return t && t.deltaV() < 27500 && !sim.flags.tamCoast; }, actions: [{ flag: 'tamCoast' }, { log: { speaker: 'Navigation', text: 'Tamarind has cut her drive. She is coasting on the speed she has and holding the rest of her tanks back. Match that speed and beat it, then brake hard at the end.' } }] },
+            hintAt({ time: 2 }, 'h1', 'Tamarind 在跑，每一分钟都在拉开距离。锁定她，看转移估算，马上按拦截。巡航保持“最快”，压着速度接近只会让你在她的射程里滑行，而她直奔逃逸线。', '#shipPanel'),
+            { when: (sim) => { const t = sim.byId('tamarind'); return t && t.deltaV() < 27500 && !sim.flags.tamCoast; }, actions: [{ flag: 'tamCoast' }, { log: { speaker: 'Navigation', text: 'Tamarind 关了推进器。她靠现有速度滑行，把剩下的推进剂留着。匹配那个速度再超过，最后狠狠反推。' } }] },
           ],
         };
       },
     },
     {
-      n: 6, id: 'europa-line', title: 'The Europa Line', location: 'Europa orbit', date: '30 May 2211',
+      n: 6, id: 'europa-line', title: '欧罗巴防线', simName: 'The Europa Line', location: 'Europa (木卫二) 轨道', date: '2211 年 5 月 30 日',
       brief: [
-        'You are back over Europa with Larkspur, Anselm and Bastion, holding the line in front of Conamara Station. The Authority has given up on sieges. Two Lancer-class carriers are inbound with a frigate for escort.',
-        'A Lancer never closes to beam range. She carries twenty-four interceptors, launches them from about 2 500 km out and leaves. An interceptor is a small craft with its own delta-v. Point defence can shoot it down, a ship can outrun it for a while, and killing the carrier stops any more coming.',
-        'Bastion, Anselm and Larkspur are the line. Nothing reaches the station.',
+        '你带着 Larkspur、Anselm 和 Bastion 回到 Europa (木卫二) 上空，在 Conamara Station 前守着防线。管理局放弃围困了。两艘枪骑兵级母舰正在靠近，还有一艘护卫舰护航。',
+        '枪骑兵级从不靠近到光束射程。她带二十四枚拦截弹，在大约 2 500 公里外放出去就走。拦截弹是一种自带速度增量的小型飞行器。点防御可以打掉它，船可以跑一阵子，而打掉母舰就不会再有新的来。',
+        'Bastion、Anselm 和 Larkspur 就是这条防线。什么都别想碰到空间站。',
       ],
-      comms: [say('JCS Bastion', 'Point defence will handle a few of them. It will not handle a salvo. Get to those carriers before they launch.')],
+      comms: [say('JCS Bastion', '点防御能应付几枚，应付不了齐射。在她们发射前赶到母舰那里。')],
       // A Lancer killed while she is still loaded does not have empty bays, so the interceptors left are
       // counted off her mounts, and the station's radiators are read off the station.
       get victory() {
         const sim = endSim('The Europa Line');
-        if (!sim) return 'Both Lancers are out of the fight and nothing reached Conamara Station.';
+        if (!sim) return '两艘枪骑兵级都退出了战斗，没有任何东西碰到 Conamara Station。';
         const st = sim.byId('conamara');
         const left = baysLeft(sim.byId('l1')) + baysLeft(sim.byId('l2'));
-        const bays = left ? left + (left === 1 ? ' interceptor was' : ' interceptors were') + ' still in their bays.' : 'Their bays were empty.';
-        const rad = st && st.radiators && st.radiators.state > 0.9 ? 'Conamara still has its radiators out.'
-          : 'Conamara has its radiators stowed, with its sink at ' + pctOf(st ? st.thermalLoad() : 0) + '.';
+        const bays = left ? left + (left === 1 ? ' 枚拦截弹还在发射舱里。' : ' 枚拦截弹还在发射舱里。') + ' 还在发射舱里。' : '她们的发射舱已经空了。';
+        const rad = st && st.radiators && st.radiators.state > 0.9 ? 'Conamara 的散热板还展开着。'
+          : 'Conamara 的散热板收着，热沉在 ' + pctOf(st ? st.thermalLoad() : 0) + '.';
         return endedShort(sim, 'l1', 'Ardent') + '. ' + endedShort(sim, 'l2', 'Fervent') + '. ' + bays + ' ' + rad;
       },
       // The station can be lost, or the line in front of it can be, with the station still on the air.
@@ -559,10 +559,10 @@
         const st = sim && sim.byId('conamara');
         if (st && !isOut(st) && ableShips(sim) === 0) {
           const live = sim.ships.filter((s) => s.faction !== sim.playerFaction && s.role !== 'station' && !isDone(s)).length;
-          return 'Larkspur, Anselm and Bastion are out of the fight in front of Conamara Station. The station is still on the air.' +
-            (live ? ' ' + COUNT[live] + (live === 1 ? ' Authority ship is' : ' Authority ships are') + ' still over it.' : '');
+          return 'Larkspur、Anselm 和 Bastion 在 Conamara Station 前退出了战斗。空间站还在发信。' +
+            (live ? ' ' + COUNT[live] + ' 艘管理局舰船还在上空。' : '');
         }
-        return 'Conamara Station has stopped transmitting.';
+        return 'Conamara Station 停止发信了。';
       },
       build() {
         const body = B.europa;
@@ -578,45 +578,45 @@
             { id: 'f1', name: 'ISV Tenacity', cls: 'frigate', faction: 'ISA', ai: true, orbit: { altitude: km(5800), angle: 0.5 }, propFraction: 0.8 },
           ],
           objectives: [
-            { id: 'p', text: 'Conamara Station survives', type: 'protect', ship: 'conamara' },
-            { id: 'n', text: 'Neutralise all Authority ships', type: 'neutralize', targets: 'hostiles' },
+            { id: 'p', text: 'Conamara Station 存活', type: 'protect', ship: 'conamara' },
+            { id: 'n', text: '使所有管理局舰船失能', type: 'neutralize', targets: 'hostiles' },
           ],
-          intro: [say('JCS Bastion', 'Point defence will handle a few of them. It will not handle a salvo. Get to those carriers before they launch.')],
+          intro: [say('JCS Bastion', '点防御能应付几枚，应付不了齐射。在她们发射前赶到母舰那里。')],
           triggers: [
-            hintAt({ time: 2 }, 'h1', 'The Lancers will hold about 2 500 km and leave once their bays are empty. Send Larkspur after them now, while they are still loaded. Bastion can stay with the station.', '#fleetList'),
-            hintAt((sim) => inbound(sim, 'interceptor'), 'h2', 'Interceptors are inbound, drawn red on the map with a countdown and a ring closing on the ship they are aimed at. The Threats band says whether her point defence can stop them in time, and the teal ring is how far that point defence reaches. Stow the radiators with X before they arrive, if the sink can take it.', '#shipPanel'),
-            hintAt((sim) => sim.time > 20 && hasAction(sim, 'launch2'), 'h3', 'Your bays never reload during a fight. Launch 2, Launch 4 or all of them with L, shift-L or A once the target is inside the blue launch ring. Their point defence stops a few a minute inside its red ring, and the line under each key says how many should get through, so send enough to beat it.', '#pEng'),
+            hintAt({ time: 2 }, 'h1', '枪骑兵级会守在 2 500 公里左右，发射舱一空就走。趁她们还满载，马上派 Larkspur 追上去。Bastion 可以留在空间站这边。', '#fleetList'),
+            hintAt((sim) => inbound(sim, 'interceptor'), 'h2', '拦截弹来袭，地图上画成红色，带倒计时，还有一个朝目标收拢的圈。威胁栏会说点防御来不来得及拦，青色圈是点防御的射程。如果热沉扛得住，在它们到达前按 X 收起散热板。', '#shipPanel'),
+            hintAt((sim) => sim.time > 20 && hasAction(sim, 'launch2'), 'h3', '发射舱在战斗中不会补充。目标进入蓝色发射圈后，按 2、4，或者用 L、Shift+L、A 全部发射。对方的点防御每分钟在红圈内拦掉几枚，每个键下面那行会写有几枚能穿过去，所以一次要放够。', '#pEng'),
           ],
         };
       },
     },
     {
-      n: 7, id: 'harkness', title: 'Harkness', location: 'Jupiter orbit, altitude 400 000 km', date: '21 June 2211',
+      n: 7, id: 'harkness', title: 'Harkness', simName: 'Harkness', location: 'Jupiter (木星) 轨道，高度 400 000 公里', date: '2211 年 6 月 21 日',
       brief: [
-        'You are in high Jupiter orbit, 400 000 km above the planet, where an Authority squadron has taken station to cut the moons off from each other. Two destroyers, two frigates and two corvettes. Command has given you the task group and the cruiser JCS Harkness to break it with.',
-        'Harkness is the Compact\'s only capital ship. Four main lasers behind mirrors 1.6 m across, and 70 cm of armour on the nose. She has not left dock since the Declaration, because the Compact cannot replace her. Losing the traffic between the moons would cost it more. Bring her out, and bring her back.',
+        '你在木星高轨道，离行星 400 000 公里，一支管理局分舰队在这里就位，要把各卫星彼此隔断。两艘驱逐舰、两艘护卫舰、两艘护卫艇。指挥部把任务编队和巡洋舰 JCS Harkness 交给你去打破它。',
+        'Harkness 是盟约唯一的主力舰。四门主激光，反射镜口径 1.6 米，舰首装甲 70 厘米。《宣言》签署以来她没出过船坞，因为盟约补不起第二艘。而失去卫星之间的航线，代价更大。带她出去，再带她回来。',
       ],
-      comms: [say('JCS Harkness', 'Harkness is yours for the day. Her four main lasers burn through armour from farther out than anything they have, so hold that range. Her nose carries 70 cm and her tail carries 12. Do not let a destroyer behind her.')],
+      comms: [say('JCS Harkness', '今天 Harkness 归你指挥。她的四门主激光能在比对方任何武器都远的距离上烧穿装甲，所以守住那个距离。舰首 70 厘米，舰尾 12 厘米。别让驱逐舰绕到她背后。')],
       // Armour does not ablate, so what Harkness came home with is her hull integrity, and a hull that
       // broke off and ran is counted as one that ran, not as a wreck.
       get victory() {
         const sim = endSim('Harkness');
-        const tail = ' The moons can talk to each other again.';
-        if (!sim) return 'The squadron is broken and Harkness is on her way back to Callisto.' + tail;
+        const tail = ' 各卫星之间又能互相通话了。';
+        if (!sim) return '分舰队被打散，Harkness 正在返回 Callisto (木卫四)。' + tail;
         const h = sim.byId('harkness');
         const ran = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].filter((id) => { const s = sim.byId(id); return s && s.drivenOff && !isOut(s); }).length;
-        const hark = h && h.hull < 0.995 ? ' Harkness is on her way back to Callisto at ' + pctOf(h.hull) + ' hull integrity.'
-          : ' Harkness is on her way back to Callisto with nothing through her armour.';
-        return 'The squadron is broken.' + (ran ? ' ' + COUNT[ran] + ' of the six broke off and ran past 1 500 km.' : '') + hark + tail;
+        const hark = h && h.hull < 0.995 ? ' Harkness 正以 ' + pctOf(h.hull) + ' 的舰体完整度返回 Callisto (木卫四)。'
+          : ' Harkness 正在返回 Callisto (木卫四)，装甲没有被击穿。';
+        return '分舰队被打散。' + (ran ? ' ' + COUNT[ran] + ' 艘（共六艘）脱离，跑到一千五百公里外。' : '') + hark + tail;
       },
       // Harkness is the protect objective, so this chapter is only lost with her out of the fight.
       get defeat() {
         const sim = endSim('Harkness');
         const h = sim && sim.byId('harkness');
-        const tail = ' The Compact has no other cruiser and no yard out here that could build one.';
-        if (h && h.captured) return 'Harkness was boarded and taken in high Jupiter orbit.' + tail;
-        if (h && h.disabled && !h.destroyed) return 'Harkness is adrift in high Jupiter orbit at ' + pctOf(h.hull) + ' hull integrity, with the squadron still around her.' + tail;
-        return 'Harkness is lost.' + tail;
+        const tail = ' 盟约没有第二艘巡洋舰，这里也没有能造巡洋舰的船坞。';
+        if (h && h.captured) return 'Harkness 在木星高轨道被登舰俘获。' + tail;
+        if (h && h.disabled && !h.destroyed) return 'Harkness 在木星高轨道失控漂流，舰体完整度 ' + pctOf(h.hull) + '，分舰队还在她周围。' + tail;
+        return 'Harkness 没了。' + tail;
       },
       build() {
         const body = B.jupiter;
@@ -636,40 +636,40 @@
             { id: 'e6', name: 'ISV Lark', cls: 'corvette', faction: 'ISA', ai: true, orbit: { altitude: alt + km(1500), angle: 0.0062 }, propFraction: 0.9 },
           ],
           objectives: [
-            { id: 'n', text: 'Neutralise the Authority squadron', type: 'neutralize', targets: 'hostiles' },
-            { id: 'p', text: 'JCS Harkness survives', type: 'protect', ship: 'harkness' },
+            { id: 'n', text: '使管理局分舰队失能', type: 'neutralize', targets: 'hostiles' },
+            { id: 'p', text: 'JCS Harkness 存活', type: 'protect', ship: 'harkness' },
           ],
-          intro: [say('JCS Harkness', 'Harkness is yours for the day. Her four main lasers burn through armour from farther out than anything they have, so hold that range. Do not let a destroyer behind her.')],
+          intro: [say('JCS Harkness', '今天 Harkness 归你指挥。她的四门主激光能在比对方任何武器都远的距离上烧穿装甲，所以守住那个距离。别让驱逐舰绕到她背后。')],
           triggers: [
-            hintAt((sim) => sim.time > 45 && !!(E() && E().reach), 'h3', 'The ticks on the line to the target are the burn-through ranges. The teal tick is where Harkness\'s beams burn through the armour they are pointed at. The red tick is where theirs burn through hers. Hold the range between the two and only one side is doing damage.', '#shipPanel'),
-            hintAt({ time: 2 }, 'h1', (touch() ? 'Four ships against six, so do not spread them. Give all four the same order, one ship at a time: tap the ship, type 300 in the Range box,' : 'Four ships against six, so do not spread them. Shift-click all four in the list, type 300 in the Range box,') + ' and put every beam on the nearest Authority ship until she is out of the fight. Then the next one. Keep Harkness nose-on, because her nose carries 70 cm of armour and her flanks carry 28.', '#fleetList'),
+            hintAt((sim) => sim.time > 45 && !!(E() && E().reach), 'h3', '到目标那条线上的刻度就是烧穿距离。青色刻度是 Harkness 的光束烧穿当前瞄准装甲的距离，红色是对方烧穿她的距离。把距离守在两者之间，就只有一方在造成伤害。', '#shipPanel'),
+            hintAt({ time: 2 }, 'h1', (touch() ? '四艘对六艘，别把兵力散开。给四艘下同一条指令，一艘一艘来：点船、在距离框里输 300、' : '四艘对六艘，别把兵力散开。在列表里 Shift 点击四艘，距离框输 300、') + ' 把所有光束集中打最近的管理局舰，打出去再换下一艘。Harkness 保持舰首对敌，舰首 70 厘米，舷侧只有 28 厘米。', '#fleetList'),
           ],
         };
       },
     },
     {
-      n: 8, id: 'declaration', title: 'Declaration', location: 'Beyond Amalthea\'s orbit, altitude 181 000 km', date: '9 July 2211',
+      n: 8, id: 'declaration', title: '《宣言》', simName: 'Declaration', location: 'Amalthea (木卫五) 轨道之外，高度 181 000 公里', date: '2211 年 7 月 9 日',
       brief: [
-        'You are 181 000 km above Jupiter, 70 000 km outside Amalthea\'s orbit, with Harkness, the destroyers Bastion and Marrow, Anselm and Larkspur. The Authority flagship ISV Concordance has come out from her anchorage at Amalthea with everything her squadron has left. A destroyer, two frigates and two Lancers.',
-        'Her admiral has asked the Compact, formally, to withdraw the Declaration. Callisto answered with the position of this task group. Concordance is a cruiser built on the same lines as Harkness. Same four main lasers, same 70 cm nose, same heat sink. Her beams burn through at the range yours do, and her sink holds as much heat as yours.',
-        'Neutralise Concordance. The rest of her squadron is yours to take or leave, and the Compact would like Harkness back in one piece.',
+        '你在木星上方 181 000 公里，Amalthea (木卫五) 轨道之外 70 000 公里，带着 Harkness、驱逐舰 Bastion 和 Marrow、Anselm 和 Larkspur。管理局旗舰 ISV Concordance 从 Amalthea 的锚地出来了，带着她分舰队剩下的全部。一艘驱逐舰、两艘护卫舰、两艘枪骑兵级。',
+        '她的上将正式要求盟约撤回《宣言》。Callisto (木卫四) 的回答是把这个任务编队的位置发过去。Concordance 是按 Harkness 同一套图纸造的巡洋舰。同样四门主激光、同样 70 厘米舰首、同样大的热沉。她的光束在和你一样的距离上烧穿装甲，热沉装的热也和你一样多。',
+        '使 Concordance 失能。她分舰队剩下的，打不打随你，盟约希望 Harkness 完整地回来。',
       ],
-      comms: [say('JCS Harkness', 'If Concordance strikes, the Authority has nothing left out here. Take your time.')],
+      comms: [say('JCS Harkness', '如果 Concordance 被打掉，管理局在这里就什么都不剩了。慢慢来。')],
       // Nothing in the sim strikes her colours, so the line says how she actually left the fight.
       get victory() {
         const sim = endSim('Declaration');
-        const tail = ' What the Authority has left out here is burning for the inner system. The Declaration stands.';
-        if (!sim) return 'Concordance is out of the fight.' + tail;
+        const tail = ' 管理局在这里剩下的都在往内星系烧。《宣言》站住了。';
+        if (!sim) return 'Concordance 退出了战斗。' + tail;
         return endedAs(sim, 'concordance', 'Concordance') + tail;
       },
       // Harkness is the protect objective, so this chapter is only lost with her out of the fight.
       get defeat() {
         const sim = endSim('Declaration');
         const h = sim && sim.byId('harkness');
-        const tail = ' The Declaration will be withdrawn by the autumn.';
-        if (h && h.captured) return 'Off Amalthea, Harkness was boarded and taken, and the Compact has nothing left to keep the Authority out of Jovian orbit.' + tail;
-        if (h && h.disabled && !h.destroyed) return 'Harkness is adrift off Amalthea at ' + pctOf(h.hull) + ' hull integrity, and the Compact has nothing left to keep the Authority out of Jovian orbit.' + tail;
-        return 'Harkness is gone, and the Compact has nothing left to keep the Authority out of Jovian orbit.' + tail;
+        const tail = ' 《宣言》到秋天就会被撤回。';
+        if (h && h.captured) return '在 Amalthea (木卫五) 外，Harkness 被登舰俘获，盟约再没有东西能把管理局挡在木星轨道之外。' + tail;
+        if (h && h.disabled && !h.destroyed) return 'Harkness 在 Amalthea (木卫五) 外失控漂流，舰体完整度 ' + pctOf(h.hull) + '，盟约再没有东西能把管理局挡在木星轨道之外。' + tail;
+        return 'Harkness 没了，盟约再没有东西能把管理局挡在木星轨道之外。' + tail;
       },
       build() {
         const body = B.jupiter;
@@ -690,13 +690,13 @@
             { id: 'e5', name: 'ISV Fervent', cls: 'lancer', faction: 'ISA', ai: true, orbit: { altitude: alt + km(4200), angle: 0.009 }, propFraction: 0.9 },
           ],
           objectives: [
-            { id: 'n', text: 'Neutralise ISV Concordance', type: 'neutralize', targets: ['concordance'] },
-            { id: 'p', text: 'JCS Harkness survives', type: 'protect', ship: 'harkness' },
-            { id: 'all', text: 'Neutralise every Authority ship', type: 'neutralize', targets: 'hostiles', optional: true },
+            { id: 'n', text: '使 ISV Concordance 失能', type: 'neutralize', targets: ['concordance'] },
+            { id: 'p', text: 'JCS Harkness 存活', type: 'protect', ship: 'harkness' },
+            { id: 'all', text: '使每一艘管理局舰船失能', type: 'neutralize', targets: 'hostiles', optional: true },
           ],
-          intro: [say('JCS Harkness', 'If Concordance strikes, the Authority has nothing left out here. Take your time.')],
+          intro: [say('JCS Harkness', '如果 Concordance 被打掉，管理局在这里就什么都不剩了。慢慢来。')],
           triggers: [
-            hintAt({ time: 2 }, 'h1', (touch() ? 'Concordance carries 70 cm of nose armour, and beams from 800 km will not burn through it. Give every ship the same order, one ship at a time: tap the ship, type 300 in the Range box,' : 'Concordance carries 70 cm of nose armour, and beams from 800 km will not burn through it. Shift-click the whole fleet, type 300 in the Range box,') + ' and take her escorts nearest first. Then put every beam on Concordance.', '#fleetList'),
+            hintAt({ time: 2 }, 'h1', (touch() ? 'Concordance 舰首有 70 厘米装甲，800 公里外的光束烧不穿。给每艘船下同一条指令，一艘一艘来：点船、距离框输 300、' : 'Concordance 舰首有 70 厘米装甲，800 公里外的光束烧不穿。Shift 点击整支舰队，距离框输 300、') + ' 先打最近的护航舰，然后把所有光束集中在 Concordance 上。', '#fleetList'),
           ],
         };
       },
@@ -708,70 +708,70 @@
   // pause screen during a story chapter. Three short paragraphs: who you are, who you are fighting, what is at
   // stake. main.js renders them as the screen's paragraphs.
   const situation = [
-    'You are Commander Halvorsen of the Jovian Compact, and the corvette JCS Larkspur is your ship.',
-    'In March 2211 the moons of Jupiter signed the Declaration and left the Inner Systems Authority, which had run them as a customs territory, taxing what they shipped inward and setting the price of their own ice.',
-    'The Authority wants that income back. It began by stopping Compact ships for inspection. That is now a blockade. If it holds, the moons cannot trade with each other or buy the reactors and parts only the inner system builds.',
+    '你是木星盟约的指挥官 Halvorsen，护卫艇 JCS Larkspur 就是你的船。',
+    '2211 年 3 月，木星的卫星签署了《宣言》，脱离内星系管理局。管理局一直把这里当关税区，对运进来的货征税，还规定她们冰块的价格。',
+    '管理局要把这笔收入拿回去。它先是以检查为名拦停盟约的船，现在变成了封锁。封锁一旦成立，各卫星之间就没法互相贸易，也买不到只有内星系才造的反应堆和零件。',
   ];
 
   // The two sides, for the same screen. One line each, in the player's terms.
   const sides = [
-    { faction: 'JC', name: 'Jovian Compact', text: 'You. Callisto, Ganymede, Europa and Io, with one cruiser and a handful of escorts. You want the Declaration to stand.' },
-    { faction: 'ISA', name: 'Inner Systems Authority', text: 'Them. Earth and Mars, with a squadron of a few dozen ships out here. They want the tariff income back.' },
+    { faction: 'JC', name: '木星盟约', text: '你们。Callisto (木卫四)、Ganymede (木卫三)、Europa (木卫二) 和 Io (木卫一)，一艘巡洋舰加几艘护航舰。你们要让《宣言》站住。' },
+    { faction: 'ISA', name: '内星系管理局', text: '他们。地球和火星，在这里摆了几十艘舰的一个分舰队。他们要把关税收入拿回来。' },
   ];
 
   // What one chapter's result changed for the war: one sentence per chapter and outcome.
   const WAR = {
     1: {
-      victory: 'Long Meridian is back at Valhalla Station, so the Compact still has the tanker that moves its propellant.',
-      defeat: 'Long Meridian came down on Callisto, and the Compact is one tanker short of moving its own propellant.',
+      victory: 'Long Meridian 回到了 Valhalla Station (瓦尔哈拉站)，盟约还留着那艘运推进剂的油轮。',
+      defeat: 'Long Meridian 坠毁在 Callisto (木卫四)，盟约少了一艘运自己推进剂的油轮。',
       // the other way to lose it: the escort is gone and the tanker is still falling
-      larkspur: 'Larkspur was lost over Callisto, and the Compact is short a corvette and the tanker that moves its propellant.',
+      larkspur: 'Larkspur 在 Callisto (木卫四) 上空损失，盟约少了一艘护卫艇，也少了运推进剂的油轮。',
     },
     2: {
-      victory: 'The convoy came through, and the Compact has now fired on an Authority warship for the first time.',
-      prize: 'The convoy came through and Sabre was taken as a prize, the first Authority warship the Compact has boarded.',
+      victory: '船队通过了，盟约第一次向管理局军舰开火。',
+      prize: '船队通过了，Sabre 被俘获，这是盟约第一次登上管理局军舰。',
       // she broke off and ran instead: hurt, but still the Authority's
-      driven: 'The convoy came through and Sabre ran for repairs, so the Authority has no picket over Ganymede this week.',
-      defeat: 'The convoy was lost, and the Authority can tell the inner planets that its inspections stopped a Compact attack.',
+      driven: '船队通过了，Sabre 跑回去修，管理局这周在 Ganymede (木卫三) 没有警戒舰。',
+      defeat: '船队没了，管理局可以对内行星说，它的检查拦住了一次盟约袭击。',
       // the other way to lose it: the escort is gone and the convoy is still out there
-      larkspur: 'The Compact is a corvette down over Ganymede, and the Authority still has Sabre on the convoy route.',
+      larkspur: '盟约在 Ganymede (木卫三) 上空少了一艘护卫艇，管理局的 Sabre 还在船队航线上。',
     },
     3: {
-      victory: 'Conamara Station has its radiators out again, so Ganymede is still getting water from Europa.',
-      defeat: 'Conamara Station is gone, and half of Ganymede is on rationed water.',
+      victory: 'Conamara Station 的散热板又展开了，Ganymede (木卫三) 还在从 Europa (木卫二) 拿到水。',
+      defeat: 'Conamara Station 没了，半个 Ganymede (木卫三) 开始配给供水。',
       // the station held and the ships in front of it did not
-      ships: 'Conamara Station is still stowed under Authority guns, and the Compact has no ships left over Europa.',
+      ships: 'Conamara Station 还收着散热板压在管理局炮口下，盟约在 Europa (木卫二) 上空已经没有船了。',
     },
     4: {
-      victory: 'The Io approaches are open, and Authority destroyers have stopped shooting at haulers holding a straight course.',
+      victory: 'Io (木卫一) 的接近航线打开了，管理局驱逐舰不再朝保持直线航行的货船开火。',
       // driven off rather than wrecked: she is flying, and she will be back when her yard is done with her
-      driven: 'Coriolis broke off hurt and left the Loki approach, so Compact haulers can use it until she is repaired.',
-      defeat: 'Coriolis still holds the Io approaches, and Compact haulers are going the long way round.',
+      driven: 'Coriolis 带伤脱离，离开了 Loki 接近航线，盟约货船可以用到它修好为止。',
+      defeat: 'Coriolis 仍然控制着 Io (木卫一) 的接近航线，盟约货船只能绕远路。',
       // Coriolis is out of it too, and Larkspur did not come home
-      coriolis: 'Coriolis is out of the fight off Io, and the Compact paid for the Loki approach with Larkspur.',
+      coriolis: 'Coriolis 在 Io (木卫一) 外退出战斗，盟约用 Larkspur 换来了 Loki 接近航线。',
     },
     5: {
-      victory: 'Tamarind was caught inside the escape line, so Authority raiders now have to assume a Compact ship will follow them out.',
-      defeat: 'Tamarind got away with Kestrel Moon\'s cargo, and the Authority is fitting out more raiders.',
+      victory: 'Tamarind 在逃逸线内被截住，管理局的袭击舰以后都得假设盟约会追出来。',
+      defeat: 'Tamarind got away with Kestrel Moon\' 的货，管理局正在装备更多袭击舰。',
       // the chase ended with Larkspur out of the fight and the raider still inside the line
-      larkspur: 'Larkspur is out of the fight in deep space, and Tamarind still has Kestrel Moon\'s cargo.',
+      larkspur: 'Larkspur 在深空退出战斗，Tamarind 还带着 Kestrel Moon 的货。',
     },
     6: {
-      victory: 'Conamara is still on the air behind the line, and the Authority has run out of cheap ways to break it.',
-      defeat: 'Conamara Station is off the air, and Europa\'s ice is out of Compact reach.',
+      victory: 'Conamara 还在防线后面发信，管理局已经没有便宜的办法打掉它。',
+      defeat: 'Conamara Station is off the air, and Europa\' 的冰，盟约够不着了。',
       // the station held and the line in front of it did not
-      ships: 'The line in front of Conamara is gone, and the Compact cannot put another one there this month.',
+      ships: 'Conamara 前的防线没了，盟约这个月没法再摆一条。',
     },
     7: {
-      victory: 'The squadron in high Jupiter orbit is broken, so the moons can supply each other again.',
-      defeat: 'Harkness is lost, and the Compact has no capital ship and no way past the squadron.',
+      victory: '木星高轨的分舰队被打散，各卫星之间又能互相补给。',
+      defeat: 'Harkness 没了，盟约没有主力舰，也过不去分舰队那一关。',
       // adrift is not the same as gone: she is a hull the Authority now has to decide what to do with
-      adrift: 'Harkness is adrift in high Jupiter orbit, and the Compact has no way past the squadron to reach her.',
+      adrift: 'Harkness 在木星高轨失控漂流，盟约过不去分舰队去救她。',
     },
     8: {
-      victory: 'Concordance is out of the fight, the Authority\'s ships left for the inner system, and the Declaration stands.',
-      defeat: 'Harkness is gone with the task group, and the Compact has nothing left to defend the Declaration with.',
-      adrift: 'Harkness is adrift off Amalthea, and the Compact has nothing left to defend the Declaration with.',
+      victory: 'Concordance is out of the fight, the Authority\' 的舰船回内星系了，《宣言》站住了。',
+      defeat: 'Harkness 和任务编队一起没了，盟约再没有东西保卫《宣言》。',
+      adrift: 'Harkness 在 Amalthea (木卫五) 外失控漂流，盟约再没有东西保卫《宣言》。',
     },
   };
   // warSoFar(n, outcome) -> one sentence, or '' when the chapter or the outcome is unknown.
@@ -781,7 +781,7 @@
     const win = outcome === 'victory';
     // The fight this line is about, when it is still there to read. Every alternate row below needs one
     // fact off it to be true, so with no sim the chapter's plain row is what prints.
-    const sim = endSim((chapters[n - 1] || {}).title);
+    const sim = endSim((chapters[n - 1] || {}).simName);
     const foe = (id) => (sim ? sim.byId(id) : null);
     // Chapter 1: the tanker on the surface, or the escort gone with the tanker still falling.
     if (n === 1 && !win) { const m = foe('meridian'); if (m && !m.destroyed && isOut(foe('larkspur'))) return row.larkspur; }

@@ -1072,20 +1072,20 @@
   function defaultCallouts(lay) {
     const { R, xCap, capLen, xMod, modLen, xSpine, spineLen, tanks, rads, xShield, xThroat, reactorLen, xExit, rExit, turrets, coils, bays, pds, spinal } = lay;
     const out = [];
-    out.push({ label: 'Armour cap', at: [xCap + capLen * 0.55, 0, R * 0.7] });
-    if (spinal.length) out.push({ label: 'Spinal beam', at: [xCap + capLen, 0, lay.spinalR] });
-    out.push({ label: 'Crew module', at: [xMod + modLen * 0.5, 0, R] });
-    if (turrets.length) out.push({ label: 'Beam turrets', at: [xMod + modLen * 0.65, 0, R * 1.5] });
-    if (coils.length) out.push({ label: coils.length > 1 ? 'Rail pairs' : 'Rail pair', at: [xMod + modLen * 0.6, 0, -R * 1.2] });
-    if (bays.length) out.push({ label: 'Launch cells', at: [xMod + modLen * 0.45, R, 0] });
-    if (pds.length) out.push({ label: 'Point defence', at: [xMod + modLen * 0.12, R * 0.7, R * 0.7] });
-    out.push({ label: 'Truss spine', at: [xSpine + spineLen * 0.5, 0, 0] });
-    if (tanks.length) out.push({ label: 'Propellant tanks', at: [(tanks[0].from + tanks[0].to) / 2, tanks[0].at[1], tanks[0].at[2] + tanks[0].r] });
-    if (rads.length) out.push({ label: 'Radiators', at: [rads[0].at[0], rads[0].at[1] + rads[0].dir[1] * rads[0].span * 0.7, rads[0].at[2] + rads[0].dir[2] * rads[0].span * 0.7] });
-    out.push({ label: 'Shadow shield', at: [xShield, 0, lay.shieldR] });
-    out.push({ label: 'Reactor', at: [xThroat + reactorLen * 0.5, 0, lay.reactorR] });
-    if (rExit > 0) out.push({ label: 'Drive', at: [xExit, 0, rExit] });
-    out.push({ label: 'Sensor mast', at: [xMod + modLen * 0.82, 0, R * 2] });
+    out.push({ label: 'Armour cap', zh: '装甲罩', at: [xCap + capLen * 0.55, 0, R * 0.7] });
+    if (spinal.length) out.push({ label: 'Spinal beam', zh: '轴射光束', at: [xCap + capLen, 0, lay.spinalR] });
+    out.push({ label: 'Crew module', zh: '乘员舱', at: [xMod + modLen * 0.5, 0, R] });
+    if (turrets.length) out.push({ label: 'Beam turrets', zh: '光束炮塔', at: [xMod + modLen * 0.65, 0, R * 1.5] });
+    if (coils.length) out.push({ label: coils.length > 1 ? 'Rail pairs' : 'Rail pair', zh: '线圈炮', at: [xMod + modLen * 0.6, 0, -R * 1.2] });
+    if (bays.length) out.push({ label: 'Launch cells', zh: '发射舱', at: [xMod + modLen * 0.45, R, 0] });
+    if (pds.length) out.push({ label: 'Point defence', zh: '点防御', at: [xMod + modLen * 0.12, R * 0.7, R * 0.7] });
+    out.push({ label: 'Truss spine', zh: '桁架主梁', at: [xSpine + spineLen * 0.5, 0, 0] });
+    if (tanks.length) out.push({ label: 'Propellant tanks', zh: '推进剂箱', at: [(tanks[0].from + tanks[0].to) / 2, tanks[0].at[1], tanks[0].at[2] + tanks[0].r] });
+    if (rads.length) out.push({ label: 'Radiators', zh: '散热板', at: [rads[0].at[0], rads[0].at[1] + rads[0].dir[1] * rads[0].span * 0.7, rads[0].at[2] + rads[0].dir[2] * rads[0].span * 0.7] });
+    out.push({ label: 'Shadow shield', zh: '阴影屏蔽', at: [xShield, 0, lay.shieldR] });
+    out.push({ label: 'Reactor', zh: '反应堆', at: [xThroat + reactorLen * 0.5, 0, lay.reactorR] });
+    if (rExit > 0) out.push({ label: 'Drive', zh: '主推进器', at: [xExit, 0, rExit] });
+    out.push({ label: 'Sensor mast', zh: '传感器桅杆', at: [xMod + modLen * 0.82, 0, R * 2] });
     return out;
   }
 
@@ -2134,7 +2134,7 @@
     return list.map((c) => {
       const at = nearest(c);
       const x = V.dot(at, cam.R) * scale, y = -V.dot(at, cam.U) * scale;
-      return { label: c.label, text: c.text, x: x * cr - y * sr, y: x * sr + y * cr, depth: V.dot(at, cam.D) * scale, facing: c.facing };
+      return { label: c.label, zh: c.zh, text: c.text, x: x * cr - y * sr, y: x * sr + y * cr, depth: V.dot(at, cam.D) * scale, facing: c.facing };
     });
   }
 
@@ -2305,46 +2305,46 @@
   const kneePct = () => Math.round(((window.OD && window.OD.P && window.OD.P.SINK_KNEE) || 0.6) * 100);
   function partText(lay) {
     const D = lay.D, A = lay.A, t = {};
-    t['Armour cap'] = A.nose + ' cm of armour on the nose, against ' + A.flank + ' cm on the flanks.';
-    t['Crew module'] = Math.round(lay.modLen) + ' m of pressurised hull for the crew, behind the armour cap.';
-    t['Truss spine'] = Math.round(lay.spineLen) + ' m of open lattice, carrying the tanks between the crew and the reactor.';
-    t['Shadow shield'] = 'Shielding between the reactor and the crew.';
-    t.Reactor = mw1(D.reactorPower) + ' MW of power for the drive' + ((D.mounts || []).length ? ' and the mounts.' : ' and the ship\'s systems.');
+    t['Armour cap'] = '舰首装甲 ' + A.nose + ' 厘米，舷侧 ' + A.flank + ' 厘米。';
+    t['Crew module'] = Math.round(lay.modLen) + ' 米长的加压舰体，供乘员使用，位于装甲罩之后。';
+    t['Truss spine'] = Math.round(lay.spineLen) + ' 米长的开放式桁架，在乘员舱与反应堆之间承载推进剂箱。';
+    t['Shadow shield'] = '隔在反应堆与乘员之间的屏蔽板。';
+    t.Reactor = mw1(D.reactorPower) + ' 兆瓦功率，供给主推进器' + ((D.mounts || []).length ? '和炮位。' : '和舰上系统。');
     t['Sensor mast'] = D.activeRange > 0
-      ? 'Telescopes watching for contacts, and an active sensor that gets a firing solution on everything inside ' + grp(D.activeRange / 1e3) + ' km.'
-      : 'Telescopes and a dish watching for other ships.';
+      ? '望远镜负责搜索接触，主动传感器能对 ' + grp(D.activeRange / 1e3) + ' 公里内的一切拿到射击解算。'
+      : '望远镜和一面天线，用来搜索其他舰船。';
     if (lay.spinal.length) {
       const n = lay.spinal.length, m = lay.spinal[0];
       t['Spinal beam'] = n === 1
-        ? 'A fixed laser the ship aims by turning, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' fixed lasers the ship aims by turning, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '一门固定激光，靠转动整艘舰来瞄准，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 门固定激光，靠转动整艘舰来瞄准，每门 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.turrets.length) {
       const n = lay.turrets.length, m = lay.turrets[0];
       t['Beam turrets'] = n === 1
-        ? '1 laser turret that traverses to any bearing, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' laser turrets that traverse to any bearing, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '1 座激光炮塔，可转向任意方位，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 座激光炮塔，可转向任意方位，每座 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.coils.length) {
-      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' kg slugs at ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' km/s.';
-      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 coilgun along the hull, ' + slug : n + ' coilguns along the hull, ' + slug;
+      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' 公斤弹丸，初速 ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' 公里/秒。';
+      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 门沿舰体安装的线圈炮，' + slug : n + ' 门沿舰体安装的线圈炮，' + slug;
     }
     if (lay.bays.length) {
       const n = lay.bays.reduce((s, b) => s + (b.count || 0), 0);
       t['Launch cells'] = n === 1
-        ? '1 interceptor in its cell, a small craft with its own drive.'
-        : n + ' interceptors in their cells, each a small craft with its own drive.';
+        ? '1 枚拦截弹在发射舱内，是一种自带推进器的小型飞行器。'
+        : n + ' 枚拦截弹在发射舱内，每枚都是自带推进器的小型飞行器。';
     }
     if (lay.pds.length) {
       const n = lay.pds.length;
       t['Point defence'] = n === 1
-        ? '1 dome with a ' + mw1(lay.pds[0].power) + ' MW laser, shooting at inbound interceptors.'
-        : n + ' domes with ' + mw1(lay.pds[0].power) + ' MW lasers, shooting at inbound interceptors.';
+        ? '1 座防御罩，带一门 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。'
+        : n + ' 座防御罩，各带 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。';
     }
     const nTanks = tankParts(D);
-    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' t of propellant in ' + nTanks + (nTanks === 1 ? ' tank.' : ' tanks.');
-    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' m² of panel, shedding up to ' + radMW(D) + ' MW while they are out, at their full ' + grp(D.radiatorTemp || 1000) + ' K only once the sink is over ' + kneePct() + ' %.';
-    if (lay.rExit > 0) t.Drive = lay.nozzles + ' ' + lay.driveKind + (lay.nozzles === 1 ? ' bell, ' : ' bells, ') + Math.round((D.thrust || 0) / 1e6) + ' MN of thrust, exhaust ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' km/s.';
+    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' 吨推进剂，装在 ' + nTanks + ' 个箱里。';
+    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' 平方米散热板，展开时最多排出 ' + radMW(D) + ' 兆瓦，只有热沉超过 ' + kneePct() + ' % 时才能达到额定的 ' + grp(D.radiatorTemp || 1000) + ' K。';
+    if (lay.rExit > 0) t.Drive = lay.nozzles + ' 个' + ({ chemical: '化学', thermal: '热', torch: '火炬' }[lay.driveKind] || '') + '喷口，推力 ' + Math.round((D.thrust || 0) / 1e6) + ' 兆牛，排气速度 ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' 公里/秒。';
     return t;
   }
   // the default callouts with those sentences on them; own = this family's own wording for a part
@@ -2353,18 +2353,17 @@
     return defaults.map((d) => (t[d.label] ? Object.assign({}, d, { text: t[d.label] }) : d));
   }
 
-  // seconds to swing the nose through 180 degrees: accelerate, run at the rate cap, brake (the autopilot's own sum)
   function flipWords(lay) {
     const a = lay.D.angAccel, w = lay.D.maxAngVel;
-    if (!(a > 0) || !(w > 0)) return ' turn the hull';
+    if (!(a > 0) || !(w > 0)) return ' 转动舰体';
     const tAcc = w / a;
     const t = a * tAcc * tAcc >= Math.PI ? 2 * Math.sqrt(Math.PI / a) : 2 * tAcc + (Math.PI - a * tAcc * tAcc) / w;
-    return ' swing the nose through 180\u00b0 in about ' + Math.max(5, Math.round(t / 5) * 5) + ' s';
+    return '，把舰首转过 180\u00b0 大约要 ' + Math.max(5, Math.round(t / 5) * 5) + ' 秒';
   }
 
   OD.ShipArt.registerFamily('corvette', {
-    name: 'Kestrel-class corvette',
-    blurb: 'Fast picket hull, 70 m. The spinal laser sits in a tube that runs the whole ship, the coilgun rides a ventral keel, and the launch cells and the point-defence dome sit to starboard.',
+    name: '红隼级护卫艇',
+    blurb: '快速哨戒舰体，70 米。轴射激光装在一根贯穿全舰的导管里，线圈炮骑在腹部龙骨上，发射舱和点防御罩在右舷。',
     length: 70,
     radius: 0.046,                                                 // slim: 6.4 m across on 70 m
     cap: { len: 0.21, shape: 'ogive', tipR: 0.16, rings: true },   // long ogive, the tube runs out through the tip
@@ -2619,12 +2618,12 @@
       const tanks = kestrelTanks(lay);
       const top = tanks.reduce((b, t) => (b && b.at[2] >= t.at[2] ? b : t), null);
       const out = retext(defaults, lay).map((d) => (d.label === 'Propellant tanks' && top ? Object.assign({}, d, { at: [(top.from + top.to) / 2, top.at[1], top.at[2] + top.r] }) : d));
-      if (lay.spinal.length) out.push({ label: 'Beam tube hood', text: 'The spinal laser fires down this tube, which runs the whole hull and past the tip.', at: [muzzleX(lay), 0, lay.spinalR * 1.4] });
-      out.push({ label: 'Attitude thrusters', text: 'Thruster quads at the cap base and the shield rim' + flipWords(lay) + '.', at: [lay.xCap + lay.R * 0.36, 0, lay.R * 1.2] });
+      if (lay.spinal.length) out.push({ label: 'Beam tube hood', zh: '光束导管', text: '轴射激光从这根导管里射出，导管贯穿整个舰体，一直伸出舰首。', at: [muzzleX(lay), 0, lay.spinalR * 1.4] });
+      out.push({ label: 'Attitude thrusters', zh: '姿控推进器', text: '装甲罩底部和屏蔽板边缘各有一组四联姿控推进器' + flipWords(lay) + '。', at: [lay.xCap + lay.R * 0.36, 0, lay.R * 1.2] });
       return out;
     },
 
-    notes: 'The Kestrel is built around the spinal beam tube, the longest line on the ship, and everything else hangs off it. The ogive cap is long and slim, because the flanks were never meant to take fire, and the crew drum is short while the sensor mast is tall for a hull this size. Three slim tanks ride a three-longeron truss, one ventral and two high on the flanks, so the tube shows between them, and the two radiator wings slide out through the gaps in a shallow V below the hull. One torch bell sits behind a shadow shield ringed with attitude-thruster quads. The rail pair is carried on a ventral keel that runs under the drum and along the cap. The launch cells and the point-defence dome sit on the starboard side, opposite the docking collar.',
+    notes: '红隼级整个是围着那根轴射光束导管造的：它是全舰最长的一条线，其余东西都挂在它上面。卵形装甲罩又长又细，因为舷侧从来不是用来挨打的；乘员舱做得很短，传感器桅杆对这么小的舰体来说却很高。三个细长的箱子架在三根纵梁的桁架上——一个在腹部，两个高挂在两舷——导管就从它们中间露出来；两片翼式散热板从舰体下方那排浅 V 形缝隙里滑出。一只火炬喷口装在阴影屏蔽之后，屏蔽四周是一圈四联姿控推进器。线圈炮扛在腹部龙骨上，龙骨从乘员舱下方一直伸到装甲罩。发射舱和点防御罩在右舷，正对着左舷的对接环。',
   });
 })();
 
@@ -2673,46 +2672,46 @@
   const kneePct = () => Math.round(((window.OD && window.OD.P && window.OD.P.SINK_KNEE) || 0.6) * 100);
   function partText(lay) {
     const D = lay.D, A = lay.A, t = {};
-    t['Armour cap'] = A.nose + ' cm of armour on the nose, against ' + A.flank + ' cm on the flanks.';
-    t['Crew module'] = Math.round(lay.modLen) + ' m of pressurised hull for the crew, behind the armour cap.';
-    t['Truss spine'] = Math.round(lay.spineLen) + ' m of open lattice, carrying the tanks between the crew and the reactor.';
-    t['Shadow shield'] = 'Shielding between the reactor and the crew.';
-    t.Reactor = mw1(D.reactorPower) + ' MW of power for the drive' + ((D.mounts || []).length ? ' and the mounts.' : ' and the ship\'s systems.');
+    t['Armour cap'] = '舰首装甲 ' + A.nose + ' 厘米，舷侧 ' + A.flank + ' 厘米。';
+    t['Crew module'] = Math.round(lay.modLen) + ' 米长的加压舰体，供乘员使用，位于装甲罩之后。';
+    t['Truss spine'] = Math.round(lay.spineLen) + ' 米长的开放式桁架，在乘员舱与反应堆之间承载推进剂箱。';
+    t['Shadow shield'] = '隔在反应堆与乘员之间的屏蔽板。';
+    t.Reactor = mw1(D.reactorPower) + ' 兆瓦功率，供给主推进器' + ((D.mounts || []).length ? '和炮位。' : '和舰上系统。');
     t['Sensor mast'] = D.activeRange > 0
-      ? 'Telescopes watching for contacts, and an active sensor that gets a firing solution on everything inside ' + grp(D.activeRange / 1e3) + ' km.'
-      : 'Telescopes and a dish watching for other ships.';
+      ? '望远镜负责搜索接触，主动传感器能对 ' + grp(D.activeRange / 1e3) + ' 公里内的一切拿到射击解算。'
+      : '望远镜和一面天线，用来搜索其他舰船。';
     if (lay.spinal.length) {
       const n = lay.spinal.length, m = lay.spinal[0];
       t['Spinal beam'] = n === 1
-        ? 'A fixed laser the ship aims by turning, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' fixed lasers the ship aims by turning, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '一门固定激光，靠转动整艘舰来瞄准，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 门固定激光，靠转动整艘舰来瞄准，每门 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.turrets.length) {
       const n = lay.turrets.length, m = lay.turrets[0];
       t['Beam turrets'] = n === 1
-        ? '1 laser turret that traverses to any bearing, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' laser turrets that traverse to any bearing, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '1 座激光炮塔，可转向任意方位，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 座激光炮塔，可转向任意方位，每座 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.coils.length) {
-      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' kg slugs at ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' km/s.';
-      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 coilgun along the hull, ' + slug : n + ' coilguns along the hull, ' + slug;
+      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' 公斤弹丸，初速 ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' 公里/秒。';
+      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 门沿舰体安装的线圈炮，' + slug : n + ' 门沿舰体安装的线圈炮，' + slug;
     }
     if (lay.bays.length) {
       const n = lay.bays.reduce((s, b) => s + (b.count || 0), 0);
       t['Launch cells'] = n === 1
-        ? '1 interceptor in its cell, a small craft with its own drive.'
-        : n + ' interceptors in their cells, each a small craft with its own drive.';
+        ? '1 枚拦截弹在发射舱内，是一种自带推进器的小型飞行器。'
+        : n + ' 枚拦截弹在发射舱内，每枚都是自带推进器的小型飞行器。';
     }
     if (lay.pds.length) {
       const n = lay.pds.length;
       t['Point defence'] = n === 1
-        ? '1 dome with a ' + mw1(lay.pds[0].power) + ' MW laser, shooting at inbound interceptors.'
-        : n + ' domes with ' + mw1(lay.pds[0].power) + ' MW lasers, shooting at inbound interceptors.';
+        ? '1 座防御罩，带一门 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。'
+        : n + ' 座防御罩，各带 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。';
     }
     const nTanks = tankParts(D);
-    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' t of propellant in ' + nTanks + (nTanks === 1 ? ' tank.' : ' tanks.');
-    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' m² of panel, shedding up to ' + radMW(D) + ' MW while they are out, at their full ' + grp(D.radiatorTemp || 1000) + ' K only once the sink is over ' + kneePct() + ' %.';
-    if (lay.rExit > 0) t.Drive = lay.nozzles + ' ' + lay.driveKind + (lay.nozzles === 1 ? ' bell, ' : ' bells, ') + Math.round((D.thrust || 0) / 1e6) + ' MN of thrust, exhaust ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' km/s.';
+    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' 吨推进剂，装在 ' + nTanks + ' 个箱里。';
+    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' 平方米散热板，展开时最多排出 ' + radMW(D) + ' 兆瓦，只有热沉超过 ' + kneePct() + ' % 时才能达到额定的 ' + grp(D.radiatorTemp || 1000) + ' K。';
+    if (lay.rExit > 0) t.Drive = lay.nozzles + ' 个' + ({ chemical: '化学', thermal: '热', torch: '火炬' }[lay.driveKind] || '') + '喷口，推力 ' + Math.round((D.thrust || 0) / 1e6) + ' 兆牛，排气速度 ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' 公里/秒。';
     return t;
   }
   // the default callouts with those sentences on them; own = this family's own wording for a part
@@ -2721,18 +2720,17 @@
     return defaults.map((d) => (t[d.label] ? Object.assign({}, d, { text: t[d.label] }) : d));
   }
 
-  // seconds to swing the nose through 180 degrees: accelerate, run at the rate cap, brake (the autopilot's own sum)
   function flipWords(lay) {
     const a = lay.D.angAccel, w = lay.D.maxAngVel;
-    if (!(a > 0) || !(w > 0)) return ' turn the hull';
+    if (!(a > 0) || !(w > 0)) return ' 转动舰体';
     const tAcc = w / a;
     const t = a * tAcc * tAcc >= Math.PI ? 2 * Math.sqrt(Math.PI / a) : 2 * tAcc + (Math.PI - a * tAcc * tAcc) / w;
-    return ' swing the nose through 180\u00b0 in about ' + Math.max(5, Math.round(t / 5) * 5) + ' s';
+    return '，把舰首转过 180\u00b0 大约要 ' + Math.max(5, Math.round(t / 5) * 5) + ' 秒';
   }
 
   A.registerFamily('frigate', {
-    name: 'Halberd-class frigate',
-    blurb: 'The hull both navies fly most, 120 m. Two laser turrets on the crew drum, the coilgun under the keel, twelve launch cells split port and starboard, four tanks on an open truss.',
+    name: '战戟级护卫舰',
+    blurb: '两方海军数量最多的舰体，120 米。乘员舱上有两座激光炮塔，龙骨下是线圈炮，十二个发射舱分列左右舷，四个推进剂箱架在开放式桁架上。',
     length: 120,
     radius: 0.057,
     cap: { len: 0.15, shape: 'ogive', tipR: 0.09, rings: true },
@@ -2897,14 +2895,14 @@
     callouts(lay, defaults) {
       const { R, xMod, modLen, xCap, pds } = lay;
       // each point-defence laser on this hull feeds a pair of domes, so the line counts lasers and says how many domes
-      const own = pds.length ? { 'Point defence': pds.length + (pds.length === 1 ? ' laser of ' : ' lasers of ') + mw1(pds[0].power) + ' MW, each feeding a pair of domes, shooting at inbound interceptors.' } : null;
+      const own = pds.length ? { 'Point defence': pds.length + ' 门 ' + mw1(pds[0].power) + ' 兆瓦激光，各自带动一对防御罩，用来打来袭的拦截弹。' } : null;
       return retext(defaults, lay, own).concat([
-        { label: 'Docking collar', text: 'The port-side collar where tenders dock and boarding tubes latch on.', at: [xMod + modLen * 0.3, R * 1.3, 0] },
-        { label: 'Attitude thrusters', text: 'Thruster quads at the cap base and the shield rim' + flipWords(lay) + '.', at: [xCap + R * 0.1, 0, R * 1.2] },
+        { label: 'Docking collar', zh: '对接环', text: '左舷的对接环，补给艇在这里靠泊，登舰管也扣在这里。', at: [xMod + modLen * 0.3, R * 1.3, 0] },
+        { label: 'Attitude thrusters', zh: '姿控推进器', text: '装甲罩底部和屏蔽板边缘各有一组四联姿控推进器' + flipWords(lay) + '。', at: [xCap + R * 0.1, 0, R * 1.2] },
       ]);
     },
 
-    notes: 'The Halberd is the reference hull of both navies. A medium ogive armour cap sits on a plain drum crew module, an open truss spine carries four propellant tanks in two hoops, two sliding wing radiators sit ahead of the shadow shield and one torch bell closes the tail. The rail pair rides under the keel on standoff struts so its rails reach along the cap, stopping short of the tip with a braced muzzle. The ventral beam turret sits aft of the breech and aims astern, the dorsal turret amidships under the sensor mast. Twelve launch cells split port and starboard. Each point-defence laser feeds a pair of domes on opposite quarters, so the ring at the forward frame covers every approach. Attitude-thruster quads at the cap base and the shield rim, a port docking collar and a comms horn on the aft frame complete the standard fit.',
+    notes: '战戟级是两方海军的参照舰体。中等长度的卵形装甲罩扣在朴素的圆筒乘员舱上，开放式桁架主梁用两道箍带固定四个推进剂箱，两片滑动翼式散热板在阴影屏蔽之前，一只火炬喷口收住舰尾。线圈炮通过短支架骑在龙骨下方，两条导轨一直伸到装甲罩边上，在靠近舰首处由加固炮口收住。腹部炮塔在炮尾之后、朝舰尾方向打，背部炮塔在舰体中段、传感器桅杆下方。十二个发射舱分列左右舷。每门点防御激光带动一对位于对角方向的防御罩，所以前框上那一圈能罩住所有接近方向。装甲罩底部和屏蔽板边缘的四联姿控推进器、左舷对接环和尾框上的通讯喇叭，构成标准配置。',
   });
 })();
 
@@ -2996,46 +2994,46 @@
   const kneePct = () => Math.round(((window.OD && window.OD.P && window.OD.P.SINK_KNEE) || 0.6) * 100);
   function partText(lay) {
     const D = lay.D, A = lay.A, t = {};
-    t['Armour cap'] = A.nose + ' cm of armour on the nose, against ' + A.flank + ' cm on the flanks.';
-    t['Crew module'] = Math.round(lay.modLen) + ' m of pressurised hull for the crew, behind the armour cap.';
-    t['Truss spine'] = Math.round(lay.spineLen) + ' m of open lattice, carrying the tanks between the crew and the reactor.';
-    t['Shadow shield'] = 'Shielding between the reactor and the crew.';
-    t.Reactor = mw1(D.reactorPower) + ' MW of power for the drive' + ((D.mounts || []).length ? ' and the mounts.' : ' and the ship\'s systems.');
+    t['Armour cap'] = '舰首装甲 ' + A.nose + ' 厘米，舷侧 ' + A.flank + ' 厘米。';
+    t['Crew module'] = Math.round(lay.modLen) + ' 米长的加压舰体，供乘员使用，位于装甲罩之后。';
+    t['Truss spine'] = Math.round(lay.spineLen) + ' 米长的开放式桁架，在乘员舱与反应堆之间承载推进剂箱。';
+    t['Shadow shield'] = '隔在反应堆与乘员之间的屏蔽板。';
+    t.Reactor = mw1(D.reactorPower) + ' 兆瓦功率，供给主推进器' + ((D.mounts || []).length ? '和炮位。' : '和舰上系统。');
     t['Sensor mast'] = D.activeRange > 0
-      ? 'Telescopes watching for contacts, and an active sensor that gets a firing solution on everything inside ' + grp(D.activeRange / 1e3) + ' km.'
-      : 'Telescopes and a dish watching for other ships.';
+      ? '望远镜负责搜索接触，主动传感器能对 ' + grp(D.activeRange / 1e3) + ' 公里内的一切拿到射击解算。'
+      : '望远镜和一面天线，用来搜索其他舰船。';
     if (lay.spinal.length) {
       const n = lay.spinal.length, m = lay.spinal[0];
       t['Spinal beam'] = n === 1
-        ? 'A fixed laser the ship aims by turning, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' fixed lasers the ship aims by turning, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '一门固定激光，靠转动整艘舰来瞄准，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 门固定激光，靠转动整艘舰来瞄准，每门 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.turrets.length) {
       const n = lay.turrets.length, m = lay.turrets[0];
       t['Beam turrets'] = n === 1
-        ? '1 laser turret that traverses to any bearing, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' laser turrets that traverse to any bearing, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '1 座激光炮塔，可转向任意方位，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 座激光炮塔，可转向任意方位，每座 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.coils.length) {
-      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' kg slugs at ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' km/s.';
-      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 coilgun along the hull, ' + slug : n + ' coilguns along the hull, ' + slug;
+      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' 公斤弹丸，初速 ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' 公里/秒。';
+      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 门沿舰体安装的线圈炮，' + slug : n + ' 门沿舰体安装的线圈炮，' + slug;
     }
     if (lay.bays.length) {
       const n = lay.bays.reduce((s, b) => s + (b.count || 0), 0);
       t['Launch cells'] = n === 1
-        ? '1 interceptor in its cell, a small craft with its own drive.'
-        : n + ' interceptors in their cells, each a small craft with its own drive.';
+        ? '1 枚拦截弹在发射舱内，是一种自带推进器的小型飞行器。'
+        : n + ' 枚拦截弹在发射舱内，每枚都是自带推进器的小型飞行器。';
     }
     if (lay.pds.length) {
       const n = lay.pds.length;
       t['Point defence'] = n === 1
-        ? '1 dome with a ' + mw1(lay.pds[0].power) + ' MW laser, shooting at inbound interceptors.'
-        : n + ' domes with ' + mw1(lay.pds[0].power) + ' MW lasers, shooting at inbound interceptors.';
+        ? '1 座防御罩，带一门 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。'
+        : n + ' 座防御罩，各带 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。';
     }
     const nTanks = tankParts(D);
-    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' t of propellant in ' + nTanks + (nTanks === 1 ? ' tank.' : ' tanks.');
-    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' m² of panel, shedding up to ' + radMW(D) + ' MW while they are out, at their full ' + grp(D.radiatorTemp || 1000) + ' K only once the sink is over ' + kneePct() + ' %.';
-    if (lay.rExit > 0) t.Drive = lay.nozzles + ' ' + lay.driveKind + (lay.nozzles === 1 ? ' bell, ' : ' bells, ') + Math.round((D.thrust || 0) / 1e6) + ' MN of thrust, exhaust ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' km/s.';
+    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' 吨推进剂，装在 ' + nTanks + ' 个箱里。';
+    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' 平方米散热板，展开时最多排出 ' + radMW(D) + ' 兆瓦，只有热沉超过 ' + kneePct() + ' % 时才能达到额定的 ' + grp(D.radiatorTemp || 1000) + ' K。';
+    if (lay.rExit > 0) t.Drive = lay.nozzles + ' 个' + ({ chemical: '化学', thermal: '热', torch: '火炬' }[lay.driveKind] || '') + '喷口，推力 ' + Math.round((D.thrust || 0) / 1e6) + ' 兆牛，排气速度 ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' 公里/秒。';
     return t;
   }
   // the default callouts with those sentences on them; own = this family's own wording for a part
@@ -3045,8 +3043,8 @@
   }
 
   SA.registerFamily('destroyer', {
-    name: 'Anvil-class destroyer', length: 180,
-    blurb: 'A short, wide hull behind a forged nose, 180 m. Both heavy coilguns run in troughs along the flanks, and the tail is the thin end of the ship.',
+    name: '铁砧级驱逐舰', length: 180,
+    blurb: '短而宽的舰体，前面是锻压舰首，180 米。两门重型线圈炮沿舷侧凹槽布置，舰尾是全舰最薄的一端。',
     radius: 0.085,
     cap: { len: 0.19, shape: 'blunt', tipR: 0.42, rings: true },
     module: { len: 0.22, kind: 'drum' },
@@ -3279,14 +3277,14 @@
       const { R, xCap, capLen, xMod, modLen, coils } = lay;
       // the coilguns are called out where they are, in the flank sponsons, so the core's own rail line comes off
       const out = retext(defaults, lay).filter((d) => d.label !== 'Rail pair' && d.label !== 'Rail pairs');
-      out.push({ label: 'Forged head', text: 'Stacked plate rings over the nose, the widest part of the armoured hull.', at: [xCap + capLen * 0.75, 0, R * 1.27] });
+      out.push({ label: 'Forged head', zh: '锻压舰首', text: '舰首外包一层层叠装的装甲环，是整艘装甲舰体最宽的部分。', at: [xCap + capLen * 0.75, 0, R * 1.27] });
       if (coils.length) {
-        const m = coils[0], slug = (m.slugMass || 0) + ' kg slugs at ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' km/s.';
-        out.push({ label: 'Rail sponsons', text: coils.length === 1 ? '1 coilgun in a trough along the flank, ' + slug : coils.length + ' coilguns in troughs along the flanks, ' + slug, at: [xMod + modLen * 0.9, R * 1.38, 0] });
+        const m = coils[0], slug = (m.slugMass || 0) + ' 公斤弹丸，初速 ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' 公里/秒。';
+        out.push({ label: 'Rail sponsons', zh: '侧舷炮槽', text: coils.length === 1 ? '1 门线圈炮装在舷侧凹槽里，' + slug : coils.length + ' 门线圈炮装在两侧凹槽里，' + slug, at: [xMod + modLen * 0.9, R * 1.38, 0] });
       }
       return out;
     },
-    notes: 'The Anvil is built around its nose facing. The head is the widest part of the armoured hull, wider than the crew drum behind it, stacked from plate rings so each ring can be replaced in dock, and every fitting of value sits in its shadow. The rail pairs run in troughs along the flanks that reach forward into the head plates. Behind the crew drum a boxed keel carries three tanks and four cross radiators on short pylons. The reactor and its twin bells are the thin end, kept as light as the tail armour allows.',
+    notes: '铁砧级是围着舰首朝向造的。舰首是装甲舰体最宽的部分，比它后面的乘员舱还宽，由一圈圈装甲板叠成，每一环都能在船坞里单独更换，所有值钱的东西都躲在它的影子里。两组线圈炮沿舷侧凹槽布置，向前伸进舰首的装甲板里。乘员舱后面是一个箱形龙骨，用短支架托着三个推进剂箱和四片十字式散热板。反应堆和它的两只喷口是最薄的一端，在舰尾装甲允许的范围内尽量做轻。',
   });
 })();
 
@@ -3733,46 +3731,46 @@
   const kneePct = () => Math.round(((window.OD && window.OD.P && window.OD.P.SINK_KNEE) || 0.6) * 100);
   function partText(lay) {
     const D = lay.D, A = lay.A, t = {};
-    t['Armour cap'] = A.nose + ' cm of armour on the nose, against ' + A.flank + ' cm on the flanks.';
-    t['Crew module'] = Math.round(lay.modLen) + ' m of pressurised hull for the crew, behind the armour cap.';
-    t['Truss spine'] = Math.round(lay.spineLen) + ' m of open lattice, carrying the tanks between the crew and the reactor.';
-    t['Shadow shield'] = 'Shielding between the reactor and the crew.';
-    t.Reactor = mw1(D.reactorPower) + ' MW of power for the drive' + ((D.mounts || []).length ? ' and the mounts.' : ' and the ship\'s systems.');
+    t['Armour cap'] = '舰首装甲 ' + A.nose + ' 厘米，舷侧 ' + A.flank + ' 厘米。';
+    t['Crew module'] = Math.round(lay.modLen) + ' 米长的加压舰体，供乘员使用，位于装甲罩之后。';
+    t['Truss spine'] = Math.round(lay.spineLen) + ' 米长的开放式桁架，在乘员舱与反应堆之间承载推进剂箱。';
+    t['Shadow shield'] = '隔在反应堆与乘员之间的屏蔽板。';
+    t.Reactor = mw1(D.reactorPower) + ' 兆瓦功率，供给主推进器' + ((D.mounts || []).length ? '和炮位。' : '和舰上系统。');
     t['Sensor mast'] = D.activeRange > 0
-      ? 'Telescopes watching for contacts, and an active sensor that gets a firing solution on everything inside ' + grp(D.activeRange / 1e3) + ' km.'
-      : 'Telescopes and a dish watching for other ships.';
+      ? '望远镜负责搜索接触，主动传感器能对 ' + grp(D.activeRange / 1e3) + ' 公里内的一切拿到射击解算。'
+      : '望远镜和一面天线，用来搜索其他舰船。';
     if (lay.spinal.length) {
       const n = lay.spinal.length, m = lay.spinal[0];
       t['Spinal beam'] = n === 1
-        ? 'A fixed laser the ship aims by turning, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' fixed lasers the ship aims by turning, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '一门固定激光，靠转动整艘舰来瞄准，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 门固定激光，靠转动整艘舰来瞄准，每门 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.turrets.length) {
       const n = lay.turrets.length, m = lay.turrets[0];
       t['Beam turrets'] = n === 1
-        ? '1 laser turret that traverses to any bearing, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' laser turrets that traverse to any bearing, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '1 座激光炮塔，可转向任意方位，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 座激光炮塔，可转向任意方位，每座 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.coils.length) {
-      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' kg slugs at ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' km/s.';
-      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 coilgun along the hull, ' + slug : n + ' coilguns along the hull, ' + slug;
+      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' 公斤弹丸，初速 ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' 公里/秒。';
+      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 门沿舰体安装的线圈炮，' + slug : n + ' 门沿舰体安装的线圈炮，' + slug;
     }
     if (lay.bays.length) {
       const n = lay.bays.reduce((s, b) => s + (b.count || 0), 0);
       t['Launch cells'] = n === 1
-        ? '1 interceptor in its cell, a small craft with its own drive.'
-        : n + ' interceptors in their cells, each a small craft with its own drive.';
+        ? '1 枚拦截弹在发射舱内，是一种自带推进器的小型飞行器。'
+        : n + ' 枚拦截弹在发射舱内，每枚都是自带推进器的小型飞行器。';
     }
     if (lay.pds.length) {
       const n = lay.pds.length;
       t['Point defence'] = n === 1
-        ? '1 dome with a ' + mw1(lay.pds[0].power) + ' MW laser, shooting at inbound interceptors.'
-        : n + ' domes with ' + mw1(lay.pds[0].power) + ' MW lasers, shooting at inbound interceptors.';
+        ? '1 座防御罩，带一门 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。'
+        : n + ' 座防御罩，各带 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。';
     }
     const nTanks = tankParts(D);
-    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' t of propellant in ' + nTanks + (nTanks === 1 ? ' tank.' : ' tanks.');
-    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' m² of panel, shedding up to ' + radMW(D) + ' MW while they are out, at their full ' + grp(D.radiatorTemp || 1000) + ' K only once the sink is over ' + kneePct() + ' %.';
-    if (lay.rExit > 0) t.Drive = lay.nozzles + ' ' + lay.driveKind + (lay.nozzles === 1 ? ' bell, ' : ' bells, ') + Math.round((D.thrust || 0) / 1e6) + ' MN of thrust, exhaust ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' km/s.';
+    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' 吨推进剂，装在 ' + nTanks + ' 个箱里。';
+    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' 平方米散热板，展开时最多排出 ' + radMW(D) + ' 兆瓦，只有热沉超过 ' + kneePct() + ' % 时才能达到额定的 ' + grp(D.radiatorTemp || 1000) + ' K。';
+    if (lay.rExit > 0) t.Drive = lay.nozzles + ' 个' + ({ chemical: '化学', thermal: '热', torch: '火炬' }[lay.driveKind] || '') + '喷口，推力 ' + Math.round((D.thrust || 0) / 1e6) + ' 兆牛，排气速度 ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' 公里/秒。';
     return t;
   }
   // the default callouts with those sentences on them; own = this family's own wording for a part
@@ -3782,8 +3780,8 @@
   }
 
   ART.registerFamily('cruiser', {
-    name: 'Harkness-class cruiser',
-    blurb: 'Flagship hull, 320 m. Four main laser turrets stand on barbettes over two armour belts, two heavy coilguns hang under the belly, and five tanks ride an open truss ahead of three torch bells.',
+    name: '哈克尼斯级巡洋舰',
+    blurb: '旗舰舰体，320 米。四座主激光炮塔立在两条装甲带之上的炮座上，两门重型线圈炮挂在腹部，五个推进剂箱架在三只火炬喷口之前的开放式桁架上。',
     length: 320,
     radius: 0.046,
     cap: { len: 0.13, shape: 'ogive', tipR: 0.12, rings: true },
@@ -3804,7 +3802,7 @@
       if (Q.rads.length) move.Radiators = [Q.rads[0].at[0], Q.rads[0].at[1] + Q.rads[0].dir[1] * Q.span * 0.7, Q.rads[0].at[2] + Q.rads[0].dir[2] * Q.span * 0.7];
       return retext(defaults, lay).map((d) => (move[d.label] ? Object.assign({}, d, { at: move[d.label] }) : d));
     },
-    notes: 'The Harkness runs 320 m, with a 56 m ogive cap of 70 cm armour, a 90 m crew cylinder and a 125 m open truss. The four main turrets stand on tall barbettes over two raised armour belts, so their apertures clear the hull in every direction, and the two rail pairs are slung under the ventral quarters and reach forward along the cap. Propellant rides in a five-tank cluster mid-truss with bare lattice ahead of it. Three pairs of radiators fan out around the aft spine between the tanks and the shadow shield, with the reactor drum and three torch bells behind. The command sensor cluster, a main dish with a second dish on a starboard arm and equipment boxes, stands on a braced mast at the module front.',
+    notes: '哈克尼斯级全长 320 米：56 米长的卵形装甲罩、70 厘米装甲，90 米长的乘员圆筒，125 米长的开放式桁架。四座主炮塔立在两条抬高的装甲带之上的高炮座上，所以它们的镜面朝任何方向都不被舰体挡住；两组线圈炮吊在腹部两侧，向前沿着装甲罩伸展。推进剂装在桁架中段的五箱集群里，前面是一段裸露的格架。三对散热板在尾部主梁周围展开，位于推进剂箱与阴影屏蔽之间，后面是反应堆圆筒和三只火炬喷口。指挥传感器组——一面主天线、一副装在右舷支臂上的副天线和几个设备箱——立在乘员舱前端一根加固桅杆上。',
   });
 })();
 
@@ -3914,46 +3912,46 @@
   const kneePct = () => Math.round(((window.OD && window.OD.P && window.OD.P.SINK_KNEE) || 0.6) * 100);
   function partText(lay) {
     const D = lay.D, A = lay.A, t = {};
-    t['Armour cap'] = A.nose + ' cm of armour on the nose, against ' + A.flank + ' cm on the flanks.';
-    t['Crew module'] = Math.round(lay.modLen) + ' m of pressurised hull for the crew, behind the armour cap.';
-    t['Truss spine'] = Math.round(lay.spineLen) + ' m of open lattice, carrying the tanks between the crew and the reactor.';
-    t['Shadow shield'] = 'Shielding between the reactor and the crew.';
-    t.Reactor = mw1(D.reactorPower) + ' MW of power for the drive' + ((D.mounts || []).length ? ' and the mounts.' : ' and the ship\'s systems.');
+    t['Armour cap'] = '舰首装甲 ' + A.nose + ' 厘米，舷侧 ' + A.flank + ' 厘米。';
+    t['Crew module'] = Math.round(lay.modLen) + ' 米长的加压舰体，供乘员使用，位于装甲罩之后。';
+    t['Truss spine'] = Math.round(lay.spineLen) + ' 米长的开放式桁架，在乘员舱与反应堆之间承载推进剂箱。';
+    t['Shadow shield'] = '隔在反应堆与乘员之间的屏蔽板。';
+    t.Reactor = mw1(D.reactorPower) + ' 兆瓦功率，供给主推进器' + ((D.mounts || []).length ? '和炮位。' : '和舰上系统。');
     t['Sensor mast'] = D.activeRange > 0
-      ? 'Telescopes watching for contacts, and an active sensor that gets a firing solution on everything inside ' + grp(D.activeRange / 1e3) + ' km.'
-      : 'Telescopes and a dish watching for other ships.';
+      ? '望远镜负责搜索接触，主动传感器能对 ' + grp(D.activeRange / 1e3) + ' 公里内的一切拿到射击解算。'
+      : '望远镜和一面天线，用来搜索其他舰船。';
     if (lay.spinal.length) {
       const n = lay.spinal.length, m = lay.spinal[0];
       t['Spinal beam'] = n === 1
-        ? 'A fixed laser the ship aims by turning, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' fixed lasers the ship aims by turning, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '一门固定激光，靠转动整艘舰来瞄准，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 门固定激光，靠转动整艘舰来瞄准，每门 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.turrets.length) {
       const n = lay.turrets.length, m = lay.turrets[0];
       t['Beam turrets'] = n === 1
-        ? '1 laser turret that traverses to any bearing, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' laser turrets that traverse to any bearing, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '1 座激光炮塔，可转向任意方位，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 座激光炮塔，可转向任意方位，每座 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.coils.length) {
-      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' kg slugs at ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' km/s.';
-      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 coilgun along the hull, ' + slug : n + ' coilguns along the hull, ' + slug;
+      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' 公斤弹丸，初速 ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' 公里/秒。';
+      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 门沿舰体安装的线圈炮，' + slug : n + ' 门沿舰体安装的线圈炮，' + slug;
     }
     if (lay.bays.length) {
       const n = lay.bays.reduce((s, b) => s + (b.count || 0), 0);
       t['Launch cells'] = n === 1
-        ? '1 interceptor in its cell, a small craft with its own drive.'
-        : n + ' interceptors in their cells, each a small craft with its own drive.';
+        ? '1 枚拦截弹在发射舱内，是一种自带推进器的小型飞行器。'
+        : n + ' 枚拦截弹在发射舱内，每枚都是自带推进器的小型飞行器。';
     }
     if (lay.pds.length) {
       const n = lay.pds.length;
       t['Point defence'] = n === 1
-        ? '1 dome with a ' + mw1(lay.pds[0].power) + ' MW laser, shooting at inbound interceptors.'
-        : n + ' domes with ' + mw1(lay.pds[0].power) + ' MW lasers, shooting at inbound interceptors.';
+        ? '1 座防御罩，带一门 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。'
+        : n + ' 座防御罩，各带 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。';
     }
     const nTanks = tankParts(D);
-    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' t of propellant in ' + nTanks + (nTanks === 1 ? ' tank.' : ' tanks.');
-    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' m² of panel, shedding up to ' + radMW(D) + ' MW while they are out, at their full ' + grp(D.radiatorTemp || 1000) + ' K only once the sink is over ' + kneePct() + ' %.';
-    if (lay.rExit > 0) t.Drive = lay.nozzles + ' ' + lay.driveKind + (lay.nozzles === 1 ? ' bell, ' : ' bells, ') + Math.round((D.thrust || 0) / 1e6) + ' MN of thrust, exhaust ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' km/s.';
+    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' 吨推进剂，装在 ' + nTanks + ' 个箱里。';
+    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' 平方米散热板，展开时最多排出 ' + radMW(D) + ' 兆瓦，只有热沉超过 ' + kneePct() + ' % 时才能达到额定的 ' + grp(D.radiatorTemp || 1000) + ' K。';
+    if (lay.rExit > 0) t.Drive = lay.nozzles + ' 个' + ({ chemical: '化学', thermal: '热', torch: '火炬' }[lay.driveKind] || '') + '喷口，推力 ' + Math.round((D.thrust || 0) / 1e6) + ' 兆牛，排气速度 ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' 公里/秒。';
     return t;
   }
   // the default callouts with those sentences on them; own = this family's own wording for a part
@@ -3963,8 +3961,8 @@
   }
 
   OD.ShipArt.registerFamily('lancer', {
-    name: 'Lancer-class interceptor carrier',
-    blurb: 'Nearly all magazine, 90 m. Twenty-four interceptors ride in two forward-facing quivers on the crew module, and one point-defence dome is the only other mount.',
+    name: '枪骑兵级拦截母舰',
+    blurb: '几乎整个舰体都是弹药舱，90 米。二十四枚拦截弹装在乘员舱上两个朝前的发射巢里，唯一的另一件装备是一座点防御罩。',
     length: 90,
     radius: 0.048,
     cap: { len: 0.1, shape: 'ogive', tipR: 0.13, rings: false },
@@ -4091,18 +4089,18 @@
       placeTanks(lay);
       const q = quivers(lay);
       const own = {
-        'Armour cap': lay.A.nose + ' cm on the nose and ' + lay.A.flank + ' cm on the flanks, thin for a warship.',
+        'Armour cap': '舰首 ' + lay.A.nose + ' 厘米，舷侧 ' + lay.A.flank + ' 厘米，对军舰来说很薄。',
       };
-      if (lay.rads.length) own.Radiators = grp(lay.D.radiatorArea || 0) + ' m\u00b2 on two wings that swing forward to stow between the tanks, shedding up to ' + radMW(lay.D)
-        + ' MW, at their full ' + grp(lay.D.radiatorTemp || 1000) + ' K only once the sink is over ' + kneePct() + ' %.';
+      if (lay.rads.length) own.Radiators = grp(lay.D.radiatorArea || 0) + ' 平方米，分在两片翼板上，收起时向前摆进推进剂箱之间，展开时最多排出 ' + radMW(lay.D)
+        + ' 兆瓦，只有热沉超过 ' + kneePct() + ' % 时才能达到额定的 ' + grp(lay.D.radiatorTemp || 1000) + ' K。';
       const out = retext(defaults, lay, own).map((d) => {
-        if (d.label === 'Launch cells' && q) return Object.assign({}, d, { text: q.per * 2 + ' interceptors in two forward-facing quivers, ' + q.per + ' a side.', at: [q.xFace, q.yc, q.hz] });
+        if (d.label === 'Launch cells' && q) return Object.assign({}, d, { text: q.per * 2 + ' 枚拦截弹装在两个朝前的发射巢里，每侧 ' + q.per + ' 枚。', at: [q.xFace, q.yc, q.hz] });
         if (d.label === 'Propellant tanks' && lay.tanks.length) { const t = lay.tanks[0]; return Object.assign({}, d, { at: [(t.from + t.to) / 2, t.at[1], t.at[2] + t.r] }); }
         return d;
       });
       return out;
     },
-    notes: 'The Lancer carries little but its magazine. Two quivers of forward-facing launch cells take up most of the crew module, twelve a side, carried on pylons and straps outboard of the pressure hull so every cell mouth clears the nose. The cap is a short unarmoured fairing with a telescope in the tip and no spinal tube, and a single point-defence dome sits on the dorsal line. Behind the module an open truss carries four propellant tanks in a diamond, big for the hull because the ship runs far and fast. The two wing radiators hinge at their forward inboard corner and swing into the slot between the tank pairs to stow. A shadow shield, a compact reactor and twin torch bells close the tail.',
+    notes: '枪骑兵级除了弹药舱几乎什么都没带。两个朝前的发射巢占了乘员舱的大部分，每侧十二个，通过支架和绑带挂在压力壳外侧，让每个发射口都不被舰首挡住。装甲罩是一段短的、无装甲的整流罩，尖端装一架望远镜，没有轴射导管；背部中线上只有一座点防御罩。乘员舱后面是开放式桁架，用菱形排布装着四个推进剂箱——对这么大的舰体来说偏大，因为这艘船跑得远、跑得快。两片翼式散热板在前内侧角上铰接，收起时向前摆进两组箱子之间的缝里。阴影屏蔽、紧凑型反应堆和一对火炬喷口收住舰尾。',
   });
 })();
 
@@ -4231,46 +4229,46 @@
   const kneePct = () => Math.round(((window.OD && window.OD.P && window.OD.P.SINK_KNEE) || 0.6) * 100);
   function partText(lay) {
     const D = lay.D, A = lay.A, t = {};
-    t['Armour cap'] = A.nose + ' cm of armour on the nose, against ' + A.flank + ' cm on the flanks.';
-    t['Crew module'] = Math.round(lay.modLen) + ' m of pressurised hull for the crew, behind the armour cap.';
-    t['Truss spine'] = Math.round(lay.spineLen) + ' m of open lattice, carrying the tanks between the crew and the reactor.';
-    t['Shadow shield'] = 'Shielding between the reactor and the crew.';
-    t.Reactor = mw1(D.reactorPower) + ' MW of power for the drive' + ((D.mounts || []).length ? ' and the mounts.' : ' and the ship\'s systems.');
+    t['Armour cap'] = '舰首装甲 ' + A.nose + ' 厘米，舷侧 ' + A.flank + ' 厘米。';
+    t['Crew module'] = Math.round(lay.modLen) + ' 米长的加压舰体，供乘员使用，位于装甲罩之后。';
+    t['Truss spine'] = Math.round(lay.spineLen) + ' 米长的开放式桁架，在乘员舱与反应堆之间承载推进剂箱。';
+    t['Shadow shield'] = '隔在反应堆与乘员之间的屏蔽板。';
+    t.Reactor = mw1(D.reactorPower) + ' 兆瓦功率，供给主推进器' + ((D.mounts || []).length ? '和炮位。' : '和舰上系统。');
     t['Sensor mast'] = D.activeRange > 0
-      ? 'Telescopes watching for contacts, and an active sensor that gets a firing solution on everything inside ' + grp(D.activeRange / 1e3) + ' km.'
-      : 'Telescopes and a dish watching for other ships.';
+      ? '望远镜负责搜索接触，主动传感器能对 ' + grp(D.activeRange / 1e3) + ' 公里内的一切拿到射击解算。'
+      : '望远镜和一面天线，用来搜索其他舰船。';
     if (lay.spinal.length) {
       const n = lay.spinal.length, m = lay.spinal[0];
       t['Spinal beam'] = n === 1
-        ? 'A fixed laser the ship aims by turning, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' fixed lasers the ship aims by turning, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '一门固定激光，靠转动整艘舰来瞄准，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 门固定激光，靠转动整艘舰来瞄准，每门 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.turrets.length) {
       const n = lay.turrets.length, m = lay.turrets[0];
       t['Beam turrets'] = n === 1
-        ? '1 laser turret that traverses to any bearing, ' + mw1(m.power) + ' MW on a ' + ap1(m.aperture) + ' m mirror.'
-        : n + ' laser turrets that traverse to any bearing, ' + mw1(m.power) + ' MW each on ' + ap1(m.aperture) + ' m mirrors.';
+        ? '1 座激光炮塔，可转向任意方位，' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。'
+        : n + ' 座激光炮塔，可转向任意方位，每座 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。';
     }
     if (lay.coils.length) {
-      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' kg slugs at ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' km/s.';
-      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 coilgun along the hull, ' + slug : n + ' coilguns along the hull, ' + slug;
+      const n = lay.coils.length, m = lay.coils[0], slug = (m.slugMass || 0) + ' 公斤弹丸，初速 ' + Math.round((m.muzzleVelocity || 0) / 100) / 10 + ' 公里/秒。';
+      t[n === 1 ? 'Rail pair' : 'Rail pairs'] = n === 1 ? '1 门沿舰体安装的线圈炮，' + slug : n + ' 门沿舰体安装的线圈炮，' + slug;
     }
     if (lay.bays.length) {
       const n = lay.bays.reduce((s, b) => s + (b.count || 0), 0);
       t['Launch cells'] = n === 1
-        ? '1 interceptor in its cell, a small craft with its own drive.'
-        : n + ' interceptors in their cells, each a small craft with its own drive.';
+        ? '1 枚拦截弹在发射舱内，是一种自带推进器的小型飞行器。'
+        : n + ' 枚拦截弹在发射舱内，每枚都是自带推进器的小型飞行器。';
     }
     if (lay.pds.length) {
       const n = lay.pds.length;
       t['Point defence'] = n === 1
-        ? '1 dome with a ' + mw1(lay.pds[0].power) + ' MW laser, shooting at inbound interceptors.'
-        : n + ' domes with ' + mw1(lay.pds[0].power) + ' MW lasers, shooting at inbound interceptors.';
+        ? '1 座防御罩，带一门 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。'
+        : n + ' 座防御罩，各带 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，用来打来袭的拦截弹。';
     }
     const nTanks = tankParts(D);
-    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' t of propellant in ' + nTanks + (nTanks === 1 ? ' tank.' : ' tanks.');
-    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' m² of panel, shedding up to ' + radMW(D) + ' MW while they are out, at their full ' + grp(D.radiatorTemp || 1000) + ' K only once the sink is over ' + kneePct() + ' %.';
-    if (lay.rExit > 0) t.Drive = lay.nozzles + ' ' + lay.driveKind + (lay.nozzles === 1 ? ' bell, ' : ' bells, ') + Math.round((D.thrust || 0) / 1e6) + ' MN of thrust, exhaust ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' km/s.';
+    if (nTanks) t['Propellant tanks'] = grp((D.propMass || 0) / 1e3) + ' 吨推进剂，装在 ' + nTanks + ' 个箱里。';
+    if (lay.rads.length) t.Radiators = grp(D.radiatorArea || 0) + ' 平方米散热板，展开时最多排出 ' + radMW(D) + ' 兆瓦，只有热沉超过 ' + kneePct() + ' % 时才能达到额定的 ' + grp(D.radiatorTemp || 1000) + ' K。';
+    if (lay.rExit > 0) t.Drive = lay.nozzles + ' 个' + ({ chemical: '化学', thermal: '热', torch: '火炬' }[lay.driveKind] || '') + '喷口，推力 ' + Math.round((D.thrust || 0) / 1e6) + ' 兆牛，排气速度 ' + Math.round((D.exhaustVelocity || 0) / 1e3) + ' 公里/秒。';
     return t;
   }
   // the default callouts with those sentences on them; own = this family's own wording for a part
@@ -4280,8 +4278,8 @@
   }
 
   OD.ShipArt.registerFamily('freighter', {
-    name: 'Meridian-class freighter',
-    blurb: 'Unarmed bulk hauler, 250 m. A square truss keel carries open racks of containers ahead of the propellant tanks, and nothing aboard can shoot.',
+    name: '子午线级货船',
+    blurb: '无武装散装货船，250 米。方形桁架龙骨在推进剂箱之前托着敞开的集装箱格架，船上没有任何东西能开火。',
     length: 250,
     radius: 0.04,
     cap: { len: 0.06, shape: 'blunt', tipR: 0.3, rings: true },
@@ -4434,20 +4432,20 @@
       const P = lay._meridian || plan(OD.ShipArt.kit, lay);
       // the hauler's own wording for the parts the core names: the cap is dust plating, the crew ride at the nose
       const own = {
-        'Armour cap': lay.A.nose + ' cm of plating over the nose, a micrometeoroid shield rather than armour.',
-        'Crew module': Math.round(lay.modLen) + ' m of pressurised hull for the crew, up at the nose ahead of the cargo.',
+        'Armour cap': '舰首包着 ' + lay.A.nose + ' 厘米厚的板，是防微陨石的，不算装甲。',
+        'Crew module': Math.round(lay.modLen) + ' 米长的加压舰体，供乘员使用，在舰首、货舱之前。',
       };
       const out = retext(defaults, lay, own).filter((c) => c.label !== 'Truss spine' && c.label !== 'Propellant tanks' && c.label !== 'Radiators' && c.label !== 'Point defence');
-      if (lay.pds.length) { const K = OD.ShipArt.kit, sp = pdSpots(K, lay)[0], np = lay.pds.length; out.push({ label: 'Point defence', text: np + (np === 1 ? ' dome with a ' : ' domes with ') + mw1(lay.pds[0].power) + (np === 1 ? ' MW laser on a rack end frame, ' : ' MW lasers on the rack end frames, ') + 'shooting at inbound interceptors.', at: K.V.add(sp.at, K.V.scale(sp.up, sp.plinth + pdR(K, lay) * 1.5)) }); }
+      if (lay.pds.length) { const K = OD.ShipArt.kit, sp = pdSpots(K, lay)[0], np = lay.pds.length; out.push({ label: 'Point defence', zh: '点防御', text: np + ' 座防御罩，各带 ' + mw1(lay.pds[0].power) + ' 兆瓦激光，装在货架端框上，用来打来袭的拦截弹。', at: K.V.add(sp.at, K.V.scale(sp.up, sp.plinth + pdR(K, lay) * 1.5)) }); }
       const n = P.racks.reduce((a, r) => a + r.rings * PER_RING, 0);
-      if (lay.rads.length) { const r = lay.rads[0]; out.push({ label: 'Radiators', text: grp(lay.D.radiatorArea || 0) + ' m² on outriggers, folded back along the keel for docking, shedding up to ' + radMW(lay.D) + ' MW, at their full ' + grp(lay.D.radiatorTemp || 1000) + ' K only once the sink is over ' + kneePct() + ' %.', at: [P.radX, r.dir[1] * (P.radRoot + r.span * 0.7), r.dir[2] * (P.radRoot + r.span * 0.7)] }); }
-      out.push({ label: 'Cargo racks', text: P.racks.length + (P.racks.length === 1 ? ' lattice rack holding ' : ' lattice racks holding ') + n + (n === 1 ? ' standard container.' : ' standard containers.'), at: [(P.rackFrom + P.rackTo) / 2, 0, P.rackHalf] });
-      out.push({ label: 'Keel', text: 'The square truss the cargo racks clamp to and the tanks thread onto.', at: [(lay.xSpine + P.tankFrom) / 2, 0, -P.keelHalf] });
+      if (lay.rads.length) { const r = lay.rads[0]; out.push({ label: 'Radiators', zh: '散热板', text: grp(lay.D.radiatorArea || 0) + ' 平方米，装在外伸支架上，对接时沿龙骨向后折起，展开时最多排出 ' + radMW(lay.D) + ' 兆瓦，只有热沉超过 ' + kneePct() + ' % 时才能达到额定的 ' + grp(lay.D.radiatorTemp || 1000) + ' K。', at: [P.radX, r.dir[1] * (P.radRoot + r.span * 0.7), r.dir[2] * (P.radRoot + r.span * 0.7)] }); }
+      out.push({ label: 'Cargo racks', zh: '货架', text: P.racks.length + ' 组格架，装着 ' + n + ' 个标准集装箱。', at: [(P.rackFrom + P.rackTo) / 2, 0, P.rackHalf] });
+      out.push({ label: 'Keel', zh: '龙骨', text: '方形桁架，货架夹在上面，推进剂箱套在上面。', at: [(lay.xSpine + P.tankFrom) / 2, 0, -P.keelHalf] });
       const nT = tankParts(lay.D);
-      if (P.tanks.length && nT) out.push({ label: 'Propellant tanks', text: grp((lay.D.propMass || 0) / 1e3) + ' t of propellant in ' + nT + (nT === 1 ? ' inline tank behind the cargo.' : ' inline tanks behind the cargo.'), at: [(P.tankFrom + P.tankTo) / 2, 0, P.tanks[0].r] });
+      if (P.tanks.length && nT) out.push({ label: 'Propellant tanks', zh: '推进剂箱', text: grp((lay.D.propMass || 0) / 1e3) + ' 吨推进剂，装在货舱后面的 ' + nT + ' 个箱里。', at: [(P.tankFrom + P.tankTo) / 2, 0, P.tanks[0].r] });
       return out;
     },
-    notes: 'A working ship rather than a warship. A square truss keel carries open lattice racks of standard containers behind a small crew drum, with the propellant tanks threaded onto the keel behind the cargo, so the racks can be loaded from any side at a dock. The 5 cm cap is a micrometeoroid shield rather than armour, the reactor is modest, the bell small, and the radiators fold back along the keel for docking. Rack count follows the dry mass and the tank section follows the propellant load. Docking lamps run along every rack frame.',
+    notes: '这是一艘干活的船，不是军舰。方形桁架龙骨在小型乘员舱后面托着敞开的格架，里面装标准集装箱；推进剂箱套在货舱之后的龙骨上，所以格架在船坞里可以从任意一侧装卸。5 厘米厚的罩子是防微陨石的，不算装甲；反应堆不大，喷口很小，散热板对接时沿龙骨向后折起。格架数量随干重变化，油箱段随推进剂装载量变化。每根格架框上都有一排对接灯。',
   });
 })();
 
@@ -4757,35 +4755,35 @@
   const kneePct = () => Math.round(((window.OD && window.OD.P && window.OD.P.SINK_KNEE) || 0.6) * 100);
 
   A.registerFamily('station', {
-    name: 'Orbital station',
-    blurb: 'A habitat ring spun on a fixed hub. Two defence lasers cover the docking end, the radiator farm hangs down the axial truss, and there is no drive.',
+    name: '轨道空间站',
+    blurb: '套在固定中枢上旋转的居住环。两门防御激光守着对接端，散热阵列挂在轴向桁架下方，没有主推进器。',
     length: 600,
     radius: 0.055,
     stages: { cap: null, spinal: null, spine: null, tanks: null, tail: null, module, mounts, radiators, sensors, extras },
     callouts(lay) {
       const g = geom(lay), out = [];
-      out.push({ label: 'Habitat ring', text: Math.round(g.rRing * 2) + ' m across, spun for gravity on ' + g.spokes + ' spokes.', at: at(g.uRing, g.rRing + g.rTube, 0) });
-      out.push({ label: 'Hub', text: 'The fixed drum the ring turns on, with its bearing collar in the ring plane.', at: at((g.uHub0 + g.uHub1) / 2, g.rHub, 0) });
-      out.push({ label: 'Docking ports', text: g.dockPorts + (g.dockPorts === 1 ? ' berth around the hub' : ' berths around the hub') + ' and one at the tip, where ships come alongside.', at: at(g.uDock1, g.rDock, 0) });
-      if (g.beams.length) { const n = g.beams.length, m = g.beams[0]; out.push({ label: 'Beam turrets', text: n + (n === 1 ? ' defence laser on the forward hub, ' : ' defence lasers on the forward hub, ') + mw1(m.power) + (n === 1 ? ' MW on a ' : ' MW each on ') + ap1(m.aperture) + (n === 1 ? ' m mirror.' : ' m mirrors.'), at: at(g.uBeam, g.rHub * 1.8, Math.PI / 2 + g.beamOff) }); }
-      if (g.pds.length) { const n = g.pds.length; out.push({ label: 'Point defence', text: n + (n === 1 ? ' dome with a ' : ' domes with ') + mw1(g.pds[0].power) + (n === 1 ? ' MW laser on the ring rim, ' : ' MW lasers on the ring rim and the hub, ') + 'shooting at inbound interceptors.', at: at(g.uRing, g.rRing + g.rTube, Math.PI / 6) }); }
-      out.push({ label: 'Axial truss', text: Math.round(Math.abs(g.uTruss1 - g.uTruss0)) + ' m of open lattice, holding the habitat away from the reactor.', at: [0, 0, (g.uTruss0 + g.uTruss1) / 2] });
+      out.push({ label: 'Habitat ring', zh: '居住环', text: '直径 ' + Math.round(g.rRing * 2) + ' 米，靠 ' + g.spokes + ' 根辐条旋转产生重力。', at: at(g.uRing, g.rRing + g.rTube, 0) });
+      out.push({ label: 'Hub', zh: '中枢', text: '固定不转的圆筒，环在它上面转，轴承环就在环所在的平面上。', at: at((g.uHub0 + g.uHub1) / 2, g.rHub, 0) });
+      out.push({ label: 'Docking ports', zh: '对接口', text: '中枢周围有 ' + g.dockPorts + ' 个泊位，顶端还有一个，舰船在那里靠泊。', at: at(g.uDock1, g.rDock, 0) });
+      if (g.beams.length) { const n = g.beams.length, m = g.beams[0]; out.push({ label: 'Beam turrets', zh: '光束炮塔', text: '前部中枢上有 ' + n + ' 门防御激光，每门 ' + mw1(m.power) + ' 兆瓦，反射镜口径 ' + ap1(m.aperture) + ' 米。', at: at(g.uBeam, g.rHub * 1.8, Math.PI / 2 + g.beamOff) }); }
+      if (g.pds.length) { const n = g.pds.length; out.push({ label: 'Point defence', zh: '点防御', text: n + ' 座防御罩，各带 ' + mw1(g.pds[0].power) + ' 兆瓦激光，装在环缘和中枢上，用来打来袭的拦截弹。', at: at(g.uRing, g.rRing + g.rTube, Math.PI / 6) }); }
+      out.push({ label: 'Axial truss', zh: '轴向桁架', text: Math.round(Math.abs(g.uTruss1 - g.uTruss0)) + ' 米长的开放式桁架，把居住区和反应堆隔开。', at: [0, 0, (g.uTruss0 + g.uTruss1) / 2] });
       // The farm is rated ten times what the habitat makes, and a rating on its own reads as a lie next to
       // the 30 MW in ships.js. Say what the margin is for: the reactor at full output and the ships alongside.
       if (g.farm) {
         const np = radParts(g.D);
         const idle = g.D.idleHeat ? mw1(g.D.idleHeat) : null;
-        out.push({ label: 'Radiator farm',
-          text: grp(g.D.radiatorArea || 0) + ' m² in ' + np + (np === 1 ? ' panel, shedding' : ' panels, shedding') + ' up to ' + radMW(g.D)
-            + ' MW, at their full ' + grp(g.D.radiatorTemp || 1000) + ' K only once the sink is over ' + kneePct() + ' %.'
-            + (idle ? ' The habitat itself makes ' + idle + ' MW of heat. The margin is for the reactor and for ships alongside.' : ''),
+        out.push({ label: 'Radiator farm', zh: '散热阵列',
+          text: grp(g.D.radiatorArea || 0) + ' 平方米，共 ' + np + ' 片，最多排出 ' + radMW(g.D)
+            + ' 兆瓦，只有热沉超过 ' + kneePct() + ' % 时才能达到额定的 ' + grp(g.D.radiatorTemp || 1000) + ' K。'
+            + (idle ? ' 居住区自身产热 ' + idle + ' 兆瓦，余量是留给反应堆和靠泊舰船的。' : ''),
           at: at((g.farm.u0 + g.farm.u1) / 2, g.rTruss + g.farm.span, 0) });
       }
-      out.push({ label: 'Shadow shield', text: 'Shielding between the reactor and the habitat.', at: at(g.uShield0, g.rShield, 0) });
-      out.push({ label: 'Reactor', text: mw1(g.D.reactorPower) + ' MW at the far end of the truss, powering the habitat' + (g.beams.length || g.pds.length ? ' and its lasers.' : '.'), at: at((g.uR0 + g.uR1) / 2, g.rReactor, 0) });
+      out.push({ label: 'Shadow shield', zh: '阴影屏蔽', text: '隔在反应堆与居住区之间的屏蔽板。', at: at(g.uShield0, g.rShield, 0) });
+      out.push({ label: 'Reactor', zh: '反应堆', text: mw1(g.D.reactorPower) + ' 兆瓦，位于桁架最远端，为居住区' + (g.beams.length || g.pds.length ? '和它的激光' : '') + '供电。', at: at((g.uR0 + g.uR1) / 2, g.rReactor, 0) });
       return out;
     },
-    notes: 'The station is a Stanford-style torus on six pressurised spokes around a fixed hub, its axis standing dorsal so the tactical map looks straight down at the ring. The hub carries the docking end beyond the ring, with four radial berths, an axial port and the communication dishes, and the bearing collar sits in the ring plane. Below the ring a long six-longeron truss carries the coolant main and the radiator farm, a fan of panels that slides in toward the truss when stowed and grows first in panel size and then in ranks with radiator area. The reactor drum sits at the far end behind a shadow shield sized to its power, so the habitat and the docking traffic stay in the shadow. The armour numbers thicken the belt around the ring rim, the dome at the docking end and the reactor skirt. There is no drive and no propellant aboard, so the station holds its orbit and draws no plume.',
+    notes: '这是一座斯坦福式环形站：加压辐条六根，套在固定中枢上，轴线朝背侧竖起，所以战术地图是正对着环看下去的。中枢带着伸出环外的对接端，有四个径向泊位、一个轴向端口和通讯天线，轴承环位于环所在的平面内。环下方是一根六纵梁的长桁架，带着冷却主管和散热阵列：收起时板子向桁架收拢，随散热面积增加先变大片数、再增加排数。反应堆圆筒在最远端，前面是按它的功率配的阴影屏蔽，所以居住区和对接交通都留在影子里。装甲数值加厚了环缘的腰带、对接端的罩顶和反应堆裙板。舰上没有推进器也没有推进剂，所以空间站留在自己的轨道上，不拖尾焰。',
   });
 })();
 

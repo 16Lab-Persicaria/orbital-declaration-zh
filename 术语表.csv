@@ -1,0 +1,226 @@
+﻿英文原词,中文译名,类别,处理,主要位置,备注
+Jovian Compact,木星盟约,势力,翻译,ships.js:101,JC 阵营全名；简称 Compact 译“盟约”
+Inner Systems Authority,内星系管理局,势力,翻译,ships.js:102,ISA 阵营全名；简称 Authority 译“管理局”
+Civilian,民用,势力,翻译,ships.js:103,CIV 阵营
+JC / ISA / CIV,不改,势力,禁改,全项目,阵营代码；只翻显示名
+JCS / ISV / JCV,不改,势力,保留,全项目,舰名前缀；舰名整体保留原文，不译不加括号
+corvette,护卫艇,舰级,翻译,ships.js:20,最小战舰；不要译“轻型巡洋舰”
+frigate,护卫舰,舰级,翻译,ships.js:32,
+destroyer,驱逐舰,舰级,翻译,ships.js:43,
+cruiser,巡洋舰,舰级,翻译,ships.js:54,
+Lancer-class,枪骑兵级,舰级,翻译,ships.js:66,舰级名翻译；与 role 值 lancer 区分
+lancer,不改,舰级,禁改,ships.js:65,role 字段值；不翻译
+interceptor carrier,拦截母舰,舰级,翻译,ships.js:66,Lancer 级的角色说明
+freighter,货船,舰级,翻译,ships.js:76,hauler 同译“货船”
+station,空间站,舰级,翻译,ships.js:87,与“战位 station”区分
+missile boat,导弹艇,舰级,翻译,ships.js:66,role 字段值；显示可译
+Kestrel-class,红隼级,舰级,翻译,ships.js:21,舰级名翻译；舰名本身不译
+Halberd-class,战戟级,舰级,翻译,ships.js:33,同上
+Anvil-class,铁砧级,舰级,翻译,ships.js:44,同上
+Harkness-class,哈克尼斯级,舰级,翻译,ships.js:55,同上；与舰名 JCS Harkness 区分
+Meridian-class,子午线级,舰级,翻译,ships.js:77,同上；与舰名 Long Meridian 区分
+hull,舰体,舰体,翻译,ui.js:245,船体结构；hull integrity 译“舰体完整度”
+hull integrity,舰体完整度,舰体,翻译,story.js:88,归零即解体
+drive,主推进器,舰体,翻译,ui.js:61,不要译“驱动器”“硬盘”
+reactor,反应堆,舰体,翻译,ui.js:61,
+radiator,散热板,舰体,翻译,ui.js:292,展开散热、收起保温
+radiator panel,散热板,舰体,翻译,damage.js,与 radiator 同词
+tank,推进剂箱,舰体,翻译,damage.js,不是“坦克”
+propellant,推进剂,舰体,翻译,ui.js:254,不要译“燃料”
+dry mass,干重,舰体,翻译,ui.js:34,
+mount,炮位,舰体,翻译,engagement.js:339,武器安装位；含激光炮塔、线圈炮、发射舱
+rack,炮位组,舰体,翻译,engagement.js:326,一艘舰的全部炮位
+armour,装甲,舰体,翻译,ui.js:46,
+facet,装甲面,舰体,翻译,engagement.js,分舰首、舷侧、舰尾三面
+nose,舰首,舰体,翻译,ships.js:26,装甲最厚
+flank,舷侧,舰体,翻译,ships.js:26,
+tail,舰尾,舰体,翻译,ships.js:26,装甲最薄；推进器在此
+component,部件,舰体,翻译,damage.js,可被单独打坏
+systems,系统,舰体,翻译,ui.js:253,推进、散热、传感器、武器四条
+nozzle,喷口,舰体,翻译,configurator.js,主推进器尾端的喷口
+fittings,附件,舰体,翻译,configurator.js,船坞里可加装的设备
+radiator area,散热面积,舰体,翻译,configurator.js,决定能排出多少热
+loaded mass,满载质量,舰体,翻译,configurator.js,干重加满推进剂
+mass budget,质量预算,舰体,翻译,configurator.js,船坞面板
+power budget,功率预算,舰体,翻译,configurator.js,反应堆功率怎么分
+heat balance,热平衡,舰体,翻译,configurator.js,产热与排热对照
+turn time,转向时间,舰体,翻译,configurator.js,掉头 180° 要多久
+stock fit,标准配置,舰体,翻译,configurator.js,没改装的原始配置
+部件名（Propellant tanks、Rail pair 等）,不改,舰体,禁改,shipart.js,同时用于逻辑比较；显示另做映射
+beam,光束,武器,翻译,ui.js:70,泛指光束武器
+laser,激光,武器,翻译,ships.js:27,
+spinal laser,轴射激光,武器,翻译,ships.js:27,沿舰首轴线射击
+laser turret,激光炮塔,武器,翻译,ships.js:39,
+main laser,主激光,武器,翻译,ships.js:61,
+defence laser,防御激光,武器,翻译,ships.js:94,空间站用
+coilgun,线圈炮,武器,翻译,ships.js:28,重型线圈炮 heavy coilgun
+slug,弹丸,武器,翻译,engagement.js:120,线圈炮弹丸；不要译“蛞蝓”
+interceptor,拦截弹,武器,翻译,engagement.js:121,不是“拦截机”
+bay,发射舱,武器,翻译,ui.js:72,拦截弹发射舱
+point defence,点防御,武器,翻译,ui.js:73,缩写 PD 同译
+salvo,齐射,武器,翻译,ui.js:72,拦截弹一次发射数量
+firing solution,射击解算,武器,翻译,ui.js:83,简称 solution
+weapons free,自由开火,武器,翻译,ui.js:67,关闭即按住不打
+fire control,火控,武器,翻译,ui.js:69,
+aim point,瞄准部位,武器,翻译,ui.js:71,舰体、散热板、推进器、炮位
+beam mode,光束模式,武器,翻译,ui.js:70,全力、持续、待机
+full,全力,武器,翻译,ui.js:70,光束模式；会灌满热沉
+sustained,持续,武器,翻译,ui.js:70,光束模式；受散热限制
+hold,待机,武器,翻译,ui.js:70,光束模式的待机；order.type 也有 hold 值，代码值不改
+arc,射界,武器,翻译,engagement.js,炮位可覆盖的角度
+reach,射程,武器,翻译,decisions.js,能打到的距离
+bite,有效射程,武器,翻译,decisions.js,能打穿的距离；与 reach 区分
+boarding,接舷,武器,翻译,ui.js:65,派人登上敌舰
+prize,俘获舰,武器,翻译,story.js:732,被夺下的敌舰
+light laser,轻型激光,武器,翻译,configurator.js,船坞可选型号
+heavy laser turret,重型激光炮塔,武器,翻译,configurator.js,船坞可选型号
+heavy spinal laser,重型轴射激光,武器,翻译,configurator.js,船坞可选型号
+long coilgun,加长线圈炮,武器,翻译,configurator.js,型号后缀 long
+wide point defence,广角点防御,武器,翻译,configurator.js,型号后缀 wide
+beams in arc,射界内光束,武器,翻译,ui.js,战斗面板行
+on target,命中,武器,翻译,ui.js,瞄准状态
+through armour,穿甲,武器,翻译,ui.js,穿深读数
+slugs left,剩余弹丸,武器,翻译,ui.js,战斗面板行
+interceptors left,剩余拦截弹,武器,翻译,ui.js,战斗面板行
+launch all,全部发射,武器,翻译,ui.js,一次打光所有发射舱
+incoming,来袭,武器,翻译,ui.js,威胁提示
+track,跟踪,传感器,翻译,ui.js:83,对目标的持续观测
+track quality,跟踪质量,传感器,翻译,ui.js:83,分接触、跟踪、解算三级
+signature,信号特征,传感器,翻译,ui.js:81,敌方传感器看到的热与辐射
+plume,尾焰,传感器,翻译,ui.js:81,开机时最亮的信号源
+sensor,传感器,传感器,翻译,ui.js:259,
+passive,被动,传感器,翻译,decisions.js,只收不发
+active,主动,传感器,翻译,ui.js:82,主动照射；会暴露自己
+contact,接触,传感器,翻译,ui.js:83,只有方位和大致距离
+by source,按来源,传感器,翻译,ui.js,信号特征分项
+seen from,被谁看到,传感器,翻译,ui.js,谁保持了对我们的解算
+our sensor,我方传感器,传感器,翻译,ui.js,面板行
+deep space,深空,传感器,翻译,skirmish.js,没有天体的战场
+heat sink,热沉,热管理,翻译,ui.js:55,存废热的容器；由散热板排走
+sink,热沉,热管理,翻译,ui.js:55,与 heat sink 同词
+heat,热量,热管理,翻译,ui.js:288,
+heat forecast,热量预测,热管理,翻译,ui.js:56,热沉何时充满或排空
+overheat,过热,热管理,翻译,ui.js:36,热沉满后推进器降到四分之一
+load,负荷,热管理,翻译,decisions.js,热沉占用比例
+extend,展开,热管理,翻译,ui.js:293,散热板展开
+stow,收起,热管理,翻译,ui.js:293,散热板收起；不是“储存”
+delta-v,速度增量,机动,翻译,util.js:107,符号 Δv；不要音译
+thrust,推力,机动,翻译,ui.js:36,
+exhaust velocity,排气速度,机动,翻译,ui.js:34,火箭方程里的 vₑ
+burn,点火,机动,翻译,guide.js,施加推力的动作；不是“燃烧”
+coast,惯性滑行,机动,翻译,guide.js,不点火
+flip,掉头,机动,翻译,guide.js,点火前先把舰首转向
+brake,反推减速,机动,翻译,guide.js,掉头后用主推进器减速
+throttle,推力档位,机动,翻译,ui.js:53,0 到 1
+heading,航向,机动,翻译,ui.js:256,
+orbit,轨道,机动,翻译,ui.js:257,
+altitude,高度,机动,翻译,ui.js:257,轨道最低点与最高点
+transfer,转移,机动,翻译,ui.js:266,两点间的轨道转移
+rendezvous,交会,机动,翻译,ui.js:266,靠近并保持相对静止
+intercept,拦截,机动,翻译,ui.js:275,显示标签译“拦截”；order.type 的值 intercept 不改；与 rendezvous“交会”区分；拦截弹是 interceptor
+keep range,保持距离,机动,翻译,ui.js:276,显示标签译“保持距离”；order.type 的值是 keeprange，不改
+match velocity,速度匹配,机动,翻译,ui.js:277,显示标签译“速度匹配”；order.type 的值是 matchv，不改
+retreat,撤退,机动,翻译,ui.js:279,显示标签译“撤退”；order.type 的值是 retreat，不改
+manual,手动,机动,翻译,ui.js:280,显示标签译“手动”；order.type 的值是 manual，不改
+jink,规避机动,机动,翻译,ui.js:283,每 20 秒横向短点火
+cruise cap,巡航上限,机动,翻译,ui.js:282,限制巡航速度以省速度增量
+g limit,过载限制,机动,翻译,ui.js:78,工作 1.2 g、抗荷 3 g、无限制
+couch,抗荷座椅,机动,翻译,ui.js:78,couch limit 译“抗荷上限”
+plotted path,规划路径,机动,翻译,ui.js:25,地图上预测的轨迹
+next event,下一事件,机动,翻译,ui.js:28,这艘舰下一件要做的事
+skip ahead,快进,机动,翻译,ui.js:29,直接跳到下一事件之前
+stopping distance,停止距离,机动,翻译,ui.js:30,反推消掉速度所需的距离
+opening range,初始距离,机动,翻译,skirmish.js,遭遇战开局的间距
+wrecked,报废,状态,翻译,damage.js,部件彻底失效
+damaged,受损,状态,翻译,damage.js,
+venting,泄漏,状态,翻译,damage.js,破口在往外喷
+adrift,失控漂流,状态,翻译,story.js:99,推进器废了或舰体太破
+disabled,失能,状态,翻译,story.js:99,退出战斗但没沉
+destroyed,击毁,状态,翻译,story.js:98,舰体归零
+captured,被俘,状态,翻译,story.js:97,接舷成功
+driven off,被驱离,状态,翻译,story.js:100,主动脱离战场
+break off,脱离,状态,翻译,story.js:102,掉头撤离
+neutralise,使失能,状态,翻译,decisions.js,任务目标用词
+Declaration,《宣言》,剧情,翻译,story.js:712,2211 年木星卫星签署的文件
+victory,胜利,剧情,翻译,story.js,
+defeat,失败,剧情,翻译,story.js,
+comms,通讯,剧情,翻译,story.js,剧情里的对讲
+log,日志,剧情,翻译,ui.js,屏幕下方的记录
+Autopilot,自动驾驶,剧情,翻译,autopilot.js,日志说话人；显示可译，但 tools 里的断言按英文值比对，替换时同步改测试
+Navigation,导航,剧情,翻译,story.js,日志说话人；显示可译，但 tools 里的断言按英文值比对，替换时同步改测试
+Bridge,舰桥,剧情,翻译,decisions.js,日志说话人；显示可译，但 tools 里的断言按英文值比对，替换时同步改测试
+Engineering,轮机,剧情,翻译,sim.js,日志说话人；显示可译，但 tools 里的断言按英文值比对，替换时同步改测试
+Gunnery,炮术,剧情,翻译,engagement.js,日志说话人；显示可译，但 tools 里的断言按英文值比对，替换时同步改测试
+Tactical,战术,剧情,翻译,sim.js,日志说话人；显示可译，但 tools 里的断言按英文值比对，替换时同步改测试
+Marines,陆战队,剧情,翻译,crew.js,日志说话人；显示可译，但 tools 里的断言按英文值比对，替换时同步改测试
+Command,指挥部,剧情,翻译,sim.js,日志说话人；显示可译，但 tools 里的断言按英文值比对，替换时同步改测试
+章节名（Cold Equations 等 8 个）,不改,剧情,禁改,story.js:142,sim.name 用同一串判断剧情分支；显示标题需另设字段
+time warp,时间加速,界面,翻译,ui.js:21,1×、4×、16×、64×
+navigator,导航官,界面,翻译,ui.js:24,给你白话建议的角色
+mission clock,任务时钟,界面,翻译,ui.js:20,
+physics panel,物理面板,界面,翻译,ui.js:23,
+decision,决策,界面,翻译,ui.js:85,战斗中的选择题
+band,决策栏,界面,翻译,decisions.js:33,屏幕上出现决策卡的横条
+briefing,简报,界面,翻译,bridge.js:5,
+debrief,战报,界面,翻译,bridge.js:5,战斗结束后的总结
+hangar,机库,界面,翻译,bridge.js:1034,出击前选舰
+refit,改装,界面,翻译,bridge.js,出击前换装
+ship configurator,舰船设计台,界面,翻译,main.js:163,自设舰船
+yard,船坞,界面,翻译,main.js:164,战役里买船的地方
+skirmish,遭遇战,界面,翻译,main.js:162,自设双方舰队
+campaign,战役,界面,翻译,README.md:75,木星十一地的长期战局
+chapter,章节,界面,翻译,story.js:142,
+situation,局势,界面,翻译,bridge.js:5,开战前的背景介绍
+inspect,检视,界面,翻译,bridge.js:5,
+objective,目标,界面,翻译,story.js:175,
+optional,可选,界面,翻译,story.js:175,可选目标
+party,班组,界面,翻译,ui.js:77,可派遣的船员小队
+watch,值班组,界面,翻译,engagement.js:325,火控值班、传感器值班
+sick bay,医务室,界面,翻译,crew.js:951,
+veteran,老兵,界面,翻译,engagement.js,形容经验高的船员
+crew,船员,界面,翻译,ui.js:77,
+fleet,舰队,界面,翻译,ui.js:181,
+faction,阵营,界面,翻译,story.js:22,
+toast,浮动提示,界面,翻译,main.js:212,屏幕上方一闪而过的提示
+damage control,损管,界面,翻译,ui.js:76,
+jury-rig,应急抢修,界面,翻译,damage.js,只能修到上限；修不满
+essentials,精简,界面,翻译,ui.js:26,面板详略模式
+full (detail),完整,界面,翻译,ui.js:26,面板详略模式；与光束模式的 full 分开
+fit all,全景适配,界面,翻译,ui.js:22,缩放到全部舰船可见
+vitals,关键读数,界面,翻译,ui.js:31,速度增量、距离、接近率
+delta-v budget,速度增量预算,界面,翻译,ui.js:35,还剩多少、这一单要花多少
+transfer estimate,转移估算,界面,翻译,ui.js:44,用真实自动驾驶预演
+arrival,到达,界面,翻译,ui.js:45,当前指令何时到位
+auto radiators,自动散热,界面,翻译,ui.js:58,按热沉负荷自动展开收起
+radiator integrity,散热板完整度,界面,翻译,ui.js:62,打坏后排热变少
+fire mode,开火模式,界面,翻译,ui.js:70,光束的全力、持续、待机
+effects,效果,界面,翻译,ui.js,战斗面板分组
+escape line,逃逸线,界面,翻译,ui.js:80,越过这条线就追不上
+active sensor,主动传感器,界面,翻译,ui.js:82,脉冲照射换解算
+bars,状态条,界面,翻译,ui.js:79,速度增量、热沉、舰体三条
+launch,出击,界面,翻译,bridge.js,确认开打
+paused,已暂停,界面,翻译,bridge.js,
+resume,继续,界面,翻译,bridge.js,
+abandon mission,放弃任务,界面,翻译,bridge.js,
+how to play,玩法说明,界面,翻译,main.js:164,两分钟讲完操作
+the war so far,战况,界面,翻译,bridge.js,局势屏的标题
+turn,回合,战役,翻译,campaign.js,
+requisition,征用点,战役,翻译,campaign.js,买船和补给的资源
+garrison,驻军,战役,翻译,campaign.js,
+income,收入,战役,翻译,campaign.js,每回合进账
+port,港口,战役,翻译,campaign.js,节点类型
+depot,补给站,战役,翻译,campaign.js,节点类型
+base,基地,战役,翻译,campaign.js,节点类型
+Commander Halvorsen,指挥官 Halvorsen,人名,翻译+保留,story.js:711,军衔 Commander 译“指挥官”；Halvorsen 保留原文
+军衔（Commander 等）,译中文,人名,翻译,story.js,军衔一律翻译；紧随其后的姓名保留原文
+人名（Halvorsen 等）,保留原文,人名,保留,story.js,只保留原文，不加括号
+舰名（JCS/ISV/JCV + 专名）,不改,舰名,保留,全项目,如 JCS Larkspur、JCV Long Meridian、ISV Sabre；一律保留原文，不加括号
+Jupiter,Jupiter (木星),地名,保留+提示,story.js,原文在前；括号只作提示
+Callisto,Callisto (木卫四),地名,保留+提示,story.js:144,同上
+Ganymede,Ganymede (木卫三),地名,保留+提示,story.js,同上
+Europa,Europa (木卫二),地名,保留+提示,story.js,同上
+Io,Io (木卫一),地名,保留+提示,story.js,同上
+Valhalla Station,Valhalla Station (瓦尔哈拉站),地名,保留+提示,story.js:172,虚构站名；音译只作提示
+Galileo Regio,Galileo Regio (伽利略区),地名,保留+提示,story.js:64,虚构地名；音译只作提示
+Conamara Station,Conamara Station (科纳马拉站),地名,保留+提示,story.js,虚构站名；音译只作提示
+km / m / km/s / m/s / g / % / K / MW / GW / MJ / AU / t / kt / Mt,原样保留,单位,保留符号,util.js:80-132,SI 单位；只按中文习惯调整前后空格

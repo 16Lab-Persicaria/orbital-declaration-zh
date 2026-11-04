@@ -85,7 +85,7 @@
   // in a fight nobody is. A hit through an open facet costs more, because the compartment is vacuum.
   const MAN = { drive: 1, reactor: 1, sensors: 0.4, mount: 0.4, radiator: 0.1, tank: 0.1 };
   // What a hull's parties are on, for the one line a ship the player is not flying gets.
-  const PLURAL = { drive: 'her drive', reactor: 'her reactor', sensors: 'her sensor suite', radiator: 'her radiator panels', mount: 'her mounts', tank: 'her tanks' };
+  const PLURAL = { drive: '她的主推进器', reactor: '她的反应堆', sensors: '她的传感器组', radiator: '她的散热板', mount: '她的炮位', tank: '她的推进剂箱' };
 
   // ------------------------------------------------------------------ small helpers
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -201,15 +201,15 @@
     if (!ship || !c) return null;
     const k = kindOf(c);
     if (k === 'drive') {
-      if (thrusting(ship) || wantsThrust(ship)) return 'the drive has to be cold, throttle to 0';
+      if (thrusting(ship) || wantsThrust(ship)) return '主推进器必须先冷却，推力归零';
       const cr = ship.crew;
       const now = cr && cr._now != null ? cr._now : null;
-      if (cr && now != null && cr._thrustAt != null && now - cr._thrustAt < T.driveHold) return 'the drive has to be cold, throttle to 0';
+      if (cr && now != null && cr._thrustAt != null && now - cr._thrustAt < T.driveHold) return '主推进器必须先冷却，推力归零';
       return null;
     }
     if (k === 'radiator') {
       const r = ship.radiators;
-      if (r && (r.deployed || (r.state || 0) > 0)) return 'the radiators have to be in';
+      if (r && (r.deployed || (r.state || 0) > 0)) return '散热板必须先收起';
       return null;
     }
     return null;
@@ -218,41 +218,41 @@
   // player has to do about it; this says what the ship is doing with the part.
   function usePhrase(ship, c) {
     const k = kindOf(c);
-    if (k === 'drive') return 'she is burning';
-    if (k === 'radiator') return 'the radiators are out';
-    return 'it is running';
+    if (k === 'drive') return '她还在点火';
+    if (k === 'radiator') return '散热板还展开着';
+    return '它还在运转';
   }
   // The station a party goes back to, named.
   function backWords(task) {
-    if (task === 'fire') return 'Back on fire control.';
-    if (task === 'sensors') return 'Back on the sensor watch.';
-    if (task === 'medical') return 'Back in the sick bay.';
-    return 'Standing by.';
+    if (task === 'fire') return '回到火控。';
+    if (task === 'sensors') return '回到传感器值班。';
+    if (task === 'medical') return '回到医务室。';
+    return '待命。';
   }
-  // The name a sentence uses for a part, spelled the way damage.js spells it: 'the drive',
-  // 'radiator panel 2', 'the coilgun'. 'PD laser 1' keeps its capitals.
+  // The name a sentence uses for a part, spelled the way damage.js spells it: '主推进器',
+  // '散热板 2', '线圈炮'. 'PD laser 1' keeps its capitals.
   function lowerFirst(name) {
     const s = String(name || '');
     if (/^[A-Z][A-Z]/.test(s)) return s;
     return s.charAt(0).toLowerCase() + s.slice(1);
   }
   function partPhrase(c) {
-    if (!c) return 'the part';
+    if (!c) return '这个部件';
     // damage.js owns the spelling of a part; the table below is the stand-in when it is not aboard.
     if (OD.Damage && typeof OD.Damage.plainName === 'function' && typeof c.name === 'string' && c.name) {
       try { const s = OD.Damage.plainName(c); if (s) return s; } catch (e) { /* the table below */ }
     }
     switch (kindOf(c)) {
-      case 'drive': return 'the drive';
-      case 'reactor': return 'the reactor';
-      case 'sensors': return 'the sensor suite';
+      case 'drive': return '主推进器';
+      case 'reactor': return '反应堆';
+      case 'sensors': return '传感器组';
       case 'radiator': case 'tank': return lowerFirst(c.name || c.id);
-      default: return 'the ' + lowerFirst(c.name || c.id);
+      default: return lowerFirst(c.name || c.id);
     }
   }
   // 'JCS Bastion' is Bastion once the fight has started and the player knows her.
   function shortName(ship) {
-    const s = String((ship && ship.name) || 'The ship');
+    const s = String((ship && ship.name) || '本舰');
     const m = /^[A-Z]{2,4}\s+(\S.*)$/.exec(s);
     return m ? m[1] : s;
   }
@@ -295,9 +295,9 @@
   }
   function otherWords(ship, pile) {
     const name = shortName(ship);
-    if (pile.kinds.length === 1 && pile.kinds[0] === 'tank') return name + "'s parties are patching her tanks.";
-    const what = pile.kinds.length === 1 ? (PLURAL[pile.kinds[0]] || 'the damage') : 'the damage';
-    return name + "'s parties are working on " + what + '.';
+    if (pile.kinds.length === 1 && pile.kinds[0] === 'tank') return name + ' 的班组正在补她的推进剂箱。';
+    const what = pile.kinds.length === 1 ? (PLURAL[pile.kinds[0]] || '受损处') : '各处损伤';
+    return name + ' 的班组正在处理' + what + '。';
   }
 
   // ------------------------------------------------------------------ build
@@ -347,21 +347,21 @@
   function words(ship, cr, p) {
     const unmanned = cr.fit <= 0;
     switch (p.task) {
-      case 'fire': return 'Party ' + n(p) + ' on fire control' + (unmanned ? ', nobody fit to stand it.' : '.');
-      case 'sensors': return 'Party ' + n(p) + ' on the sensor watch' + (unmanned ? ', nobody fit to stand it.' : '.');
+      case 'fire': return '班组 ' + n(p) + ' 在火控' + (unmanned ? '，没人撑得住。' : '。');
+      case 'sensors': return '班组 ' + n(p) + ' 在传感器值班' + (unmanned ? '，没人撑得住。' : '。');
       case 'medical':
-        if (unmanned) return 'Party ' + n(p) + ' in the sick bay · nobody fit to work it.';
-        return 'Party ' + n(p) + ' in the sick bay · ' + (cr.wounded > 0 ? cr.wounded + ' wounded aboard.' : 'no wounded left.');
+        if (unmanned) return '班组 ' + n(p) + ' 在医务室 · 没人能干活。';
+        return '班组 ' + n(p) + ' 在医务室 · ' + (cr.wounded > 0 ? '船上有 ' + cr.wounded + ' 名伤员。' : '没有伤员了。');
       case 'repair': {
         const c = partOf(ship, p.part);
-        if (!c) return 'Party ' + n(p) + ' standing by.';
-        if (cr.strapped) return 'Party ' + n(p) + ' on ' + partPhrase(c) + ', paused at ' + gWord(cr.gNow) + '.';
-        if (unmanned) return 'Party ' + n(p) + ' on ' + partPhrase(c) + ', held. Nobody is fit to work.';
+        if (!c) return '班组 ' + n(p) + ' 待命。';
+        if (cr.strapped) return '班组 ' + n(p) + ' 在' + partPhrase(c) + '上，停在 ' + gWord(cr.gNow) + '。';
+        if (unmanned) return '班组 ' + n(p) + ' 在' + partPhrase(c) + '上，等着。没人撑得住。';
         const why = inUse(ship, c);
-        if (why) return 'Party ' + n(p) + ' on ' + partPhrase(c) + ', held. ' + why.charAt(0).toUpperCase() + why.slice(1) + '.';
-        return 'Party ' + n(p) + ' on ' + partPhrase(c) + ', ' + timeWords(p.eta) + ' to ' + pct(capOf(ship, c)) + '.';
+        if (why) return '班组 ' + n(p) + ' 在' + partPhrase(c) + '上，等着。' + why + '。';
+        return '班组 ' + n(p) + ' 在' + partPhrase(c) + '上，' + timeWords(p.eta) + '能修到 ' + pct(capOf(ship, c)) + '。';
       }
-      default: return 'Party ' + n(p) + ' standing by.';
+      default: return '班组 ' + n(p) + ' 待命。';
     }
   }
   function n(p) { return String(p.id).replace(/^p/, ''); }
@@ -438,7 +438,7 @@
   function lostWithShip(sim, ship, cr) {
     const aboard = settleLoss(cr);
     if (aboard <= 0) return null;
-    const line = aboard >= cr.total ? aboard + ' lost with the ship.' : 'The ' + aboard + ' still aboard are lost with the ship.';
+    const line = aboard >= cr.total ? aboard + ' 人随舰沉没。' : '船上剩下的 ' + aboard + ' 人随舰沉没。';
     say(sim, ship, line, 'alert');
     return line;
   }
@@ -448,9 +448,9 @@
     cr._burst = null;
     if (b.wounded <= 0 && b.lost <= 0) return;
     const bits = [];
-    if (b.wounded > 0) bits.push(b.wounded + ' wounded');
-    if (b.lost > 0) bits.push(b.lost + ' lost');
-    say(sim, ship, bits.join(' and ') + ' at ' + gWord(b.peak) + '.', b.lost > 0 ? 'alert' : 'warn');
+    if (b.wounded > 0) bits.push(b.wounded + ' 人受伤');
+    if (b.lost > 0) bits.push(b.lost + ' 人阵亡');
+    say(sim, ship, bits.join('，') + '，在 ' + gWord(b.peak) + '。', b.lost > 0 ? 'alert' : 'warn');
   }
 
   function repairStep(sim, ship, cr, dt) {
@@ -482,7 +482,7 @@
     const partId = p.part;
     const from = p.from;
     const back = from && from !== 'repair' && TASKS.indexOf(from) >= 0 ? from : station(ship, cr, p);
-    const line = 'Party ' + n(p) + ' stands down from ' + partPhrase(c) + ': ' + usePhrase(ship, c) + '. ' + backWords(back);
+    const line = '班组 ' + n(p) + ' 撤下' + partPhrase(c) + '：' + usePhrase(ship, c) + '。' + backWords(back);
     stand(ship, cr, p);
     p.task = back;
     hold(ship, partId, T.autoAssign);
@@ -500,13 +500,13 @@
       if (OD.Damage && typeof OD.Damage.aggregate === 'function') OD.Damage.aggregate(ship);
     }
     const hp = c.hp;
-    const who = 'Party ' + n(p) + ' ';
+    const who = '班组 ' + n(p) + ' ';
     if (!focused(sim, ship)) note(sim, ship, cr, c);
-    else if (!(hp > before + 1e-6)) say(sim, ship, who + 'can do no more for ' + partPhrase(c) + '.', 'info');
+    else if (!(hp > before + 1e-6)) say(sim, ship, who + '对' + partPhrase(c) + '已经无能为力。', 'info');
     else if (kindOf(c) === 'tank') {
-      say(sim, ship, wasVenting ? who + 'has ' + partPhrase(c) + ' isolated. The venting has stopped.'
-        : who + 'has ' + partPhrase(c) + ' patched. The plating is sound again.', 'good');
-    } else say(sim, ship, who + 'has ' + partPhrase(c) + ' back to ' + pct(hp) + '.', 'good');
+      say(sim, ship, wasVenting ? who + '把' + partPhrase(c) + '隔离了。泄漏已经停止。'
+        : who + '把' + partPhrase(c) + '补好了。外壳重新完好。', 'good');
+    } else say(sim, ship, who + '把' + partPhrase(c) + '修到 ' + pct(hp) + '。', 'good');
     stand(ship, cr, p);
   }
 
@@ -535,9 +535,9 @@
     if (cr._cas && t - (cr._casAt == null ? -1e9 : cr._casAt) >= T.casualtyGap) {
       const pile = cr._cas; cr._cas = null; cr._casAt = t;
       const bits = [];
-      if (pile.wounded > 0) bits.push(pile.wounded + ' wounded');
-      if (pile.lost > 0) bits.push(pile.lost + ' lost');
-      if (bits.length) say(sim, ship, bits.join(' and ') + ' ' + whereWords(pile) + '.', pile.lost > 0 ? 'alert' : 'warn');
+      if (pile.wounded > 0) bits.push(pile.wounded + ' 人受伤');
+      if (pile.lost > 0) bits.push(pile.lost + ' 人阵亡');
+      if (bits.length) say(sim, ship, bits.join('，') + whereWords(pile) + '。', pile.lost > 0 ? 'alert' : 'warn');
     }
     if (cr._other && t - (cr._otherAt == null ? -1e9 : cr._otherAt) >= T.otherGap) {
       const pile = cr._other; cr._other = null; cr._otherAt = t;
@@ -545,7 +545,7 @@
     }
     if (cr._back && t - (cr._backAt == null ? -1e9 : cr._backAt) >= T.logGap) {
       const back = cr._back; cr._back = 0; cr._backAt = t;
-      say(sim, ship, back + ' back on duty' + (cr.wounded > 0 ? ', ' + cr.wounded + ' still wounded.' : '. No wounded left.'), 'good');
+      say(sim, ship, back + ' 个班组回到岗位' + (cr.wounded > 0 ? '，还有 ' + cr.wounded + ' 名伤员。' : '。没有伤员了。'), 'good');
     }
   }
 
@@ -674,7 +674,7 @@
       }
       if (p) {
         start(ship, cr, p, c.id);
-        if (focused(sim, ship)) say(sim, ship, 'Party ' + n(p) + ' is on ' + partPhrase(c) + ": the ship's routine.", 'info');
+        if (focused(sim, ship)) say(sim, ship, '班组 ' + n(p) + ' 正在处理' + partPhrase(c) + '：舰上的例行程序。', 'info');
         else note(sim, ship, cr, c);
         sent = p;
       }
@@ -766,7 +766,7 @@
     const wounded = hurt - lost;
     cr.fit -= hurt; cr.wounded += wounded; cr.lost += lost;
     out.wounded = wounded; out.lost = lost;
-    const place = boarding ? String(where) : c ? 'on ' + partPhrase(c) : 'aboard';
+    const place = boarding ? String(where) : c ? '在' + partPhrase(c) + '上' : '在船上';
     const pile = cr._cas || (cr._cas = { wounded: 0, lost: 0, where: place, places: [] });
     pile.wounded += wounded; pile.lost += lost;
     if (pile.places.indexOf(place) < 0) { pile.places.push(place); pile.where = place; }
@@ -776,32 +776,32 @@
   // parts are the parts that were hit; a boarding piled in with part hits is simply aboard.
   function whereWords(pile) {
     const places = (pile && pile.places) || [];
-    if (places.length <= 1) return (pile && pile.where) || 'aboard';
-    return places.every((s) => /^on /.test(s)) ? 'on the parts that were hit' : 'aboard';
+    if (places.length <= 1) return (pile && pile.where) || '在船上';
+    return places.every((s) => /^在/.test(s)) ? '在被击中的部件上' : '在船上';
   }
 
   // ------------------------------------------------------------------ the board
   function crewWords(cr) {
-    const bits = [cr.fit > 0 ? cr.fit + ' fit' : 'none fit'];
-    if (cr.wounded > 0) bits.push(cr.wounded + ' wounded');
-    if (cr.lost > 0) bits.push(cr.lost + ' lost');
-    return 'Crew ' + cr.total + ': ' + bits.join(', ') + '.';
+    const bits = [cr.fit > 0 ? '可执勤 ' + cr.fit : '无人可执勤'];
+    if (cr.wounded > 0) bits.push('伤员 ' + cr.wounded);
+    if (cr.lost > 0) bits.push('阵亡 ' + cr.lost);
+    return '船员 ' + cr.total + ' 人：' + bits.join('，') + '。';
   }
   // Who is left to work comes before what the burn is doing to them: a board that reads "the crew
   // can work" over "none fit" is lying about the thing the player is about to spend. But a burn
   // that is hurting people says so first, and the thin crew follows it, so neither fact is lost.
   function gWords(cr) {
-    if (cr.fit <= 0) return 'Nobody is fit to work.';
+    if (cr.fit <= 0) return '没有人能干活。';
     const thin = cr.total > 0 && cr.fit / cr.total < T.thinShare
-      ? cr.fit + ' of ' + cr.total + ' fit: the watches run at ' + pct(fitFactor(cr)) + '.' : '';
+      ? cr.fit + ' / ' + cr.total + ' 可执勤：值班只能按 ' + pct(fitFactor(cr)) + ' 运转。' : '';
     let g = '';
-    if (cr.gNow > T.deathG) g = gWord(cr.gNow) + ': past what the couches hold. The crew is taking injuries, and some are killed.';
-    else if (cr.gNow > T.couchG) g = gWord(cr.gNow) + ': over the couch limit. The crew is taking injuries.';
-    else if (cr.strapped) g = gWord(cr.gNow) + ': the crew is strapped in and repairs are paused.';
-    if (g) return thin ? g + ' ' + thin : g;
+    if (cr.gNow > T.deathG) g = gWord(cr.gNow) + '：已经超过抗荷座椅能承受的限度。船员在受伤，还有人阵亡。';
+    else if (cr.gNow > T.couchG) g = gWord(cr.gNow) + '：超过抗荷上限。船员正在受伤。';
+    else if (cr.strapped) g = gWord(cr.gNow) + '：船员已绑进座椅，修理暂停。';
+    if (g) return thin ? g + thin : g;
     // Nothing the burn has to say: the crew is the whole sentence.
-    if (thin) return gWord(cr.gNow) + ', and ' + thin;
-    return gWord(cr.gNow) + ': the crew can work.';
+    if (thin) return gWord(cr.gNow) + '，' + thin;
+    return gWord(cr.gNow) + '：船员可以干活。';
   }
   function board(ship) {
     const cr = ship && ship.crew;
@@ -826,7 +826,7 @@
         id: c.id, name: c.name || c.id, state: row.state || stateOf(ship, c), hp: clamp(c.hp, 0, 1),
         cap, repairable: can, eta, party: p ? p.id : null, blocked: can ? inUse(ship, c) : null,
         buys: row.buys != null ? row.buys
-          : can ? 'A party brings ' + partPhrase(c) + ' to ' + pct(cap) + ', ' + timeWords(eta) + '.' : null,
+          : can ? '一个班组能把' + partPhrase(c) + '修到 ' + pct(cap) + '，需要 ' + timeWords(eta) + '。' : null,
       };
     });
     const clauses = [];
@@ -835,7 +835,7 @@
       if (p.task === 'standby') { standby++; continue; }
       clauses.push(words(ship, cr, p));
     }
-    if (standby > 0) clauses.push(standby + ' standing by.');
+    if (standby > 0) clauses.push(standby + ' 个班组待命。');
     return {
       crew: { total: cr.total, fit: cr.fit, wounded: cr.wounded, lost: cr.lost, xp: cr.xp, gNow: cr.gNow, gMode: cr.gMode, strapped: cr.strapped, overCouch: cr.overCouch },
       parties, parts,
@@ -869,19 +869,19 @@
       if (!c || busy(cr, partId, p) || !repairable(ship, partId)) return null;
       const was = p.task; // what the ship gives up for this repair, said in the same breath
       start(ship, cr, p, partId);
-      let line = 'Party ' + n(p) + ' to ' + partPhrase(c) + ': ' + timeWords(p.eta) + ' to ' + pct(capOf(ship, c)) + '.';
+      let line = '班组 ' + n(p) + ' 去修' + partPhrase(c) + '：' + timeWords(p.eta) + '，能修到 ' + pct(capOf(ship, c)) + '。';
       const why = inUse(ship, c);
-      if (why) line += ' Held: ' + why + '.';
+      if (why) line += '暂停：' + why + '。';
       // The cap and the watch are the same number often enough that they cannot share a sentence.
-      if (was === 'fire') line += ' Fire control drops to ' + pct(T.noParty) + ' of its rate until she is back.';
-      else if (was === 'sensors') line += ' The sensor watch drops to ' + pct(T.noParty) + ' of its rate until she is back.';
+      if (was === 'fire') line += '火控在她回来之前降到 ' + pct(T.noParty) + ' 的速率。';
+      else if (was === 'sensors') line += '传感器值班在她回来之前降到 ' + pct(T.noParty) + ' 的速率。';
       return line;
     }
     p.part = null; p.progress = 0; p.eta = 0; p.task = task; p.since = cr._now || 0;
-    if (task === 'fire') return 'Party ' + n(p) + ' to fire control.';
-    if (task === 'sensors') return 'Party ' + n(p) + ' to the sensor watch.';
-    if (task === 'medical') return 'Party ' + n(p) + ' to the sick bay: one wounded back every ' + T.medic + ' s.';
-    return 'Party ' + n(p) + ' stood down.';
+    if (task === 'fire') return '班组 ' + n(p) + ' 去火控。';
+    if (task === 'sensors') return '班组 ' + n(p) + ' 去传感器值班。';
+    if (task === 'medical') return '班组 ' + n(p) + ' 去医务室：每 ' + T.medic + ' 秒让一名伤员恢复执勤。';
+    return '班组 ' + n(p) + ' 已撤下。';
   }
   function release(ship, partyId) {
     const cr = ship && ship.crew;
@@ -889,17 +889,17 @@
     const p = partyOf(cr, partyId);
     if (!p) return null;
     stand(ship, cr, p);
-    if (p.task === 'fire') return 'Party ' + n(p) + ' back to fire control.';
-    if (p.task === 'sensors') return 'Party ' + n(p) + ' back to the sensor watch.';
-    return 'Party ' + n(p) + ' stood down.';
+    if (p.task === 'fire') return '班组 ' + n(p) + ' 回到火控。';
+    if (p.task === 'sensors') return '班组 ' + n(p) + ' 回到传感器值班。';
+    return '班组 ' + n(p) + ' 已撤下。';
   }
   function setG(ship, mode) {
     const cr = ship && ship.crew;
     if (!cr || ['work', 'couches', 'max'].indexOf(mode) < 0) return null;
     cr.gMode = mode;
-    if (mode === 'work') return 'Acceleration limit 1.2 g. The crew keeps working through the burn.';
-    if (mode === 'couches') return 'Acceleration limit 3 g. The crew straps in above 1.2 g and repairs pause.';
-    return 'No acceleration limit. Above 3 g the crew takes injuries, and above 6 g some are killed.';
+    if (mode === 'work') return '过载上限 1.2 g。船员在整个点火过程中都能干活。';
+    if (mode === 'couches') return '过载上限 3 g。超过 1.2 g 船员绑进座椅，修理暂停。';
+    return '不设过载上限。超过 3 g 船员会受伤，超过 6 g 会有人阵亡。';
   }
 
   // ------------------------------------------------------------------ campaign
@@ -943,13 +943,13 @@
 
   // ------------------------------------------------------------------ teaching
   const TEACH = {
-    parties: 'Your crew works in parties. Party 1 has fire control, party 2 the sensor watch, the rest stand by. Send one to a hurt part from the damage-control board, or press C.',
-    workLimit: 'Above 1.2 g the parties strap into the couches. Repairs hold where they are until the burn eases.',
-    couchLimit: 'Above 3 g the couches are all that hold the crew. Fire control and the sensor watch run at 85 %, and about 1 in 12 of the crew are hurt every minute for every g over, twice that above 5 g. Above 6 g some of them are killed.',
-    juryRig: 'A repair in vacuum is a jury-rig. A wrecked drive comes back to 30 % and no further. A holed tank is isolated, and the propellant that vented is gone.',
-    inUse: 'A party cannot work a part that is running. The drive has to be cold, with the throttle at 0. A radiator panel means the radiators pulled in for the whole shift, and no cooling at all while they are in.',
-    medical: 'A party in the sick bay brings one wounded back to duty every 45 s. Nobody works the sick bay above 1.2 g. With nobody there the wounded stay down for the rest of the fight.',
-    experience: 'A crew that brings the hull home gains a point of experience, up to 3. Each point repairs 15 % faster and steadies fire control and the sensor watch.',
+    parties: '船员按班组行动。1 号班组管火控，2 号管传感器值班，其余待命。在损管面板上派一组去受损部件，或者按 C。',
+    workLimit: '超过 1.2 g，班组要绑进抗荷座椅，修理停在原地，直到点火放缓。',
+    couchLimit: '超过 3 g，全靠抗荷座椅把人撑住。火控和传感器值班只能按 85 % 运转；每超出 1 g，每分钟大约 12 人里有 1 人受伤，超过 5 g 再翻一倍。超过 6 g 会有人阵亡。',
+    juryRig: '真空里的修理只能是应急抢修。报废的推进器恢复到 30 %，不能再高。被打穿的推进剂箱会被隔离，漏掉的推进剂就没了。',
+    inUse: '正在运转的部件不能修。推进器必须先冷却，推力归零。散热板则意味着整班都要收着，收着的时候一点散热都没有。',
+    medical: '医务室里有班组时，每 45 秒能让一名伤员恢复执勤。超过 1.2 g 就没人能在医务室工作。没人守着，伤员剩下的战斗里都起不来。',
+    experience: '把舰体带回港的船员得 1 点经验，最多 3 点。每点让修理快 15 %，也让火控和传感器值班更稳。',
   };
 
   // The whole jury-rig lesson is three sentences, and two of them are about a part the player is
@@ -962,19 +962,19 @@
     const hp = clamp(c.hp, 0, 1);
     const cap = capOf(ship, c);
     if (kindOf(c) === 'tank') {
-      if (venting(ship, c)) return 'A party valves ' + name + ' out of the feed: the venting stops, the plating holds at ' + pct(cap) + ', and what went out is gone.';
-      if (c.isolated) return up(name) + ' is valved out of the feed already. There is no hole left to shut.';
-      if (cap > hp + 1e-6) return 'A dent in sound plating is beaten out in vacuum: ' + name + ' comes back to ' + pct(cap) + '.';
-      return up(name) + ' is as sound as a party can make it: ' + pct(cap) + '.';
+      if (venting(ship, c)) return '班组把' + name + '从管路里关掉：泄漏停止，外壳保持在 ' + pct(cap) + '，漏掉的就再也回不来了。';
+      if (c.isolated) return up(name) + '已经从管路里关掉了，没有破口要补。';
+      if (cap > hp + 1e-6) return '真空里完好的外壳上那种凹陷可以敲平：' + name + '能修到 ' + pct(cap) + '。';
+      return up(name) + '已经是班组能做到的最好状态：' + pct(cap) + '。';
     }
     if (hp <= 0) {
-      if (!(cap > 0)) return 'A wrecked ' + bare(name) + ' is gone. No jury-rig brings it back in a fight.';
+      if (!(cap > 0)) return bare(name) + '已经报废没了。战斗中没有任何应急抢修能把它救回来。';
       const second = capOf(ship, Object.assign({}, c, { hp: cap }));
-      if (second > cap + 1e-6) return 'A wrecked ' + bare(name) + ' reaches ' + pct(cap) + ' in one shift and ' + pct(second) + ' in a second.';
-      return 'A wrecked ' + bare(name) + ' reaches ' + pct(cap) + ' and no further.';
+      if (second > cap + 1e-6) return '报废的' + bare(name) + '一个班次能修到 ' + pct(cap) + '，两个班次能到 ' + pct(second) + '。';
+      return '报废的' + bare(name) + '只能修到 ' + pct(cap) + '，再高不行了。';
     }
-    if (!(cap > hp + 1e-6)) return 'A repair in vacuum is a jury-rig, and ' + name + ' is at the cap already: ' + pct(cap) + '.';
-    return 'A repair in vacuum is a jury-rig: ' + name + ' comes back to ' + pct(cap) + ', never further.';
+    if (!(cap > hp + 1e-6)) return '真空里的修理就是应急抢修，而' + name + '已经到顶了：' + pct(cap) + '。';
+    return '真空里的修理就是应急抢修：' + name + '能修到 ' + pct(cap) + '，不能再高。';
   }
   function bare(phrase) { return String(phrase).replace(/^the /, ''); }
   function up(phrase) { const s = String(phrase); return s.charAt(0).toUpperCase() + s.slice(1); }

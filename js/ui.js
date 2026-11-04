@@ -16,73 +16,75 @@
   let logCount = 0;
 
   // ------------------------------------------------------------------ tooltips
+  const SPEAKER_ZH = { Navigation: '导航', 'Damage control': '损管', Gunnery: '炮术', Tactical: '战术', Command: '指挥部', Engineering: '轮机', Marines: '陆战队', Sensors: '传感器', Autopilot: '自动驾驶', Bridge: '舰桥', Yard: '船坞', 'Valhalla Control': 'Valhalla 控制中心', 'Galileo Regio': 'Galileo Regio (伽利略区)', 'Conamara Station': 'Conamara Station (科纳马拉站)' };
+  const speakerZh = (s) => SPEAKER_ZH[s] || s || '';
+
   const TIPS = {
-    clock: { title: 'Mission clock', body: 'Time since the fight began. Closing 3 000 km at 1.3 g takes about 16 minutes, so most orders run for tens of minutes.' },
-    warp: { title: 'Time warp', body: '1× is real time. 4×, 16× and 64× run the long coasts faster without changing the physics step, so nothing is skipped. A launch or a hit pulls time back to 1×.' },
-    fit: { title: 'Fit all', body: 'Zoom out until every ship is on screen. Home does the same. Scroll to zoom, drag to pan, F to follow the selected ship.' },
-    physics: { title: 'Physics panel', body: 'The numbers behind the selected ship, kept live: delta-v, transfer time and cost, heat, armour facing and orbit. P opens it.' },
-    navigator: { title: 'Navigator', body: 'What the selected ship is doing now, and what it does next. The same look-ahead draws the plotted path on the map.' },
-    plan: { title: 'Plotted path', body: 'Bright line: burning. Dashed: turning or coasting. Blue-grey: braking tail-first. The first ring is the flip, the second the arrival.' },
-    detail: { title: 'Essentials or Full', body: 'Essentials shows what you need to fly and fight. Full adds mass, speed, heading, altitude, the systems bars and the gunnery rows. D switches between them.' },
-    tip: { title: 'Tip', body: 'A suggestion for what to do next. It clears once you have done it.' },
-    next: { title: 'Next event', body: 'The next thing the selected ship will do: finish a turn, flip, start braking, arrive. Time warp drops to 1× just before it so you can watch.' },
-    skip: { title: 'Skip ahead', body: 'Run time at 64× until 20 s before the next event, then drop back to 1×.' },
-    stopping: { title: 'Stopping distance', body: 'How far the ship travels while the drive cancels the closing speed, at d = v² / 2a. More than the range means you overshoot.', formula: 'd = v² / (2·a)' },
-    vitals: { title: 'Vitals', body: 'Delta-v left, the range to the target, and how fast that range is closing. These three decide most orders.' },
+    clock: { title: '任务时钟', body: '从战斗开始算起的时间。以 1.3 g 接近 3 000 公里大约要 16 分钟，所以多数指令会跑上几十分钟。' },
+    warp: { title: '时间加速', body: '1× 是实时。4×、16×、64× 让漫长的滑行更快，物理步长不变，什么都不会被跳过。发射或中弹会把时间拉回 1×。' },
+    fit: { title: '全景适配', body: '缩放到所有舰船都在画面内。Home 键同效。滚轮缩放，拖动平移，F 跟随选中的舰。' },
+    physics: { title: '物理面板', body: '选中舰背后的数字，实时更新：速度增量、转移时间与代价、热量、受弹装甲面、轨道。按 P 打开。' },
+    navigator: { title: '导航官', body: '选中舰现在在做什么，接下来要做什么。同一套预测也画成地图上的轨迹。' },
+    plan: { title: '规划路径', body: '亮线：正在点火。虚线：转向或滑行。蓝灰：掉头反推。第一个圈是掉头点，第二个是到达点。' },
+    detail: { title: '精简或完整', body: '精简只显示开船和打仗要用的。完整再加质量、速度、航向、高度、系统条和炮术读数。按 D 切换。' },
+    tip: { title: '提示', body: '下一步可以做什么的建议。做完就消失。' },
+    next: { title: '下一事件', body: '选中舰下一件要做的事：转完向、掉头、开始反推、到达。时间会在它之前自动降回 1×，让你看得见。' },
+    skip: { title: '快进', body: '以 64× 跑，直到下一事件前 20 秒，再降回 1×。' },
+    stopping: { title: '停止距离', body: '推进器抵消接近速度的这段距离里，舰还会走多远，按 d = v² / 2a 算。超过当前距离就会冲过头。', formula: 'd = v² / (2·a)' },
+    vitals: { title: '关键读数', body: '剩余速度增量、到目标的距离、距离缩小的速度。这三项决定大多数指令。' },
     dv: (c) => (c.ship && !hasDrive(c.ship)
-      ? { title: 'Delta-v remaining', body: 'She has no drive and no propellant. No burn can change her orbit.' }
-      : { title: 'Delta-v remaining', body: 'The speed change the propellant aboard can still buy. Every burn spends it, and only a depot puts it back.', formula: c.ship ? 'Δv = vₑ · ln(m₀ / m₁)\n   = ' + U.fmt.speed(c.ship.exhaustVelocity) + ' · ln(' + U.fmt.mass(c.ship.mass()) + ' / ' + U.fmt.mass(c.ship.dryMass) + ')\n   = ' + U.fmt.dv(c.ship.deltaV()) : '' }),
-    dvgauge: (c) => ({ title: 'Delta-v budget', body: 'The bar is the delta-v left against a full load. The hatched part is what the current order will spend.', formula: c.plan && c.plan.active ? 'this order: ' + U.fmt.dv(c.plan.dv) + ' of ' + U.fmt.dv(c.ship.deltaV()) + (c.plan.feasible ? '' : '  (not enough)') : '' }),
-    accel: (c) => ({ title: 'Acceleration', body: 'Thrust divided by current mass. It rises as propellant burns off, and falls when the drive is damaged or the heat sink is full. The g limit you set for the crew caps it as well.', formula: c.ship ? accelFormula(c.ship) : '' }),
-    mass: { title: 'Mass', body: 'Current mass, with the propellant left in brackets. A corvette leaves port about 60 % propellant by mass.' },
-    speed: { title: 'Speed', body: 'Speed relative to the body you are orbiting. A ship parked in orbit is still doing kilometres per second.' },
-    heading: { title: 'Heading', body: 'Where the nose points. Thrust leaves through the tail, so the autopilot turns the ship before every burn. A corvette takes about 21 s to swing 180°, a cruiser longer.' },
-    orbit: { title: 'Altitude', body: 'Height above the surface at the low and high points of the current coast. A low point below the surface means the coast ends on the ground. On an escape path it is the height now.' },
-    target: { title: 'Target', body: 'The ship your orders and readouts point at. Click a ship on the map or in the fleet list to set it.' },
-    range: { title: 'Range', body: 'Straight-line distance to the target. Below a firing solution this is the estimate from our track, shown with its error.' },
-    closing: { title: 'Closing speed', body: 'How fast the range is shrinking. Negative means the target is pulling away. Slugs and interceptors are aimed off this number. Beams are not.' },
-    rendezvous: (c) => ({ title: 'Transfer estimate', body: 'Time and delta-v for the transfer, from a look-ahead that flies the order with the real autopilot. The ideal burn-flip-burn below is the least it could cost.', formula: 'ideal: time = 2·√(d / a) + flip,  Δv = 2·√(d · a)' + (c.est ? '\n     = ' + U.fmt.time(c.est.time) + ', ' + U.fmt.dv(c.est.dv) : '') }),
-    arrive: { title: 'Arrival', body: 'When the current order reaches its goal: alongside for an intercept, inside the band for keep range. It counts down as the ship flies the plan.' },
-    facing: { title: 'Facing', body: 'Which armour facet the target sees. The nose is thickest and the tail thinnest, so braking toward an enemy shows them the tail.' },
-    order_intercept: { title: 'Intercept', body: 'Close with the target and arrive alongside at 2 km with the speed matched. The button shows the time and the delta-v it will cost.' },
-    order_keeprange: { title: 'Keep range', body: 'Hold the range set below and match the target speed there. Inside the band the ship coasts nose-on and spends nothing.' },
-    order_matchv: { title: 'Match velocity', body: 'Burn until your velocity matches the target, wherever you are. The range then stops changing.' },
-    order_hold: { title: 'Hold', body: 'No burns. Coast on the current trajectory with the nose toward the target.' },
-    order_retreat: { title: 'Retreat', body: 'Full burn straight away from the nearest hostile. It points the tail at them, and the tail carries the thinnest armour and the drive.' },
-    order_manual: { title: 'Manual burn', body: 'Set the heading and the throttle yourself. The autopilot only handles the turn.' },
-    jink: { title: 'Jink', body: 'Short sideways burns every 20 s. A slug takes about 60 s to cross 250 km, and a 2 s nudge at 10 m/s² moves you 1.2 km in that time, so it misses. Each nudge costs delta-v.', formula: 'miss ≈ a · t_burst · t_flight  (a 2 s nudge at 10 m/s² over a 60 s flight: about 1.2 km)' },
-    vmax: { title: 'Cruise cap', body: 'Fastest lets the transfer run up to any speed. A cap holds the cruise at 3 km/s or 1.5 km/s, which arrives later and spends far less delta-v.' },
-    heat: (c) => ({ title: 'Heat sink', body: 'The reactor, the drive and every beam shot put heat into the sink, and the radiators are the only way out. A full sink holds the drive to a quarter and stops every mount, point defence included, until it drains.', formula: c.ship ? 'in  ' + U.fmt.power(c.ship.idleHeat + c.ship.driveHeat * heatFrac(c.ship) + (c.ship.lastExtraHeat || 0)) + '\nout ' + U.fmt.power(c.ship.radiatorPower()) + '\nsink ' + U.fmt.energy(c.ship.heat) + ' / ' + U.fmt.energy(c.ship.sinkCapacity) : '' }),
-    heatfc: { title: 'Heat forecast', body: 'When the sink fills or empties at the current heat in and heat out. Extending the radiators or cutting the throttle pushes that back.' },
-    radiators: (c) => ({ title: 'Radiators', body: 'Extended, the radiators shed heat and the sink drains. Stowed, they shed nothing and the sink fills. They are the easiest part of the ship to hit, and take ' + ((c.ship && c.ship.radiatorDeployTime) || 25) + ' s to extend or stow.', formula: c.ship ? 'P = 2·A·ε·σ·T⁴ = 2 · ' + c.ship.radiatorArea + ' m² · 0.9 · σ · (' + c.ship.radiatorTemp + ' K)⁴ = ' + U.fmt.power(P.radiatorPower(c.ship.radiatorArea, c.ship.radiatorTemp)) : '' }),
-    rad_auto: { title: 'Auto radiators', body: 'Extend above 70 % of the sink. Stow below 30 % with a hostile inside 600 km, and whenever their beams are on the radiators.' },
-    hull: { title: 'Hull', body: 'Structural integrity. At zero the ship breaks up.' },
-    hullview: { title: 'Hull view', body: 'Watch this ship live: the radiators, the mounts, the plume and the damage are what she is doing right now, from the side, from above or three-quarter. V opens it, and so does this portrait. Zooming in on the map shows the same.' },
-    sys_drive: { title: 'Drive', body: 'Thrust scales with the drive. The turn rate falls half as far: the attitude thrusters carry the rest, so a drive at 20 % turns at 60 %.' },
-    sys_radiators: { title: 'Radiator integrity', body: 'Damaged radiator area sheds less heat.' },
-    sys_sensors: { title: 'Sensors', body: 'Tracking quality. Damaged sensors widen every aim.' },
-    sys_weapons: { title: 'Weapons', body: 'Mount integrity, shared across the ship.' },
-    boarding: () => { const b = (OD.Sim && OD.Sim.BOARD) || { range: 3000, speed: 25, time: 90, odds: 2 }; return { title: 'Boarding', body: 'Hold within ' + U.fmt.dist(b.range) + ' of a hostile at under ' + b.speed + ' m/s relative speed and your party crosses: ' + U.fmt.time(b.time) + ' against a crew the size of yours, longer against a bigger one. A crew more than ' + (b.odds === 2 ? 'twice' : b.odds + ' times') + ' yours throws the party back.' }; },
-    follow: { title: 'Follow', body: 'Keep the camera centred on this ship. F does the same.' },
-    weaponsfree: { title: 'Weapons free', body: 'Fire at the target with every mount in arc. Switch it off to hold fire, for instance to close for boarding or to keep the sink for the drive. Your other ships run their own bays. This one launches interceptors on your order (L or A).' },
-    threats: { title: 'Threats', body: 'Interceptors and slugs inbound on this ship, with the time until they arrive and whether point defence can stop them first. The map draws each one with its countdown, and warp drops to 1× on every new launch.' },
-    firecontrol: { title: 'Fire control', body: 'Beam mode, aim point and interceptor salvos for this ship. Each setting trades damage on the target against heat or interceptors spent.' },
-    firemode: { title: 'Beam mode', body: 'Full fires every beam and fills the sink, then forces a cool-down with the drive at 25 %. Sustained holds the beams to what the radiators can shed, so they fire without a time limit but weaker. Hold keeps the beams cold, and the coilguns and bays still fire. B cycles.' },
-    aim: { title: 'Aim point', body: 'Hull is the biggest target, so most of a shot lands. Radiators count only while theirs are out, and the drive only from the tail. Aiming at mounts kills their beams one at a time. A smaller part takes a smaller share of each shot. T cycles.' },
-    salvo: { title: 'Salvo', body: 'Interceptors fly on their own delta-v and only reach the target inside the launch reach ring. Their point defence kills a few a minute, so a salvo larger than it can stop before arrival gets the rest through. Bays never reload.' },
-    pd: { title: 'Point defence', body: 'Short-range beams that shoot at inbound interceptors inside the point-defence ring. Each mount kills at a fixed rate and draws on the same heat sink, so a big salvo or a full sink gets through.' },
-    // v13: the board's three tooltips carry OD.Crew.TEACH, so the written lessons reach a player. Without the
-    // crew module each falls back to the v13 first-cut text.
-    damage: () => ({ title: 'Damage control', body: teach('juryRig', 'A party sent to a hurt part brings it to a jury-rig cap, never full: a wrecked drive to 30 %, a holed tank isolated.') + ' Parties come off fire control or the sensor watch, so each repair costs something. ' + teach('inUse', 'A party cannot work a part that is running: the drive has to be cold and the radiators in.') }),
-    crew: () => ({ title: 'Crew', body: teach('parties', 'Parties are the hands you deploy: fire control, the sensor watch, a repair, the sick bay. Send one to a hurt part from the damage-control board, or press C.') + ' ' + teach('experience', 'A crew that brings the hull home gains a point of experience, up to 3.') }),
-    gmode: () => ({ title: 'G limit', body: 'The acceleration the autopilot burns to: Work 1.2 g, Couches 3 g, or No limit. ' + teach('workLimit', 'Above 1.2 g the parties strap into the couches and repairs hold where they are.') + ' ' + teach('couchLimit', 'Above 3 g about 1 in 12 of the crew are hurt every minute for every g over, twice that above 5 g.') }),
-    fleet_dv: { title: 'Bars', body: 'Delta-v left · heat sink headroom · hull.' },
-    escape: { title: 'Escape line', body: 'Past this ring the target costs more delta-v than this ship has left.' },
-    signature: (c) => ({ title: 'Signature', body: 'How loud this ship is to enemy sensors right now. A cold coasting hull radiates about 1 MW. Hot radiators are tens of megawatts, and a lit drive is gigawatts. The range they get a firing solution from grows with the square root of that power.', formula: c.sig ? 'P = plume ' + U.fmt.power(c.sig.plume) + ' + radiators ' + U.fmt.power(c.sig.radiators) + ' + hull ' + U.fmt.power(c.sig.hull) + ' = ' + U.fmt.power(c.sig.total) + (c.sf && c.sf.solution > 0 ? '\nsolution from ' + km(c.sf.solution) + (c.sf.by ? ' (' + c.sf.by + ')' : '') : '') : '' }),
-    active: { title: 'Active sensor', body: 'Pulse and read the echo: a firing solution on everything inside its reach within seconds, however cold they are. Every ship out there gets the same solution on us, and the pulse heats the sink. S toggles it.' },
-    track: { title: 'Track quality', body: 'What our sensors have on the target. A contact is a bearing and a rough range. A track adds the class and a fuzzy position. A solution is good enough to fire on, so the beams and coilguns open up. Closing the range raises it, and so does catching them burning.' },
-    solution_in: { title: 'Solution in', body: 'How long until our track is good enough to fire on, at the current closing rate. "Not at this range" means we have to close, wait for them to burn, or go active.' },
-    decision: { title: 'Decision', body: 'A choice the fight needs from you. Each key sets an ordinary order or fire-control setting, and the lit one is what the navigator advises. Later leaves the question open and time keeps running. A repair, sick-bay or burn question counts down to the moment the ship\'s routine settles it.' },
+      ? { title: '剩余速度增量', body: '她没有推进器，也没有推进剂。任何点火都改不了她的轨道。' }
+      : { title: '剩余速度增量', body: '船上推进剂还能买到的速度变化。每次点火都要花，只有补给站能补回来。', formula: c.ship ? 'Δv = vₑ · ln(m₀ / m₁)\n   = ' + U.fmt.speed(c.ship.exhaustVelocity) + ' · ln(' + U.fmt.mass(c.ship.mass()) + ' / ' + U.fmt.mass(c.ship.dryMass) + ')\n   = ' + U.fmt.dv(c.ship.deltaV()) : '' }),
+    dvgauge: (c) => ({ title: '速度增量预算', body: '这条是剩余速度增量占满箱的比例。斜纹部分是本条指令将要花掉的。', formula: c.plan && c.plan.active ? '本条指令：' + U.fmt.dv(c.plan.dv) + ' / ' + U.fmt.dv(c.ship.deltaV()) + (c.plan.feasible ? '' : '（不够）') : '' }),
+    accel: (c) => ({ title: '加速度', body: '推力除以当前质量。推进剂烧掉它会上升，推进器受损或热沉满了它会下降。你给船员设的过载上限也会压住它。', formula: c.ship ? accelFormula(c.ship) : '' }),
+    mass: { title: '质量', body: '当前质量，括号里是剩余推进剂。护卫艇出港时推进剂约占质量的 60 %。' },
+    speed: { title: '速度', body: '相对所绕天体的速度。停在轨道上的船也有每秒好几公里。' },
+    heading: { title: '航向', body: '舰首指向。推力从舰尾喷出，所以自动驾驶每次点火前都要先转向。护卫艇转 180° 约 21 秒，巡洋舰更久。' },
+    orbit: { title: '高度', body: '当前滑行段最低点和最高点离表面的高度。最低点低于表面，这段滑行就会撞地。在逃逸轨道上显示的是当前高度。' },
+    target: { title: '目标', body: '指令和读数指向的舰。点地图或舰队列表里的舰来指定。' },
+    range: { title: '距离', body: '到目标的直线距离。有了射击解算之后，这是按我方跟踪估算的，会带误差。' },
+    closing: { title: '接近速度', body: '距离缩小的速度。负数表示目标在拉开。弹丸和拦截弹按这个数提前量，光束不用。' },
+    rendezvous: (c) => ({ title: '转移估算', body: '按真实自动驾驶飞一遍这条件令，得出所需时间和速度增量。下面理想的“点火—掉头—反推”是理论下限。', formula: '理想：时间 = 2·√(d / a) + 掉头，  Δv = 2·√(d · a)' + (c.est ? '\n     = ' + U.fmt.time(c.est.time) + '，' + U.fmt.dv(c.est.dv) : '') }),
+    arrive: { title: '到达', body: '当前指令什么时候到位：拦截是贴到旁边，保持距离是进入允许的误差带。舰按计划飞，时间跟着倒数。' },
+    facing: { title: '受弹面', body: '目标看到的是哪一面装甲。舰首最厚，舰尾最薄，所以朝着敌人反推，就是把舰尾亮给他。' },
+    order_intercept: { title: '拦截', body: '接近目标，最后在 2 公里处并排、速度匹配。按钮上会显示要花的时间和速度增量。' },
+    order_keeprange: { title: '保持距离', body: '维持下面设定的距离，并在那里匹配目标速度。进入允许误差带后，舰首朝前滑行，不再花推进剂。' },
+    order_matchv: { title: '速度匹配', body: '点火到自己的速度与目标一致，不管在什么位置。之后距离就不再变化。' },
+    order_hold: { title: '待命', body: '不点火。沿当前轨迹滑行，舰首朝向目标。' },
+    order_retreat: { title: '撤退', body: '全力背离最近的敌舰。这会把舰尾对着他，而舰尾的装甲最薄，推进器也在那里。' },
+    order_manual: { title: '手动点火', body: '自己设航向和推力。自动驾驶只负责转向。' },
+    jink: { title: '规避机动', body: '每 20 秒横向短点火。弹丸飞 250 公里大约要 60 秒，10 m/s² 推 2 秒能横移 1.2 公里，刚好躲开。每次都要花速度增量。', formula: '偏移 ≈ a · t_burst · t_flight（10 m/s² 推 2 秒、飞 60 秒：约 1.2 公里）' },
+    vmax: { title: '巡航上限', body: '最快：转移过程中不设上限。设上限会把巡航压在 3 公里/秒或 1.5 公里/秒，到得更晚，但省下大量速度增量。' },
+    heat: (c) => ({ title: '热沉', body: '反应堆、推进器和每一次光束射击都会把热打进热沉，只有散热板能把热排出去。热沉满了，推进器只能出四分之一的力，所有炮位停火——包括点防御——直到它排空。', formula: c.ship ? '进  ' + U.fmt.power(c.ship.idleHeat + c.ship.driveHeat * heatFrac(c.ship) + (c.ship.lastExtraHeat || 0)) + '\n出 ' + U.fmt.power(c.ship.radiatorPower()) + '\n存量 ' + U.fmt.energy(c.ship.heat) + ' / ' + U.fmt.energy(c.ship.sinkCapacity) : '' }),
+    heatfc: { title: '热量预测', body: '按当前的产热和排热，热沉什么时候会满或排空。展开散热板或收推力都能把它往后推。' },
+    radiators: (c) => ({ title: '散热板', body: '展开时排热，热沉下降。收起时不排热，热沉上升。它们是全舰最容易被打中的部件，展开或收起要 ' + ((c.ship && c.ship.radiatorDeployTime) || 25) + ' 秒。', formula: c.ship ? 'P = 2·A·ε·σ·T⁴ = 2 · ' + c.ship.radiatorArea + ' m² · 0.9 · σ · (' + c.ship.radiatorTemp + ' K)⁴ = ' + U.fmt.power(P.radiatorPower(c.ship.radiatorArea, c.ship.radiatorTemp)) : '' }),
+    rad_auto: { title: '自动散热', body: '热沉超过 70 % 就展开。低于 30 % 且 600 公里内有敌舰时收起；对方光束打到散热板上时也收起。' },
+    hull: { title: '舰体', body: '结构完整度。归零就解体。' },
+    hullview: { title: '舰体视图', body: '实时看这艘舰：散热板、炮位、尾焰和损伤都是它此刻的状态，可以侧看、俯看或斜看。按 V 打开，点这个缩略图也行。地图放大看到的是同一个东西。' },
+    sys_drive: { title: '主推进器', body: '推力随推进器状态下降。转向速度只降一半：姿控推进器承担其余部分，所以推进器剩 20 % 时还能转到 60 %。' },
+    sys_radiators: { title: '散热板完整度', body: '散热板被打坏，能排掉的热就变少。' },
+    sys_sensors: { title: '传感器', body: '跟踪质量。传感器受损，每一次瞄准的误差都会变大。' },
+    sys_weapons: { title: '武器', body: '炮位完整度，全舰共用。' },
+    boarding: () => { const b = (OD.Sim && OD.Sim.BOARD) || { range: 3000, speed: 25, time: 90, odds: 2 }; return { title: '接舷', body: '把船保持在敌舰 ' + U.fmt.dist(b.range) + ' 内、相对速度低于 ' + b.speed + ' 米/秒，你的班组就能过去：对方船员和你差不多时约 ' + U.fmt.time(b.time) + '，对方更多就更久。船员人数超过你 ' + (b.odds === 2 ? '一倍' : b.odds + ' 倍') + '，班组会被打回来。' }; },
+    follow: { title: '跟随', body: '镜头锁在这艘舰上。按 F 同效。' },
+    weaponsfree: { title: '自由开火', body: '用射界内的所有炮位打目标。关掉就是按住不打，比如为了靠近接舷，或者把热沉留给推进器。其他舰自己管自己的发射舱。这一艘按你的命令发射拦截弹（L 或 A）。' },
+    threats: { title: '威胁', body: '正朝这艘舰来的拦截弹和弹丸，带到达倒计时，以及点防御来不来得及拦。地图上每一发都带倒计时，每次新发射都会把时间降回 1×。' },
+    firecontrol: { title: '火控', body: '这艘舰的光束模式、瞄准部位和拦截弹齐射。每一项都是拿对目标的伤害去换热量或拦截弹。' },
+    firemode: { title: '光束模式', body: '全力：所有光束开火，灌满热沉，然后被迫冷却，推进器只剩 25 %。持续：把光束压到散热板排得掉的程度，没有时间限制但更弱。待机：光束不出力，线圈炮和发射舱照打。按 B 循环。' },
+    aim: { title: '瞄准部位', body: '舰体面积最大，多数射击都会落在上面。散热板只在对方展开时算数，推进器只能从舰尾打。瞄准炮位可以一门一门打掉对方的光束。部位越小，每发分到的伤害越少。按 T 循环。' },
+    salvo: { title: '齐射', body: '拦截弹靠自己那点速度增量飞，只有进入发射射程圈内才够得着目标。对方的点防御每分钟能打掉几枚，所以一次放出的数量超过它拦得掉的，剩下的就能穿过去。发射舱不会补充。' },
+    pd: { title: '点防御', body: '近程光束，打进入点防御圈内的来袭拦截弹。每个炮位有固定击杀率，而且和主武器共用同一个热沉，所以大齐射或满热沉都能突防。' },
+    // v13：这三条提示直接引用 OD.Crew.TEACH，玩家读到的就是写下来的那套讲法；没有船员模块时退回这里的初版文字。
+    damage: () => ({ title: '损管', body: teach('juryRig', '派到受损部件的班组只能把它修到应急上限，永远修不满：报废的推进器修到 30 %，破口的水箱先隔离。') + ' 班组要从火控或传感器值班里抽，所以每次修理都有代价。' + teach('inUse', '正在运转的部件没法修：推进器要先冷却，散热板要先收起。') }),
+    crew: () => ({ title: '船员', body: teach('parties', '班组是你能派出去的人手：火控、传感器值班、修理、医务室。在损管面板上派一组去受损部件，或者按 C。') + ' ' + teach('experience', '把舰体带回港的船员会涨一点经验，最多 3 点。') }),
+    gmode: () => ({ title: '过载限制', body: '自动驾驶点火时压到的加速度：工作 1.2 g、抗荷 3 g、不限制。' + teach('workLimit', '超过 1.2 g，班组要绑进抗荷座椅，修理停在原地。') + ' ' + teach('couchLimit', '超过 3 g，每多 1 g 每分钟大约 12 个人里伤 1 个，超过 5 g 翻倍。') }),
+    fleet_dv: { title: '状态条', body: '剩余速度增量 · 热沉余量 · 舰体。' },
+    escape: { title: '逃逸线', body: '越过这个圈，追目标要花的速度增量就超过这艘舰剩下的了。' },
+    signature: (c) => ({ title: '信号特征', body: '这艘舰此刻在敌方传感器里有多响。冷着滑行的舰体大约辐射 1 兆瓦，散热板全开是几十兆瓦，点火是吉瓦级。对方能拿到射击解算的距离，随这个功率的平方根增长。', formula: c.sig ? 'P = 尾焰 ' + U.fmt.power(c.sig.plume) + ' + 散热板 ' + U.fmt.power(c.sig.radiators) + ' + 舰体 ' + U.fmt.power(c.sig.hull) + ' = ' + U.fmt.power(c.sig.total) + (c.sf && c.sf.solution > 0 ? '\n解算距离 ' + km(c.sf.solution) + (c.sf.by ? '（' + c.sf.by + '）' : '') : '') : '' }),
+    active: { title: '主动传感器', body: '打一发脉冲读回波：几秒内就能对射程内所有目标拿到射击解算，不管对方多冷。同时外面每一艘船也拿到了对等的解算，脉冲还会给热沉加热。按 S 开关。' },
+    track: { title: '跟踪质量', body: '我方传感器对目标掌握到什么程度。接触：只有方位和大概距离。跟踪：多出舰级和模糊位置。解算：好到可以开火，光束和线圈炮就能打。拉近距离会提升，抓到对方点火也会提升。' },
+    solution_in: { title: '解算还需', body: '按当前接近速度，还要多久跟踪质量才够开火。“此距离无解”表示得靠近、等对方点火，或者开主动。' },
+    decision: { title: '决策', body: '战斗要你做的选择。每个键都会设一条普通指令或火控设置，亮着的那个是导航官的建议。“稍后”把问题留着，时间继续走。修理、医务和过载这类问题会倒数到舰上例行程序自己定下来为止。' },
   };
 
   function tipContent(key) {
@@ -139,36 +141,36 @@
   // The acceleration tooltip: F/m as the quotient it is, then the crew's cap on its own line, then what the
   // drive is actually giving when damage or a full sink has taken it below both.
   function accelFormula(ship) {
-    if (!hasDrive(ship)) return 'no drive: F = 0, so a = 0 at any mass';
+    if (!hasDrive(ship)) return '没有推进器：F = 0，所以不管质量多大，加速度都是 0';
     const m = ship.mass();
     const raw = m > 0 ? ship.thrust / m : 0;
     let f = 'a = F / m = ' + U.fmt.si(ship.thrust, 'N') + ' / ' + U.fmt.mass(m) + ' = ' + U.fmt.accel(raw);
     let cap = null;
     if (OD.Crew && typeof OD.Crew.accelCap === 'function') { try { cap = OD.Crew.accelCap(ship); } catch (e) { cap = null; } }
-    if (typeof cap === 'number' && isFinite(cap) && cap > 0 && cap < raw - 1e-6) f += '\nthe crew g limit caps the burn at ' + U.fmt.accel(cap);
+    if (typeof cap === 'number' && isFinite(cap) && cap > 0 && cap < raw - 1e-6) f += '\n船员的过载上限把这次点火压到 ' + U.fmt.accel(cap);
     const now = ship.accel();
     const held = cap != null && isFinite(cap) ? Math.min(raw, cap) : raw;
-    if (isFinite(now) && now < held - 0.05) f += '\nthe drive gives ' + U.fmt.accel(now) + ' right now';
+    if (isFinite(now) && now < held - 0.05) f += '\n主推进器现在只能给出 ' + U.fmt.accel(now);
     return f;
   }
   function heatCls(load) { return load > 0.85 ? 'crit' : load > 0.5 ? 'warn' : ''; }
   function orderLabel(ship) {
     const o = ship.order || { type: 'hold' };
-    const t = { intercept: 'intercept', keeprange: 'keep ' + (o.range ? U.fmt.dist(o.range) : ''), matchv: 'match speed', hold: 'hold', retreat: 'retreat', manual: 'manual ' + Math.round((o.throttle || 0) * 100) + '%', evade: 'evade', approach: 'coast in' }[o.type] || o.type;
-    if (ship.destroyed) return 'lost'; if (ship.captured) return 'captured'; if (ship.disabled) return 'disabled';
-    if ((OD.Ships.CLASSES[ship.cls].doctrine || {}).stationary) return 'station';
+    const t = { intercept: '拦截', keeprange: '保持 ' + (o.range ? U.fmt.dist(o.range) : ''), matchv: '速度匹配', hold: '待命', retreat: '撤退', manual: '手动 ' + Math.round((o.throttle || 0) * 100) + '%', evade: '规避', approach: '滑行接近' }[o.type] || o.type;
+    if (ship.destroyed) return '已毁'; if (ship.captured) return '被俘'; if (ship.disabled) return '失能';
+    if ((OD.Ships.CLASSES[ship.cls].doctrine || {}).stationary) return '空间站';
     // Sensors see a hostile's plume, not her orders.
-    if (game && game.sim && ship.faction !== game.sim.playerFaction) return ship.throttle > 0.02 ? 'burning ' + ((ship.accel() * ship.throttle) / 9.80665).toFixed(1) + ' g' : 'coasting';
+    if (game && game.sim && ship.faction !== game.sim.playerFaction) return ship.throttle > 0.02 ? '点火 ' + ((ship.accel() * ship.throttle) / 9.80665).toFixed(1) + ' g' : '滑行';
     return t + (ship.jink ? ' · jink' : '');
   }
   // v15: a hull built without a drive (the station: thrust 0, no tanks) against one whose drive is out
   function hasDrive(ship) { return !!ship && ship.thrust > 0; }
   function armourAllRound(ship) { const a = ship && ship.armour; return !!a && a.nose === a.flank && a.flank === a.tail; }
-  // why a hull makes no thrust, as the end of a sentence ('the tanks are dry'); '' when she makes some
-  function noThrustWhy(ship) { const n = thrustWhy(ship).none; return n ? n.replace(/^no thrust(: )?/, '') || 'no thrust' : ''; }
+  // why a hull makes no thrust, as the end of a sentence ('推进剂箱见底'); '' when she makes some
+  function noThrustWhy(ship) { const n = thrustWhy(ship).none; return n ? n.replace(/^no thrust(: )?/, '') || '无推力' : ''; }
   function facetSeen(ship, target) {
     const rel = Math.abs(U.angleDiff(U.angleOf(U.sub(target.pos, ship.pos)), ship.heading));
-    return rel < Math.PI / 4 ? 'nose' : rel > (3 * Math.PI) / 4 ? 'tail' : 'flank';
+    return rel < Math.PI / 4 ? '舰首' : rel > (3 * Math.PI) / 4 ? '舰尾' : '舷侧';
   }
 
   // ------------------------------------------------------------------ fleet list
@@ -229,74 +231,74 @@
     const adv = (ok) => (ok ? '' : ' data-adv');
     const anyHostile = sim.ships.some((s) => sim.isHostile(s, ship));
     // v15: a hull with no drive (a station) has no delta-v, no transfer and no stopping distance: those rows are
-    // left out rather than printed as noughts and NaN. Armour the same on every facet reads 'all round'.
+    // left out rather than printed as noughts and NaN. Armour the same on every facet reads '全向'.
     const noDrive = !hasDrive(ship), allRound = armourAllRound(ship);
     let h = '';
     // her name is known (the list, the cards and the hints use it); what the track lacks is her class
     const shownName = ship.name;
-    h += '<div class="head"><div><div class="name">' + esc(shownName) + '</div><div class="cls">' + esc(pic && !pic.classKnown ? 'Class unknown' : cls.name) + '</div></div><span class="badge ' + ship.faction + '">' + esc(OD.Ships.FACTIONS[ship.faction].short) + '</span></div>';
-    h += '<div class="portrait-wrap"><canvas class="portrait" id="pPortrait" data-tip="hullview" title="Hull view (V)" role="button" tabindex="0" aria-label="Open the hull view of ' + esc(shownName) + '"></canvas><div class="head-tools"><button class="sm" id="pFollow" data-tip="follow">Follow<kbd>F</kbd></button><button class="sm" id="pDetail" data-tip="detail" aria-pressed="false">Full<kbd>D</kbd></button></div></div>';
+    h += '<div class="head"><div><div class="name">' + esc(shownName) + '</div><div class="cls">' + esc(pic && !pic.classKnown ? '舰级未知' : cls.name) + '</div></div><span class="badge ' + ship.faction + '">' + esc(OD.Ships.FACTIONS[ship.faction].short) + '</span></div>';
+    h += '<div class="portrait-wrap"><canvas class="portrait" id="pPortrait" data-tip="hullview" title="舰体视图（V）" role="button" tabindex="0" aria-label="打开舰体视图：' + esc(shownName) + '"></canvas><div class="head-tools"><button class="sm" id="pFollow" data-tip="follow">跟随<kbd>F</kbd></button><button class="sm" id="pDetail" data-tip="detail" aria-pressed="false">Full<kbd>D</kbd></button></div></div>';
     // Navigator: the plain-language line. For a hostile, our track on her in its place.
-    if (pic) h += '<div class="section nav" data-v="nav" data-phase="track"><div class="nav-head"><span data-tip="track">Our track</span><span class="pill" data-v="ostate"></span></div><div class="nav-line" data-v="navtext"></div><div class="nav-sub" data-v="navsub"></div></div>';
-    else h += '<div class="section nav" data-v="nav" data-phase="coast"><div class="nav-head"><span data-tip="navigator">Navigator</span><span class="pill" data-v="ostate"></span></div><div class="nav-line" data-v="navtext"></div><div class="nav-sub" data-v="navsub"></div><div class="tipline" data-v="navtip" data-tip="tip" hidden></div></div>';
+    if (pic) h += '<div class="section nav" data-v="nav" data-phase="track"><div class="nav-head"><span data-tip="track">我方跟踪</span><span class="pill" data-v="ostate"></span></div><div class="nav-line" data-v="navtext"></div><div class="nav-sub" data-v="navsub"></div></div>';
+    else h += '<div class="section nav" data-v="nav" data-phase="coast"><div class="nav-head"><span data-tip="navigator">导航官</span><span class="pill" data-v="ostate"></span></div><div class="nav-line" data-v="navtext"></div><div class="nav-sub" data-v="navsub"></div><div class="tipline" data-v="navtip" data-tip="tip" hidden></div></div>';
     // Threats: hidden until something is inbound
-    if (!blind) h += '<div class="section threats" data-v="thsec" hidden><div class="th-head"><span data-tip="threats">Threats</span><span class="pill" data-v="thlevel"></span></div><div class="th-line" data-v="thtext"></div><div class="kv" data-v="throws" style="margin-top:4px"></div></div>';
+    if (!blind) h += '<div class="section threats" data-v="thsec" hidden><div class="th-head"><span data-tip="threats">威胁</span><span class="pill" data-v="thlevel"></span></div><div class="th-line" data-v="thtext"></div><div class="kv" data-v="throws" style="margin-top:4px"></div></div>';
     // Vitals: the three numbers that matter most (for a hostile held as a solution, range and closing from our ship)
-    if (!blind) h += '<div class="vitals" data-tip="vitals"><div><span class="k">Delta-v</span><span class="v" data-v="vdv"></span></div><div><span class="k">Range</span><span class="v" data-v="vrange"></span></div><div><span class="k">Closing</span><span class="v" data-v="vclose"></span></div></div>';
+    if (!blind) h += '<div class="vitals" data-tip="vitals"><div><span class="k">速度增量</span><span class="v" data-v="vdv"></span></div><div><span class="k">距离</span><span class="v" data-v="vrange"></span></div><div><span class="k">接近速度</span><span class="v" data-v="vclose"></span></div></div>';
     // Signature: how loud we are, and the active sensor (v11; hidden until the sensor module is present)
-    if (!blind) h += '<div class="sigrow" data-v="sigrow" hidden><span class="k" data-tip="signature">Signature</span><span class="v" data-v="sig"></span>' + (control ? '<button class="sm" id="pActive" data-tip="active" aria-pressed="false">Active<kbd>S</kbd></button>' : '') + '</div>';
+    if (!blind) h += '<div class="sigrow" data-v="sigrow" hidden><span class="k" data-tip="signature">信号特征</span><span class="v" data-v="sig"></span>' + (control ? '<button class="sm" id="pActive" data-tip="active" aria-pressed="false">主动<kbd>S</kbd></button>' : '') + '</div>';
     // Delta-v gauge
-    if (!blind) h += '<div class="section"><div class="gauge-row"><span class="k" data-tip="dv">Delta-v (fuel)</span><span class="v" data-v="dv"></span></div>' +
+    if (!blind) h += '<div class="section"><div class="gauge-row"><span class="k" data-tip="dv">速度增量（推进剂）</span><span class="v" data-v="dv"></span></div>' +
       (noDrive ? '' : '<div class="gauge dv" data-tip="dvgauge"><i class="fill" data-v="dvfill"></i><i class="cost" data-v="dvcost"></i></div>' +
       '<div class="gauge-foot"><span data-v="dvplan"></span><span data-v="dvfull" class="dim"></span></div>') +
       '<div class="kv" data-adv>' +
-      '<span class="k" data-tip="accel">Acceleration</span><span class="v" data-v="accel"></span>' +
-      '<span class="k" data-tip="mass">Mass (propellant)</span><span class="v" data-v="mass"></span>' +
-      '<span class="k" data-tip="speed">Speed</span><span class="v" data-v="speed"></span>' +
-      '<span class="k" data-tip="heading">Heading</span><span class="v" data-v="heading"></span>' +
-      (sim.body ? '<span class="k" data-tip="orbit">Altitude</span><span class="v" data-v="orbit"></span>' : '') +
-      '<span class="k" data-tip="signature" data-v="sigsrck" hidden>Signature by source</span><span class="v" data-v="sigsrc" hidden></span>' +
-      '<span class="k" data-tip="track" data-v="sensk" hidden>' + (ship.faction === sim.playerFaction ? 'Our sensors' : 'Her sensors') + '</span><span class="v" data-v="sens" hidden></span>' +
+      '<span class="k" data-tip="accel">加速度</span><span class="v" data-v="accel"></span>' +
+      '<span class="k" data-tip="mass">质量（推进剂）</span><span class="v" data-v="mass"></span>' +
+      '<span class="k" data-tip="speed">速度</span><span class="v" data-v="speed"></span>' +
+      '<span class="k" data-tip="heading">航向</span><span class="v" data-v="heading"></span>' +
+      (sim.body ? '<span class="k" data-tip="orbit">高度</span><span class="v" data-v="orbit"></span>' : '') +
+      '<span class="k" data-tip="signature" data-v="sigsrck" hidden>信号特征分项</span><span class="v" data-v="sigsrc" hidden></span>' +
+      '<span class="k" data-tip="track" data-v="sensk" hidden>' + (ship.faction === sim.playerFaction ? '我方传感器' : '她的传感器') + '</span><span class="v" data-v="sens" hidden></span>' +
       '</div></div>';
     // Target (a hostile's target is her order: never shown)
-    if (!pic) h += '<div class="section"><h4><span data-tip="target">Target</span><span class="pill" data-v="tstate"></span></h4><div class="kv">' +
-      '<span class="k">Contact</span><span class="v" data-v="tname"></span>' +
-      '<span class="k" data-tip="track" data-v="ttrackk" hidden>Track</span><span class="v" data-v="ttrack" hidden></span>' +
-      '<span class="k" data-tip="solution_in" data-v="tsolk" hidden>Solution in</span><span class="v" data-v="tsol" hidden></span>' +
-      (noDrive ? '' : '<span class="k" data-tip="rendezvous">Transfer</span><span class="v" data-v="test"></span>' +
-      '<span class="k" data-tip="arrive">Arrive</span><span class="v" data-v="tarr"></span>' +
-      '<span class="k" data-tip="stopping">Stop needs</span><span class="v" data-v="tstop"></span>') +
-      '</div><div class="facing-row" data-tip="facing"><span class="k">They see</span>' +
+    if (!pic) h += '<div class="section"><h4><span data-tip="target">目标</span><span class="pill" data-v="tstate"></span></h4><div class="kv">' +
+      '<span class="k">接触</span><span class="v" data-v="tname"></span>' +
+      '<span class="k" data-tip="track" data-v="ttrackk" hidden>跟踪</span><span class="v" data-v="ttrack" hidden></span>' +
+      '<span class="k" data-tip="solution_in" data-v="tsolk" hidden>解算还需</span><span class="v" data-v="tsol" hidden></span>' +
+      (noDrive ? '' : '<span class="k" data-tip="rendezvous">转移</span><span class="v" data-v="test"></span>' +
+      '<span class="k" data-tip="arrive">到达</span><span class="v" data-v="tarr"></span>' +
+      '<span class="k" data-tip="stopping">停止需要</span><span class="v" data-v="tstop"></span>') +
+      '</div><div class="facing-row" data-tip="facing"><span class="k">对方看到</span>' +
       (allRound ? '' : '<svg class="facing" viewBox="0 0 64 24" width="64" height="24" aria-hidden="true"><polygon data-f="tail" points="3,7 16,7 16,17 3,17"/><polygon data-f="flank" points="17,6 44,6 44,18 17,18"/><polygon data-f="nose" points="45,6 61,12 45,18"/></svg>') +
       '<span class="v" data-v="tfacing"></span></div>' +
-      '<div class="row" data-v="boardrow" hidden><label data-tip="boarding">Boarding</label><div class="bar" style="flex:1"><i data-v="boardbar" style="background:var(--good)"></i></div></div></div>';
+      '<div class="row" data-v="boardrow" hidden><label data-tip="boarding">接舷</label><div class="bar" style="flex:1"><i data-v="boardbar" style="background:var(--good)"></i></div></div></div>';
     if (control) {
-      h += '<div class="section"><h4>Orders</h4><div class="btnrow orders">' +
-        '<button data-order="intercept" data-tip="order_intercept"' + adv(orderSet.includes('intercept')) + '><span>Intercept<kbd>I</kbd></span><small data-v="pv_intercept"></small></button>' +
-        '<button data-order="keeprange" data-tip="order_keeprange"' + adv(orderSet.includes('keeprange')) + '><span>Keep range<kbd>K</kbd></span><small data-v="pv_keeprange"></small></button>' +
-        '<button data-order="matchv" data-tip="order_matchv"' + adv(orderSet.includes('matchv')) + '><span>Match speed<kbd>M</kbd></span><small data-v="pv_matchv"></small></button>' +
-        '<button data-order="hold" data-tip="order_hold"' + adv(orderSet.includes('hold')) + '><span>Hold<kbd>H</kbd></span><small>coast, no burn</small></button>' +
-        '<button data-order="retreat" data-tip="order_retreat"' + adv(orderSet.includes('retreat')) + '><span>Retreat<kbd>R</kbd></span><small data-v="pv_retreat">full burn away</small></button>' +
-        '<button data-order="manual" data-tip="order_manual"' + adv(orderSet.includes('manual')) + '><span>Manual</span><small>heading + throttle</small></button></div>' +
-        '<div class="row"' + adv(orderSet.includes('keeprange')) + '><label data-tip="order_keeprange" for="pRange">Range km</label><input type="number" id="pRange" min="1" step="10" value="' + Math.round((ship.order.range || cls.doctrine.range || 200e3) / 1000) + '">' +
-        '<select id="pVmax" data-tip="vmax" aria-label="Cruise cap"><option value="0">Fastest</option><option value="3000">Cap 3 km/s</option><option value="1500">Cap 1.5 km/s</option></select>' +
-        '<button class="sm" id="pJink" data-tip="jink" aria-pressed="false"' + adv(anyHostile || ctl.jink) + '>Jink<kbd>J</kbd></button></div>' +
-        '<div class="row" id="pManual" hidden><label for="pHeading">Heading</label><input type="range" id="pHeading" min="0" max="359" value="' + Math.round(((ship.heading * 180) / Math.PI + 360) % 360) + '"><span class="num" data-v="mhead" style="width:3em"></span></div>' +
-        '<div class="row" id="pManual2" hidden><label for="pThrottle">Throttle</label><input type="range" id="pThrottle" min="0" max="100" value="0"><span class="num" data-v="mthr" style="width:3em"></span></div>' +
+      h += '<div class="section"><h4>指令</h4><div class="btnrow orders">' +
+        '<button data-order="intercept" data-tip="order_intercept"' + adv(orderSet.includes('intercept')) + '><span>拦截<kbd>I</kbd></span><small data-v="pv_intercept"></small></button>' +
+        '<button data-order="keeprange" data-tip="order_keeprange"' + adv(orderSet.includes('keeprange')) + '><span>保持距离<kbd>K</kbd></span><small data-v="pv_keeprange"></small></button>' +
+        '<button data-order="matchv" data-tip="order_matchv"' + adv(orderSet.includes('matchv')) + '><span>速度匹配<kbd>M</kbd></span><small data-v="pv_matchv"></small></button>' +
+        '<button data-order="hold" data-tip="order_hold"' + adv(orderSet.includes('hold')) + '><span>待命<kbd>H</kbd></span><small>滑行，不点火</small></button>' +
+        '<button data-order="retreat" data-tip="order_retreat"' + adv(orderSet.includes('retreat')) + '><span>撤退<kbd>R</kbd></span><small data-v="pv_retreat">全力背离</small></button>' +
+        '<button data-order="manual" data-tip="order_manual"' + adv(orderSet.includes('manual')) + '><span>手动</span><small>航向 + 推力</small></button></div>' +
+        '<div class="row"' + adv(orderSet.includes('keeprange')) + '><label data-tip="order_keeprange" for="pRange">距离 公里</label><input type="number" id="pRange" min="1" step="10" value="' + Math.round((ship.order.range || cls.doctrine.range || 200e3) / 1000) + '">' +
+        '<select id="pVmax" data-tip="vmax" aria-label="巡航上限"><option value="0">最快</option><option value="3000">上限 3 公里/秒</option><option value="1500">上限 1.5 公里/秒</option></select>' +
+        '<button class="sm" id="pJink" data-tip="jink" aria-pressed="false"' + adv(anyHostile || ctl.jink) + '>规避<kbd>J</kbd></button></div>' +
+        '<div class="row" id="pManual" hidden><label for="pHeading">航向</label><input type="range" id="pHeading" min="0" max="359" value="' + Math.round(((ship.heading * 180) / Math.PI + 360) % 360) + '"><span class="num" data-v="mhead" style="width:3em"></span></div>' +
+        '<div class="row" id="pManual2" hidden><label for="pThrottle">推力</label><input type="range" id="pThrottle" min="0" max="100" value="0"><span class="num" data-v="mthr" style="width:3em"></span></div>' +
         '</div>';
     }
-    if (!blind) h += '<div class="section"><h4><span data-tip="heat">Heat</span><span class="pill" data-v="hstate"></span></h4><div class="heatbar"><i data-v="heatbar"></i><b data-v="heatmark"></b></div><div class="kv">' +
-      '<span class="k">Heat stored</span><span class="v" data-v="heat"></span>' +
-      '<span class="k" data-tip="heatfc">Forecast</span><span class="v" data-v="heatfc"></span>' +
-      '<span class="k" data-adv>Heat in / out</span><span class="v" data-adv data-v="heatio"></span>' +
-      '<span class="k" data-tip="radiators">Radiators</span><span class="v" data-v="rad"></span></div>' +
-      (own ? '<div class="btnrow" style="margin-top:6px"' + adv(anyHostile) + '><button class="sm" data-rad="1" data-tip="radiators">Extend</button><button class="sm" data-rad="0" data-tip="radiators">Stow</button><button class="sm" data-rad="auto" data-tip="rad_auto">Auto</button></div>' : '') +
+    if (!blind) h += '<div class="section"><h4><span data-tip="heat">热量</span><span class="pill" data-v="hstate"></span></h4><div class="heatbar"><i data-v="heatbar"></i><b data-v="heatmark"></b></div><div class="kv">' +
+      '<span class="k">热沉存量</span><span class="v" data-v="heat"></span>' +
+      '<span class="k" data-tip="heatfc">预测</span><span class="v" data-v="heatfc"></span>' +
+      '<span class="k" data-adv>进热 / 出热</span><span class="v" data-adv data-v="heatio"></span>' +
+      '<span class="k" data-tip="radiators">散热板</span><span class="v" data-v="rad"></span></div>' +
+      (own ? '<div class="btnrow" style="margin-top:6px"' + adv(anyHostile) + '><button class="sm" data-rad="1" data-tip="radiators">展开</button><button class="sm" data-rad="0" data-tip="radiators">收起</button><button class="sm" data-rad="auto" data-tip="rad_auto">自动</button></div>' : '') +
       '</div>';
     if (blind) { /* no damage report below a solution: the hull view shows none either */ }
     else if (OD.Damage && OD.Damage.report) {
-      h += '<div class="section" data-adv data-v="syssec"><h4><span data-tip="damage">Damage control</span><span class="pill" data-v="dmgstate"></span></h4>' +
+      h += '<div class="section" data-adv data-v="syssec"><h4><span data-tip="damage">损管</span><span class="pill" data-v="dmgstate"></span></h4>' +
         '<div class="crewline" data-v="crew" data-tip="crew"></div>' +
-        (own ? '<div class="btnrow gmode" data-v="gmode" data-tip="gmode"><button class="sm" data-g="work">Work · 1.2 g</button><button class="sm" data-g="couches">Couches · 3 g</button><button class="sm" data-g="max">No limit</button></div><div class="gwords" data-v="gwords"></div>' : '') +
+        (own ? '<div class="btnrow gmode" data-v="gmode" data-tip="gmode"><button class="sm" data-g="work">工作 · 1.2 g</button><button class="sm" data-g="couches">抗荷座椅 · 3 g</button><button class="sm" data-g="max">不限</button></div><div class="gwords" data-v="gwords"></div>' : '') +
         '<div class="dmg" data-v="dmg"></div></div>';
     } else {
       h += '<div class="section" data-adv data-v="syssec"><h4>Systems</h4><div class="sysbars">' +
@@ -369,7 +371,7 @@
     const target = ship.target;
     const rangeKm = $('pRange') ? Math.max(1, +$('pRange').value) : 200;
     const vmax = $('pVmax') && +$('pVmax').value ? +$('pVmax').value : undefined;
-    if ((type === 'intercept' || type === 'keeprange' || type === 'matchv' || type === 'approach') && !target) { UI.toast('Pick a target first: click a ship on the map or in the fleet list.'); return; }
+    if ((type === 'intercept' || type === 'keeprange' || type === 'matchv' || type === 'approach') && !target) { UI.toast('先选一个目标：点地图上的舰船，或者点列表里的。'); return; }
     let order;
     switch (type) {
       case 'intercept': order = { type, target, range: 2000, vmax }; break;
@@ -438,7 +440,7 @@
     '#legend .sw.ladder{height:7px;width:20px;border-top:0;border-left:2px solid var(--accent);border-right:2px solid var(--crit);margin-bottom:-4px}',
   ].join('\n');
   const LEGEND_V8 = [
-    ['pd', 'point defence reach · ours teal, theirs red'], ['reach', 'interceptor reach · ours blue'], ['inc', 'incoming · time to arrival'], ['ladder', 'burn-through ranges'],
+    ['pd', '点防御射程 · 我方青色，敌方红色'], ['reach', '拦截弹射程 · 我方蓝色'], ['inc', '来袭 · 到达时间'], ['ladder', '烧穿距离'],
   ];
   function installV8() {
     if (!document.getElementById('odV8css')) { const st = document.createElement('style'); st.id = 'odV8css'; st.textContent = V8_CSS; document.head.appendChild(st); }
@@ -447,9 +449,9 @@
       for (const [cls, text] of LEGEND_V8) { const row = document.createElement('div'); row.className = 'lg-row'; row.innerHTML = '<i class="sw ' + cls + '"></i>' + esc(text); lg.appendChild(row); }
     }
   }
-  const FIRE_MODES = [['fire_full', 'Full'], ['fire_sustained', 'Sustained'], ['fire_hold', 'Hold']];
-  const AIMS = [['aim_hull', 'Hull'], ['aim_radiators', 'Radiators'], ['aim_drive', 'Drive'], ['aim_mounts', 'Mounts']];
-  const SALVOS = [['launch2', 'Launch 2', 2, 'L'], ['launch4', 'Launch 4', 4, '⇧L'], ['launchAll', 'Launch all', 'all', 'A']];
+  const FIRE_MODES = [['fire_full', '完整'], ['fire_sustained', '持续'], ['fire_hold', '待机']];
+  const AIMS = [['aim_hull', '舰体'], ['aim_radiators', '散热板'], ['aim_drive', '推进器'], ['aim_mounts', '炮位']];
+  const SALVOS = [['launch2', '发射 2', 2, 'L'], ['launch4', '发射 4', 4, '⇧L'], ['launchAll', '全弹发射', 'all', 'A']];
   function engActs(ship) { try { return (OD.Engagement && OD.Engagement.panelActions && OD.Engagement.panelActions(ship)) || []; } catch (e) { return []; } }
   function actById(acts) { const m = {}; for (const a of acts) m[a.id] = a; return m; }
   function fcSection(anyHostile) {
@@ -508,10 +510,10 @@
             if (n === 'all') { const m = /\((\d+)\)/.exec((a && a.label) || ''); n = m ? +m[1] : null; }
             let e = null; if (n) { try { e = OD.Engagement.salvoEstimate(sim, ship, target, n); } catch (err) { e = null; } }
             if (e) {
-              if (!e.reach) { est = 'out of reach'; cls = 'warn'; }
-              else { const th = e.through != null ? e.through : null; est = (e.flightTime != null ? U.fmt.time(e.flightTime) + ' flight' : '') + (th != null ? ' · ' + th + ' through' : ''); cls = th === 0 ? 'warn' : th > 0 ? 'good' : ''; }
+              if (!e.reach) { est = '射程外'; cls = 'warn'; }
+              else { const th = e.through != null ? e.through : null; est = (e.flightTime != null ? '飞行 ' + U.fmt.time(e.flightTime) : '') + (th != null ? ' · 穿深 ' + th : ''); cls = th === 0 ? 'warn' : th > 0 ? 'good' : ''; }
             }
-          } else if (!target) est = 'no target';
+          } else if (!target) est = '无目标';
           const sm = b.querySelector('small'); if (sm && sm.textContent !== est) sm.textContent = est;
           b.className = 'sm salvo' + (cls ? ' ' + cls : '');
         });
@@ -524,7 +526,7 @@
         let r = null; try { r = OD.Engagement.pdReport(ship); } catch (e) { r = null; }
         if (r && r.mounts > 0) {
           const v = r.live + ' of ' + r.mounts + (r.engaging ? ' · ' + r.engaging + ' engaging' : '') + (r.ratePerMin ? ' · stops ' + Math.round(r.ratePerMin) + '/min' : '') + (r.kills ? ' · ' + r.kills + ' kills' : '');
-          html = kvRow('Point defence', v, { tip: 'pd', cls: r.live === 0 ? 'crit' : r.engaging ? 'warn' : '', width: rowsWidth(bound.pdrows) });
+          html = kvRow('点防御', v, { tip: 'pd', cls: r.live === 0 ? 'crit' : r.engaging ? 'warn' : '', width: rowsWidth(bound.pdrows) });
         }
       }
       // the crew on the mounts and on the sensors (v13): one row each when the watch is off its rated value
@@ -560,14 +562,14 @@
     if (OD.Sensors && sim.isHostile(target, ship)) { const tr0 = trackOf(sim, ship, target); if (tr0 && tr0.est && tr0.est.pos && tr0.q < ((OD.Sensors.T && OD.Sensors.T.solutionQ) || 2.7)) { range = U.dist(ship.pos, tr0.est.pos); fuzzy = true; } }
     const theirs = OD.Render.facetShown(ship, target), ours = (r.their && r.their.facet) || OD.Render.facetShown(target, ship);
     const word = (d, facet) => {
-      if (!(d > 0)) return 'never: armour too thick';
-      if (fuzzy) return facet + ' · inside ' + U.fmt.dist(d) + ' · our range is a guess';
-      if (range <= d) return facet + ' · now, out to ' + U.fmt.dist(d);
-      return facet + ' · inside ' + U.fmt.dist(d) + ' · ' + U.fmt.dist(range - d) + ' to go';
+      if (!(d > 0)) return '永不：装甲太厚';
+      if (fuzzy) return facet + ' · 进入 ' + U.fmt.dist(d) + ' 内 · 我方距离是估的';
+      if (range <= d) return facet + ' · 现在就在 ' + U.fmt.dist(d) + ' 内';
+      return facet + ' · 进入 ' + U.fmt.dist(d) + ' 内 · 还差 ' + U.fmt.dist(range - d);
     };
     const thr = (E.shared && E.shared.throttleTip) ? ' ' + E.shared.throttleTip : '';
-    const rows = [{ label: 'Our beams burn through', value: word(r.beams[theirs], 'their ' + theirs), tip: 'The range inside which our beams burn through the facet they are showing us. Inside it, every second on target takes hull off them.' + thr }];
-    if (r.their && r.their.beams) rows.push({ label: 'Their beams burn through', value: word(r.their.beams[ours], 'our ' + ours), tip: 'The range inside which their beams burn through the facet we are showing them. Stay outside it, or turn the nose to them.' + thr });
+    const rows = [{ label: '我方光束烧穿', value: word(r.beams[theirs], '对方' + theirs), tip: '我方光束能烧穿对方当前受弹面的距离。进入这个距离后，每多打一秒都在削对方的舰体。' + thr }];
+    if (r.their && r.their.beams) rows.push({ label: '对方光束烧穿', value: word(r.their.beams[ours], '我方' + ours), tip: '对方光束能烧穿我方当前受弹面的距离。留在它外面，或者把舰首转过去。' + thr });
     return rows;
   }
   // Threat band: one plain sentence from the engagement module plus the numbers behind it.
@@ -579,13 +581,13 @@
     if (!s || !s.level || s.level === 'none') { bound.thsec.hidden = true; return; }
     bound.thsec.hidden = false;
     bound.thsec.className = 'section threats ' + s.level;
-    if (bound.thlevel) { bound.thlevel.textContent = s.level === 'alert' ? 'incoming' : s.level; bound.thlevel.className = 'pill ' + (s.level === 'alert' ? 'crit' : s.level === 'warn' ? 'warn' : 'good'); }
+    if (bound.thlevel) { bound.thlevel.textContent = s.level === 'alert' ? '来袭' : s.level; bound.thlevel.className = 'pill ' + (s.level === 'alert' ? 'crit' : s.level === 'warn' ? 'warn' : 'good'); }
     if (bound.thtext) { if (bound.thtext.textContent !== (s.text || '')) bound.thtext.textContent = s.text || ''; bound.thtext.className = 'th-line ' + s.level; }
     if (bound.throws) {
       const rows = [];
-      if (s.incoming) rows.push(['Inbound', s.incoming + (s.incoming === 1 ? ' interceptor' : ' interceptors') + (s.firstEta != null ? ' · first in ' + U.fmt.time(s.firstEta) : ''), s.firstEta != null && s.firstEta < 20 ? 'crit' : 'warn', s.incoming + (s.incoming === 1 ? ' interceptor' : ' interceptors') + (s.firstEta != null ? ' in ' + U.fmt.time(s.firstEta) : '')]);
-      if (s.slugs) rows.push(['Slugs', s.slugs + ' in flight', 'warn', s.slugs + (s.slugs === 1 ? ' slug' : ' slugs')]);
-      if (s.incoming && s.pdMounts != null) rows.push(['Point defence', s.pdMounts ? (s.pdCanStop ? 'can stop them' : 'cannot stop them all') + (s.pdRatePerMin ? ' · ' + Math.round(s.pdRatePerMin) + '/min' : '') : 'none aboard', s.pdMounts && s.pdCanStop ? 'good' : 'crit', s.pdMounts ? (s.pdCanStop ? 'point defence holds' : 'point defence cannot stop them all') : 'no point defence']);
+      if (s.incoming) rows.push(['来袭', s.incoming + ' 枚拦截弹' + (s.firstEta != null ? ' · 最近 ' + U.fmt.time(s.firstEta) + ' 后到' : ''), s.firstEta != null && s.firstEta < 20 ? 'crit' : 'warn', s.incoming + ' 枚拦截弹' + (s.firstEta != null ? '，' + U.fmt.time(s.firstEta) + ' 后到' : '')]);
+      if (s.slugs) rows.push(['弹丸', s.slugs + ' 发在途', 'warn', s.slugs + ' 发弹丸在途']);
+      if (s.incoming && s.pdMounts != null) rows.push(['点防御', s.pdMounts ? (s.pdCanStop ? '能拦住' : '拦不完') + (s.pdRatePerMin ? ' · 每分钟 ' + Math.round(s.pdRatePerMin) : '') : '舰上没有', s.pdMounts && s.pdCanStop ? 'good' : 'crit', s.pdMounts ? (s.pdCanStop ? '点防御拦得住' : '点防御拦不完') : '没有点防御']);
       // on a phone the stacked rows push the rest of the panel down: one merged line instead
       const merged = window.innerWidth < 900 && rows.length > 1;
       const html = merged
@@ -611,18 +613,18 @@
     const parties = c && Array.isArray(c.parties) ? c.parties : null;
     const overCouch = c ? (c.overCouch == null ? !!c.strapped : !!c.overCouch) : false;
     let why;
-    if (parties && !parties.some((p) => p && p.task === 'sensors')) why = 'no party on it.';
-    else if (c && c.total > 0 && c.fit * 3 < c.total) why = 'fewer than a third of the crew are fit.';
-    else if (overCouch) why = 'the crew is over the couch limit.';
-    else if (f > 1) why = 'a veteran crew.';
-    else why = 'the watch is short-handed.';
-    return 'Sensor watch at ' + U.fmt.pct(f) + ': ' + why;
+    if (parties && !parties.some((p) => p && p.task === 'sensors')) why = '没有班组负责。';
+    else if (c && c.total > 0 && c.fit * 3 < c.total) why = '船员里能干活的不剩三分之一。';
+    else if (overCouch) why = '船员已经超过抗荷上限。';
+    else if (f > 1) why = '老兵船员。';
+    else why = '值班组人手不够。';
+    return '传感器值班 ' + U.fmt.pct(f) + ': ' + why;
   }
   // "Fire control at 70 %: no party on it." → a key-and-value row beside the point-defence rows.
   function crewWatchRow(words, width) {
     if (!words) return '';
     const i = words.indexOf(':');
-    const k = i > 0 ? words.slice(0, i) : 'Fire control', v = i > 0 ? words.slice(i + 1).trim() : words;
+    const k = i > 0 ? words.slice(0, i) : '火控', v = i > 0 ? words.slice(i + 1).trim() : words;
     const pct = /at (\d+) %/.exec(k);
     return kvRow(k, v, { tip: 'crew', cls: pct && +pct[1] < 100 ? 'warn' : '', width });
   }
@@ -666,17 +668,17 @@
     const live = liveAccel(ship), rated = ship.accelNominal(), fac = rated > 0 ? live / rated : 1;
     const drive = ship.systems ? ship.systems.drive : 1;
     let none = '';
-    if (!hasDrive(ship)) none = 'no thrust: she has no drive';
-    else if (ship.destroyed) none = 'no thrust: she is destroyed';
-    else if (ship.propMass <= 0) none = 'no thrust: the tanks are dry';
-    else if (ship.disabled) none = 'no thrust: she is out of the fight';
-    else if (!(drive > 0)) none = 'no thrust: the drive is wrecked';
-    else if (!(live > 0)) none = 'no thrust';
+    if (!hasDrive(ship)) none = '无推力：她没有主推进器';
+    else if (ship.destroyed) none = '无推力：她已被击毁';
+    else if (ship.propMass <= 0) none = '无推力：推进剂箱见底';
+    else if (ship.disabled) none = '无推力：她已退出战斗';
+    else if (!(drive > 0)) none = '无推力：主推进器报废';
+    else if (!(live > 0)) none = '无推力';
     const parts = [];
-    if (drive < 0.995 && drive > 0) parts.push('the drive is at ' + Math.round(drive * 100) + ' %');
-    if (ship.overheated) parts.push('the sink is full, so the drive is held to a quarter');
+    if (drive < 0.995 && drive > 0) parts.push('推进器只剩 ' + Math.round(drive * 100) + ' %');
+    if (ship.overheated) parts.push('热沉满了，推进器被压到四分之一');
     const unc = ship.propMass > 0 && !ship.disabled && !ship.destroyed ? (ship.thrust * drive * (ship.overheated ? 0.25 : 1)) / ship.mass() : 0;
-    if (live > 0 && unc > live * 1.005) parts.push('the g limit set for the crew');
+    if (live > 0 && unc > live * 1.005) parts.push('为船员设的过载上限');
     return { live, fac, none, why: parts.join(', ') };
   }
   function etaWords(s) { if (!(s > 0)) return ''; const m = Math.floor(s / 60), r = Math.round(s % 60); return m ? m + ' min' + (r >= 30 ? ' 30 s' : '') : r + ' s'; }
@@ -692,7 +694,7 @@
     const freeId = board ? freeParty(ship) : null;
     // the Send button names the watch it takes when no party is standing by (round 2)
     const freeTask = freeId && board.parties ? (board.parties.find((x) => x.id === freeId) || {}).task : null;
-    const sendLabel = freeId ? 'Send party ' + String(freeId).replace(/^p/, '') + (freeTask === 'fire' ? ' · fire control' : freeTask === 'sensors' ? ' · the sensor watch' : freeTask === 'medical' ? ' · the sick bay' : '') : '';
+    const sendLabel = freeId ? '派出班组 ' + String(freeId).replace(/^p/, '') + (freeTask === 'fire' ? ' · 火控' : freeTask === 'sensors' ? ' · 传感器值班' : freeTask === 'medical' ? ' · 医务室' : '') : '';
     const full = UI.detail === 'full';
     let hurt = 0, wrecked = 0, working = 0, actionable = 0;
     const counts = {}, past = [], small = [];
@@ -729,8 +731,8 @@
         // the moment an order stops a running repair, say so once: the ring alone reads as slow, not stopped
         const key = r.id, was = heldSeen[key], now = q.blocked ? String(q.blocked) : '';
         if (now && was !== now && own && game.sim && ship.faction === game.sim.playerFaction) {
-          const text = 'Party ' + String(party.id).replace(/^p/, '') + ' on ' + partPlainName(ship, r) + ' is waiting. ' + now.charAt(0).toUpperCase() + now.slice(1) + '.';
-          toast(text, 3200, 'Damage control');
+          const text = String(party.id).replace(/^p/, '') + ' 号班组在' + partPlainName(ship, r) + '上等着：' + now + '。';
+          toast(text, 3200, '损管');
           if (typeof game.sim.addLog === 'function') game.sim.addLog(text, 'Damage control', 'warn');
         }
         heldSeen[key] = now;
@@ -747,11 +749,11 @@
           then = then.replace(/[.,;:\s]+$/, '');
           if (then) then = 'Then ' + then.charAt(0).toLowerCase() + then.slice(1) + (tw ? ', in ' + tw : '') + '.';
           const reason = String(q.blocked).replace(/[.\s]+$/, '');
-          const text = 'Held: ' + reason + '.' + (then ? ' ' + then : '');
+          const text = '暂停：' + reason + '。' + (then ? ' ' + then : '');
           let tradeWords = '';
           if (OD.Decisions && typeof OD.Decisions.tradeWords === 'function') { try { tradeWords = String(OD.Decisions.tradeWords(ship, r.id) || ''); } catch (e) { tradeWords = ''; } }
           const pnum = freeId ? String(freeId).replace(/^p/, '') : '';
-          const label = !freeId ? '' : tradeWords ? tradeWords + ' · party ' + pnum + ' works' : sendLabel + ' · waits for the part';
+          const label = !freeId ? '' : tradeWords ? tradeWords + ' · 班组 ' + pnum + ' 干活' : sendLabel + ' · 要等部件停下来';
           html += '<div class="dmg-party"><span>' + keepNums(esc(text)) + '</span>' + (label ? '<button class="sm" data-send="' + esc(r.id) + '"' + (tradeWords ? ' data-clear="1"' : '') + '>' + esc(label) + '</button>' : '') + '</div>';
           if (!freeId) noFree = true;
         } else if (can) { html += '<div class="dmg-party"><span>' + keepNums(esc(buys)) + '</span>' + (sendLabel ? '<button class="sm" data-send="' + esc(r.id) + '">' + esc(sendLabel) + '</button>' : '') + '</div>'; if (!sendLabel) noFree = true; }
@@ -763,11 +765,11 @@
       // Essentials folds the rows with no button of their own: the small jobs Full still offers, and the parts
       // past a jury-rig's reach, in two clauses so the line never calls a job Full sells "not worth a party"
       const bits = [];
-      if (small.length) bits.push(small.length + (small.length === 1 ? ' smaller job' : ' smaller jobs') + ': ' + keepNums(esc(small.join(', '))) + '.');
-      if (past.length) bits.push(past.length + (past.length === 1 ? ' part' : ' parts') + ' past a jury-rig: ' + keepNums(esc(past.join(', '))) + '.');
-      html += '<div class="dmg-past" style="grid-column:1/-1">' + bits.join(' ') + (own ? ' Full lists them.' : '') + '</div>';
+      if (small.length) bits.push(small.length + (small.length === 1 ? ' 件小活' : ' 件小活') + '：' + keepNums(esc(small.join('、'))) + '。');
+      if (past.length) bits.push(past.length + (past.length === 1 ? ' 个部件' : ' 个部件') + '已经超出应急抢修能救的范围：' + keepNums(esc(past.join('、'))) + '。');
+      html += '<div class="dmg-past" style="grid-column:1/-1">' + bits.join(' ') + (own ? '完整面板里会列出它们。' : '') + '</div>';
     }
-    if (!hurt && ship.hull >= 0.999) html += '<div class="dmg-empty" style="grid-column:1/-1">No damage.</div>';
+    if (!hurt && ship.hull >= 0.999) html += '<div class="dmg-empty" style="grid-column:1/-1">没有损伤。</div>';
     if (bound.dmg.innerHTML !== html) bound.dmg.innerHTML = html;
     if (bound.crew) { const t = nbPct(board ? (board.words || '') : ''); if (bound.crew.textContent !== t) bound.crew.textContent = t; }
     if (bound.crew) { let nf = document.getElementById('dmgNoFree'); if (noFree && !nf) { nf = document.createElement('div'); nf.id = 'dmgNoFree'; nf.textContent = NO_PARTY; bound.crew.insertAdjacentElement('afterend', nf); } else if (!noFree && nf) nf.remove(); }
@@ -793,7 +795,7 @@
     return true;
   }
   const STATE_ORDER = ['worn', 'damaged', 'isolated', 'venting', 'wrecked'];
-  const NO_PARTY = 'No party free. Recall one.';
+  const NO_PARTY = '没有空闲班组。先召回一个。';
   // The part, named the way the log and the board name it. damage.js owns the plain names; without it the row
   // name goes in lower case behind a definite article.
   function partPlainName(ship, row) {
@@ -827,16 +829,16 @@
     const can = q.repairable != null ? !!q.repairable : !!worst.repairable;
     const cap = q.cap != null ? q.cap : worst.cap;
     const say = (hp) => {
-      let text = name.charAt(0).toUpperCase() + name.slice(1) + ' on ' + ship.name + ' is hit, down to ' + U.fmt.pct(U.clamp(hp, 0, 1)) + '.';
-      text += phone ? ' Open Damage control in the panel.' : ' Open Damage control in the panel, or press C.';
-      if (can && typeof cap === 'number' && cap > 0) text += ' A party can jury-rig it back to ' + U.fmt.pct(U.clamp(cap, 0, 1)) + '.';
+      let text = ship.name + ' 的' + name + '被打中，只剩 ' + U.fmt.pct(U.clamp(hp, 0, 1)) + '。';
+      text += phone ? '打开面板里的损管栏。' : '打开面板里的损管栏，或者按 C。';
+      if (can && typeof cap === 'number' && cap > 0) text += '一个班组能把它抢修回 ' + U.fmt.pct(U.clamp(cap, 0, 1)) + '。';
       return nbPct(text);
     };
     // v15: the hint quotes the part's number as it is now (it read 77 % while the board read 58 %), and it goes
     // once a party has the part back to what a jury-rig gives, or the ship is lost
     const hpNow = () => { const c = Array.isArray(ship.components) ? ship.components.find((x) => x.id === worst.id) : null; return c ? (c.hp == null ? 1 : c.hp) : null; };
     const hp0 = worst.hp == null ? 1 : worst.hp, mendTo = typeof cap === 'number' && cap > 0 && hp0 < cap - 0.005 ? cap - 0.005 : Infinity;
-    showHint({ id: 'v8dmg', text: say(hp0), anchor: '#shipPanel', action: phone ? { label: 'Open the board', run: () => damageBoard() } : null,
+    showHint({ id: 'v8dmg', text: say(hp0), anchor: '#shipPanel', action: phone ? { label: '打开损管面板', run: () => damageBoard() } : null,
       refresh: () => { const hp = hpNow(); return hp == null ? null : say(hp); },
       until: () => { const hp = hpNow(); return !!(ship.destroyed || ship.captured || hp == null || hp >= mendTo); } });
     // the section forcing itself open is not enough on a tall panel: put the board on screen
@@ -854,13 +856,13 @@
   // Key C: bring the damage-control board into view.
   function damageBoard() {
     // on a phone an open card hides the ship panel, so the board cannot be reached until the card is answered
-    if (window.innerWidth <= 900 && document.body.classList.contains('decision-open')) { toast('Answer the question first. Esc leaves it for later.', 3000); return false; }
-    const sec = bound.syssec; if (!sec) { toast('Select one of our ships first.', 2000); return false; }
+    if (window.innerWidth <= 900 && document.body.classList.contains('decision-open')) { toast('先回答这个问题。按 Esc 可以留到稍后。', 3000); return false; }
+    const sec = bound.syssec; if (!sec) { toast('先选中一艘我方舰船。', 2000); return false; }
     sec.classList.add('force');
     const sh = selected(); if (sh) updateDamage(sh);
     try { sec.scrollIntoView({ block: 'nearest' }); } catch (e) { /* older browsers */ }
     scrollPanelTo(sec);
-    if (bound.dmg && /No damage\./.test(bound.dmg.textContent)) toast('No damage. The board lists hurt parts and the parties on them when there are any.', 2600);
+    if (bound.dmg && /No damage\./.test(bound.dmg.textContent)) toast('没有损伤。有受损部件时，面板会列出它们和负责的班组。', 2600);
     return true;
   }
   // Keyboard for fire control, called by main.js: returns true when the key did something.
@@ -870,7 +872,7 @@
     const by = actById(engActs(ship));
     const cycle = (list) => { const ids = list.map(([id]) => id).filter((id) => by[id]); if (!ids.length) return false; const i = ids.findIndex((id) => by[id].active); sim.engagementAction(ship, ids[(i + 1) % ids.length]); return true; };
     const k = key.toLowerCase();
-    if (k === 'w') { ship.weaponsFree = !ship.weaponsFree; toast(ship.weaponsFree ? ship.name + ': weapons free.' : ship.name + ': holding fire.', 1500); if (sim.flags) sim.flags.fireKeyUsed = true; return true; }
+    if (k === 'w') { ship.weaponsFree = !ship.weaponsFree; toast(ship.weaponsFree ? ship.name + '：武器已放开。' : ship.name + '：按住不打。', 1500); if (sim.flags) sim.flags.fireKeyUsed = true; return true; }
     if (k === 'b') { if (!cycle(FIRE_MODES)) return false; const a = FIRE_MODES.map(([id]) => actById(engActs(ship))[id]).find((x) => x && x.active); if (a) toast('Beams: ' + a.label + (a.tip ? ' · ' + a.tip : ''), 2500); return true; }
     if (k === 't') { if (!cycle(AIMS)) return false; const a = AIMS.map(([id]) => actById(engActs(ship))[id]).find((x) => x && x.active); if (a) toast('Aim: ' + a.label + (a.tip ? ' · ' + a.tip : ''), 2500); return true; }
     if (k === 'l') { const id = shift ? 'launch4' : 'launch2'; const a = by[id] || by[shift ? 'launch2' : 'launch']; if (!a) return false; sim.engagementAction(ship, a.id); return true; }
@@ -888,14 +890,14 @@
       const rating = typeof ship.radiatorRating === 'function' ? ship.radiatorRating() : ship.radiatorPower();
       let f = null; try { f = P.sinkForecast(ship.heat, ship.sinkCapacity, rating, pin, 3600, ship.radiatorTemp); } catch (e) { f = null; }
       if (f) {
-        if (f.tFull != null && isFinite(f.tFull)) return { text: 'full in ' + U.fmt.time(f.tFull), cls: f.tFull < 300 ? 'crit' : f.tFull < 1200 ? 'warn' : '' };
+        if (f.tFull != null && isFinite(f.tFull)) return { text: U.fmt.time(f.tFull) + ' 后充满', cls: f.tFull < 300 ? 'crit' : f.tFull < 1200 ? 'warn' : '' };
         if (f.tEmpty != null && isFinite(f.tEmpty) && ship.heat > 0.05 * ship.sinkCapacity) return { text: 'draining, ' + U.fmt.time(f.tEmpty) + ' to empty', cls: 'good' };
-        if (f.settle != null && isFinite(f.settle) && f.settle < 0.999 && rating > 0) return { text: 'settles near ' + Math.round(f.settle * 100) + '%', cls: f.settle >= ((P.SINK_KNEE || 0.6) - 0.05) ? 'warn' : '' };
+        if (f.settle != null && isFinite(f.settle) && f.settle < 0.999 && rating > 0) return { text: '稳定在 ' + Math.round(f.settle * 100) + ' % 附近', cls: f.settle >= ((P.SINK_KNEE || 0.6) - 0.05) ? 'warn' : '' };
         // nothing settles when the panels are in or the heat beats the rating: the sink fills, however slowly
-        if (net > 1e3) { const t = (ship.sinkCapacity - ship.heat) / net; return { text: 'full in ' + U.fmt.time(t), cls: t < 300 ? 'crit' : t < 1200 ? 'warn' : '' }; }
+        if (net > 1e3) { const t = (ship.sinkCapacity - ship.heat) / net; return { text: U.fmt.time(t) + ' 后充满', cls: t < 300 ? 'crit' : t < 1200 ? 'warn' : '' }; }
       }
     }
-    if (net > 1e3) { const t = (ship.sinkCapacity - ship.heat) / net; return { text: 'full in ' + U.fmt.time(t), cls: t < 300 ? 'crit' : t < 1200 ? 'warn' : '' }; }
+    if (net > 1e3) { const t = (ship.sinkCapacity - ship.heat) / net; return { text: U.fmt.time(t) + ' 后充满', cls: t < 300 ? 'crit' : t < 1200 ? 'warn' : '' }; }
     if (net < -1e3 && ship.heat > 0) return { text: 'draining, ' + U.fmt.time(ship.heat / -net) + ' to empty', cls: 'good' };
     return { text: 'steady', cls: '' };
   }
@@ -928,13 +930,13 @@
       const tip = OD.Guide.suggest(sim, ship);
       if (bound.navtip) { bound.navtip.hidden = !tip; if (tip) set('navtip', tip); }
     }
-    if (!pic && bound.ostate) { const th = ship.throttle; set('ostate', ship.disabled ? 'disabled' : th > 0 ? 'burning ' + Math.round(th * 100) + '%' : Math.abs(U.angleDiff(ship.cmdHeading, ship.heading)) > 0.05 ? 'turning' : 'coasting'); bound.ostate.className = 'pill ' + (th > 0 ? 'good' : ''); }
+    if (!pic && bound.ostate) { const th = ship.throttle; set('ostate', ship.disabled ? '失能' : th > 0 ? '点火 ' + Math.round(th * 100) + '%' : Math.abs(U.angleDiff(ship.cmdHeading, ship.heading)) > 0.05 ? '转向中' : '滑行'); bound.ostate.className = 'pill ' + (th > 0 ? 'good' : ''); }
 
     // delta-v
     const dvNow = ship.deltaV(), dvFull = ship.deltaVFull();
     const noDrive = !hasDrive(ship);
     const dvf = dvFull > 0 ? dvNow / dvFull : 0;
-    if (noDrive) { set('dv', 'no drive', ''); set('vdv', 'no drive', ''); }
+    if (noDrive) { set('dv', '无推进器', ''); set('vdv', '无推进器', ''); }
     else {
       set('dv', U.fmt.dv(dvNow) + ' · ' + Math.round(dvf * 100) + '%', dvf < 0.15 ? 'crit' : dvf < 0.35 ? 'warn' : '');
       set('vdv', U.fmt.dv(dvNow), dvf < 0.15 ? 'crit' : dvf < 0.35 ? 'warn' : '');
@@ -948,9 +950,9 @@
       bound.dvcost.classList.toggle('over', !!(plan && plan.active && !plan.feasible));
     }
     if (pic) set('dvplan', '');
-    else set('dvplan', plan && plan.active ? 'this order: ' + U.fmt.dv(plan.dv) + (plan.feasible ? '' : ' · not enough') : 'no burn planned', plan && plan.active && !plan.feasible ? 'crit' : '');
-    set('dvfull', 'full ' + U.fmt.dv(dvFull));
-    set('accel', noDrive ? 'no drive' : U.fmt.accel(ship.accel()));
+    else set('dvplan', plan && plan.active ? '本条指令：' + U.fmt.dv(plan.dv) + (plan.feasible ? '' : ' · 不够') : '未安排点火', plan && plan.active && !plan.feasible ? 'crit' : '');
+    set('dvfull', '满箱 ' + U.fmt.dv(dvFull));
+    set('accel', noDrive ? '无推进器' : U.fmt.accel(ship.accel()));
     set('mass', U.fmt.mass(ship.mass()) + ' (' + U.fmt.mass(ship.propMass) + ')');
     set('speed', U.fmt.speed(U.len(ship.vel)));
     set('heading', U.fmt.deg(ship.heading) + (!pic && Math.abs(U.angleDiff(ship.cmdHeading, ship.heading)) > 0.05 ? ' → ' + U.fmt.deg(ship.cmdHeading) : ''));
@@ -998,8 +1000,8 @@
         // her next order: with her drive out-pulling ours it never comes, otherwise it holds if she coasts.
         const herBurn = target && !target.destroyed && typeof target.accel === 'function' && (target.throttle || 0) > 0.05 ? target.accel() * target.throttle : 0;
         const outrun = herBurn > 0 && herBurn >= liveAccel(ship) * Math.max(0.05, ship.throttle || 1) && d > 200e3;
-        const arriveWords = plan && plan.arrive ? (eta < 3 ? 'now' : outrun ? 'not while she burns this hard' : 'in ' + U.fmt.time(eta) + (herBurn > 0 ? ' if she coasts' : '')) : '';
-        set('tarr', active ? (plan.arrive ? arriveWords : plan.crash ? 'never: ends on the ground' : plan.dry ? 'never: tanks run dry' : 'beyond 4 h') : '—', active && (plan.crash || plan.dry || outrun) ? 'crit' : '');
+        const arriveWords = plan && plan.arrive ? (eta < 3 ? '现在' : outrun ? '她这样点火就到不了' : U.fmt.time(eta) + ' 后' + (herBurn > 0 ? '（如果她滑行）' : '')) : '';
+        set('tarr', active ? (plan.arrive ? arriveWords : plan.crash ? '永不：会撞地' : plan.dry ? '永不：推进剂烧干' : '超过 4 小时') : '—', active && (plan.crash || plan.dry || outrun) ? 'crit' : '');
       } else {
         const est = OD.Autopilot.estimate(ship, target);
         set('test', isFinite(est.time) ? U.fmt.time(est.time) + ' · ' + U.fmt.dv(est.dv) : '—', est.dv > ship.deltaV() ? 'crit' : '');
@@ -1009,16 +1011,16 @@
       let fsuffix = '';
       if (OD.Guide && plan && plan.active && plan.order.target === target.id && sim.isHostile(target, ship)) {
         const tA = OD.Guide.eta(sim, plan, plan.arrive), tF = OD.Guide.eta(sim, plan, plan.flip);
-        if (facet === 'tail' && tA != null) fsuffix = ' · ' + U.fmt.time(tA) + ' more';
-        else if (facet === 'nose' && tF != null && tF > 2) fsuffix = ' · tail from flip in ' + U.fmt.time(tF);
+        if (facet === 'tail' && tA != null) fsuffix = ' · 还有 ' + U.fmt.time(tA);
+        else if (facet === 'nose' && tF != null && tF > 2) fsuffix = ' · ' + U.fmt.time(tF) + '后掉头变舰尾';
       }
-      if (armourAllRound(ship)) set('tfacing', ship.armour.nose + ' cm all round', '');
-      else set('tfacing', facet + ' ' + ship.armour[facet] + ' cm' + fsuffix, facet === 'tail' ? 'crit' : facet === 'flank' ? 'warn' : 'good');
+      if (armourAllRound(ship)) set('tfacing', ship.armour.nose + ' 厘米，全向', '');
+      else set('tfacing', facet + ' ' + ship.armour[facet] + ' 厘米' + fsuffix, facet === 'tail' ? 'crit' : facet === 'flank' ? 'warn' : 'good');
       facets.forEach((f) => { f.classList.toggle('seen', f.dataset.f === facet); f.setAttribute('class', 'f-' + f.dataset.f + (f.dataset.f === facet ? ' seen' : '')); });
-      set('tstate', target.faction === ship.faction ? 'friendly' : sim.isHostile(target, ship) ? 'hostile' : 'civilian');
+      set('tstate', target.faction === ship.faction ? '友方' : sim.isHostile(target, ship) ? '敌方' : '民用');
       bound.tstate.className = 'pill ' + (sim.isHostile(target, ship) ? 'warn' : '');
     } else {
-      set('tname', '—'); set('vrange', '—', ''); set('vclose', '—', ''); set('test', '—'); set('tarr', '—'); set('tstop', '—', ''); set('tfacing', '—'); set('tstate', 'none'); if (bound.tstate) bound.tstate.className = 'pill';
+      set('tname', '—'); set('vrange', '—', ''); set('vclose', '—', ''); set('test', '—'); set('tarr', '—'); set('tstop', '—', ''); set('tfacing', '—'); set('tstate', '无'); if (bound.tstate) bound.tstate.className = 'pill';
       facets.forEach((f) => f.setAttribute('class', 'f-' + f.dataset.f));
     }
     // v11: signature, track and solution rows
@@ -1028,10 +1030,10 @@
       if (st) {
         bound.sigrow.hidden = false; set('sig', st.text, st.cls);
         const pa = $('pActive');
-        if (pa) { const on = !!(typeof OD.Sensors.isActive === 'function' ? OD.Sensors.isActive(ship) : ship.activeSensor); pa.classList.toggle('on', on); pa.setAttribute('aria-pressed', String(on)); pa.disabled = !(ship.activeRange > 0); pa.title = ship.activeRange > 0 ? 'Active sensor (S): a firing solution on everything inside ' + km(ship.activeRange) + '. Everyone out there gets one on us.' : 'No active sensor aboard.'; }
+        if (pa) { const on = !!(typeof OD.Sensors.isActive === 'function' ? OD.Sensors.isActive(ship) : ship.activeSensor); pa.classList.toggle('on', on); pa.setAttribute('aria-pressed', String(on)); pa.disabled = !(ship.activeRange > 0); pa.title = ship.activeRange > 0 ? '主动传感器（S）：' + km(ship.activeRange) + '内的一切都立刻拿到解算，外面每艘船也同时拿到对我们的解算。' : '舰上没有主动传感器。'; }
         for (const k of ['sigsrck', 'sigsrc', 'sensk', 'sens']) if (bound[k]) bound[k].hidden = false;
-        set('sigsrc', 'plume ' + U.fmt.power(st.sig.plume) + ' · radiators ' + U.fmt.power(st.sig.radiators) + ' · hull ' + U.fmt.power(st.sig.hull));
-        set('sens', 'passive ' + km((ship.sensorRange || 0) * ((ship.systems && ship.systems.sensors) || 1)) + (ship.activeRange > 0 ? ' · active ' + km(ship.activeRange) : ''));
+        set('sigsrc', '尾焰 ' + U.fmt.power(st.sig.plume) + ' · 散热板 ' + U.fmt.power(st.sig.radiators) + ' · 舰体 ' + U.fmt.power(st.sig.hull));
+        set('sens', '被动 ' + km((ship.sensorRange || 0) * ((ship.systems && ship.systems.sensors) || 1)) + (ship.activeRange > 0 ? ' · 主动 ' + km(ship.activeRange) : ''));
       }
       if (bound.ttrack) {
         const tr = target && !target.destroyed && sim.isHostile(target, ship) ? trackOf(sim, ship, target) : null;
@@ -1039,9 +1041,9 @@
         if (tr) {
           const sol = tr.q >= ((OD.Sensors.T && OD.Sensors.T.solutionQ) || 2.7);
           const friendly = tr.source === 'friendly' || !sim.isHostile(target, ship);
-          set('ttrack', friendly ? 'solution · transponder' : tr.word + ' · q ' + (isFinite(tr.q) ? tr.q.toFixed(1) : '—') + (tr.source === 'active' ? ' · active' : ''), friendly || sol ? 'good' : tr.word === 'contact' ? 'crit' : 'warn');
+          set('ttrack', friendly ? '解算 · 应答机' : ({ contact: '接触', track: '跟踪', solution: '解算' }[tr.word] || tr.word) + ' · q ' + (isFinite(tr.q) ? tr.q.toFixed(1) : '—') + (tr.source === 'active' ? ' · 主动' : ''), friendly || sol ? 'good' : tr.word === 'contact' ? 'crit' : 'warn');
           let eta = null; try { eta = sol || friendly ? 0 : (typeof OD.Sensors.solutionEta === 'function' ? OD.Sensors.solutionEta(sim, ship, target) : null); } catch (e) { eta = null; }
-          set('tsol', sol || friendly ? 'held' : eta != null && isFinite(eta) ? U.fmt.time(eta) : 'not at this range', sol || friendly ? 'good' : eta != null && isFinite(eta) ? '' : 'warn');
+          set('tsol', sol || friendly ? '已获得' : eta != null && isFinite(eta) ? U.fmt.time(eta) : '此距离无解', sol || friendly ? 'good' : eta != null && isFinite(eta) ? '' : 'warn');
         }
       }
     }
@@ -1055,16 +1057,16 @@
       // v15: a hull that cannot burn (dry tanks, a wrecked drive) says why on each key that needs a burn
       const cant = liveAccel(ship) > 0 ? '' : noThrustWhy(ship);
       const preview = (type, order) => {
-        if (!target || target.destroyed) return 'needs a target';
+        if (!target || target.destroyed) return '需要一个目标';
         if (cant) return cant;
-        if (ship.order.type === type && ship.order.target === target.id && (type !== 'keeprange' || Math.round(ship.order.range / 1000) === rangeKm)) return plan && plan.active ? (plan.arrive ? 'arrive in ' + U.fmt.time(OD.Guide.eta(sim, plan, plan.arrive)) : 'active') : 'active';
+        if (ship.order.type === type && ship.order.target === target.id && (type !== 'keeprange' || Math.round(ship.order.range / 1000) === rangeKm)) return plan && plan.active ? (plan.arrive ? '到达还需 ' + U.fmt.time(OD.Guide.eta(sim, plan, plan.arrive)) : 'active') : 'active';
         const hp = OD.Guide.plan(sim, ship, order);
         return hp.active ? OD.Guide.summary(hp) : '—';
       };
       set('pv_intercept', preview('intercept', { type: 'intercept', target: target && target.id, range: 2000, vmax }));
       set('pv_keeprange', preview('keeprange', { type: 'keeprange', target: target && target.id, range: rangeKm * 1000, vmax }));
-      set('pv_matchv', target && !target.destroyed ? (cant || (ship.order.type === 'matchv' ? 'active' : U.fmt.speed(U.len(U.sub(ship.vel, target.vel))) + ' to cancel')) : 'needs a target');
-      set('pv_retreat', cant || 'full burn away');
+      set('pv_matchv', target && !target.destroyed ? (cant || (ship.order.type === 'matchv' ? '进行中' : '需抵消 ' + U.fmt.speed(U.len(U.sub(ship.vel, target.vel))))) : '需要一个目标');
+      set('pv_retreat', cant || '全力背离');
     }
     if ($('pJink')) { $('pJink').classList.toggle('active', !!ship.jink); $('pJink').setAttribute('aria-pressed', String(!!ship.jink)); }
     if ($('pManual')) { const m = ship.order.type === 'manual'; $('pManual').hidden = !m; $('pManual2').hidden = !m; if (m) { set('mhead', U.fmt.deg(ship.order.heading || 0)); set('mthr', Math.round((ship.order.throttle || 0) * 100) + '%'); } }
@@ -1072,14 +1074,14 @@
     // heat
     const load = ship.thermalLoad();
     if (bound.heatbar) bound.heatbar.style.width = Math.round(load * 100) + '%';
-    set('heat', Math.round(load * 100) + '% of ' + U.fmt.energy(ship.sinkCapacity), heatCls(load));
+    set('heat', Math.round(load * 100) + ' % / ' + U.fmt.energy(ship.sinkCapacity), heatCls(load));
     const fc = heatForecast(ship);
     set('heatfc', fc.text, fc.cls);
     const hin = ship.idleHeat + ship.driveHeat * heatFrac(ship) + (ship.lastExtraHeat || 0);
     set('heatio', U.fmt.power(hin) + ' / ' + U.fmt.power(ship.radiatorPower()));
     const rs = ship.radiators;
-    set('rad', (rs.state >= 0.99 ? 'extended' : rs.state <= 0.01 ? 'stowed' : (rs.deployed ? 'extending ' : 'stowing ') + Math.round(rs.state * 100) + '%') + (rs.auto ? ' · auto' : ''));
-    set('hstate', ship.overheated ? 'saturated' : load > 0.85 ? 'critical' : load > 0.5 ? 'warm' : 'nominal');
+    set('rad', (rs.state >= 0.99 ? '已展开' : rs.state <= 0.01 ? '已收起' : (rs.deployed ? '展开中 ' : '收起中 ') + Math.round(rs.state * 100) + '%') + (rs.auto ? ' · 自动' : ''));
+    set('hstate', ship.overheated ? 'saturated' : load > 0.85 ? '危险' : load > 0.5 ? '偏热' : '正常');
     if (bound.hstate) bound.hstate.className = 'pill ' + (ship.overheated ? 'crit' : load > 0.5 ? 'warn' : 'good');
     panel.querySelectorAll('[data-rad]').forEach((b) => b.classList.toggle('active', b.dataset.rad === 'auto' ? rs.auto : !rs.auto && (b.dataset.rad === '1') === rs.deployed));
     // systems (shown in Essentials only once something is damaged)
@@ -1107,7 +1109,7 @@
       if ($('pWF')) { $('pWF').classList.toggle('active', !!ship.weaponsFree); $('pWF').setAttribute('aria-pressed', String(!!ship.weaponsFree)); }
     }
     $('pFollow').classList.toggle('active', game.cam.follow === ship.id);
-    const det = $('pDetail'); if (det) { det.classList.toggle('active', UI.detail === 'full'); det.setAttribute('aria-pressed', String(UI.detail === 'full')); const want = (UI.detail === 'full' ? 'Full' : 'Essentials') + '<kbd>D</kbd>'; if (det.innerHTML !== want) det.innerHTML = want; }
+    const det = $('pDetail'); if (det) { det.classList.toggle('active', UI.detail === 'full'); det.setAttribute('aria-pressed', String(UI.detail === 'full')); const want = (UI.detail === 'full' ? '完整' : '精简') + '<kbd>D</kbd>'; if (det.innerHTML !== want) det.innerHTML = want; }
     drawPortrait(ship, pic);
   }
 
@@ -1133,7 +1135,7 @@
         // v12: the live overlay (mounts slewing and firing, launches, point defence, venting) on top of the cached hull
         if (drawn && opts.live && typeof OD.ShipArt.overlay === 'function') OD.ShipArt.overlay(ctx, artId(ship), opts);
       }
-      catch (e) { OD.Render.lastError = 'ship art: ' + (e && e.message); }
+      catch (e) { OD.Render.lastError = '舰船绘制：' + (e && e.message); }
       ctx.restore();
     }
     if (!drawn) { ctx.save(); ctx.translate(cx, cy); drawFallbackHull(ctx, ship, L, view); ctx.restore(); }
@@ -1234,7 +1236,7 @@
     ctx.clearRect(0, 0, W, H);
     ctx.font = '9.5px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = 'rgba(127,145,167,0.9)'; ctx.textAlign = 'left';
     // a bare contact has no picture, as in the hull view; a track shows the class and its radiators, nothing live
-    if (pic && pic.level === 'contact') ctx.fillText('contact only: no picture', 8, H - 6);
+    if (pic && pic.level === 'contact') ctx.fillText('只有接触：没有图像', 8, H - 6);
     else {
       // the ship sits low-left so the Follow and Full keys in the top-right corner never cover it
       const fit = fitArt(ship, 'side', Math.min(W * 0.72, H * 2.2), W * 0.72, H * 0.6);
@@ -1243,22 +1245,22 @@
       ctx.fillText((OD.Ships.CLASSES[ship.cls].length) + ' m', 8, H - 6);
     }
     // the V key only where there is a keyboard (index.html hides key letters on a touch screen the same way)
-    ctx.textAlign = 'right'; ctx.fillText(coarseQuery && coarseQuery.matches ? 'hull view' : 'hull view  V', W - 8, H - 6);
+    ctx.textAlign = 'right'; ctx.fillText(coarseQuery && coarseQuery.matches ? '舰体视图' : '舰体视图  V', W - 8, H - 6);
   }
 
   // ------------------------------------------------------------------ hull view screen
   const hullState = { view: 'side', shipId: null, lastKv: 0 };
-  const VIEW_NAMES = { side: 'from the side', top: 'from above', 'three-quarter': 'three-quarter' };
+  const VIEW_NAMES = { side: '侧视', top: '俯视', 'three-quarter': '斜视' };
   function hullShips(sim) { return sim.ships.filter((s) => !s.destroyed); }
   function hullView(id) {
     if (!game.sim) return;
-    if (window.innerWidth <= 900 && document.body.classList.contains('decision-open')) { toast('Answer the question first. Esc leaves it for later.', 3000); return; }
+    if (window.innerWidth <= 900 && document.body.classList.contains('decision-open')) { toast('先回答这个问题。按 Esc 可以留到稍后。', 3000); return; }
     const ship = (id && game.sim.byId(id)) || selected() || game.sim.playerShips()[0]; if (!ship) return;
     hullState.shipId = ship.id;
     // v12: the hull view stays live; the sim keeps stepping at the current warp and the picture follows it
-    const el = screen('hull', '<div class="eyebrow">Hull view<span class="hull-esc"> · V or Esc closes</span></div><h2 class="title hull-title" id="hullName"></h2><p class="sub" id="hullSub"></p>' +
-      '<div class="hullview"><div><div class="views"><span class="seg" id="hullViews">' + ['side', 'top', 'three-quarter'].map((v, i) => '<button data-view="' + v + '">' + (v === 'three-quarter' ? 'Three-quarter' : v[0].toUpperCase() + v.slice(1)) + '<kbd>' + (i + 1) + '</kbd></button>').join('') + '</span><span style="flex:1"></span><button class="sm" id="hullPrev" title="Previous ship (←)">◀ Prev</button><button class="sm" id="hullNext" title="Next ship (→)">Next ▶</button></div>' +
-      '<div class="pic" id="hullPic"><canvas id="hullCanvas" aria-label="Hull of the selected ship"></canvas></div><div id="hullLive" style="font-size:12.5px;margin-top:6px;min-height:1.4em;color:var(--ink)"></div>' +
+    const el = screen('hull', '<div class="eyebrow">舰体视图<span class="hull-esc"> · V 或 Esc 关闭</span></div><h2 class="title hull-title" id="hullName"></h2><p class="sub" id="hullSub"></p>' +
+      '<div class="hullview"><div><div class="views"><span class="seg" id="hullViews">' + ['side', 'top', 'three-quarter'].map((v, i) => '<button data-view="' + v + '">' + ({ side: '侧视', top: '俯视', 'three-quarter': '斜视' }[v]) + '<kbd>' + (i + 1) + '</kbd></button>').join('') + '</span><span style="flex:1"></span><button class="sm" id="hullPrev" title="上一艘（←）">◀ 上一艘</button><button class="sm" id="hullNext" title="下一艘（→）">下一艘 ▶</button></div>' +
+      '<div class="pic" id="hullPic"><canvas id="hullCanvas" aria-label="选中舰船的舰体"></canvas></div><div id="hullLive" style="font-size:12.5px;margin-top:6px;min-height:1.4em;color:var(--ink)"></div>' +
       // v13: the parties get their own strip between the live line and the part definitions, so they are never
       // inside the scrolling callout box
       '<div id="hullParties" hidden><b>Parties</b><span></span></div>' +
@@ -1289,7 +1291,7 @@
     ctx.font = '10.5px "IBM Plex Mono", ui-monospace, monospace';
     // a phone has room for two rows of labels a side, a laptop four
     const ROWS = W < 430 ? 2 : 4, STEP = 13, TOP = 28, BOTTOM = 44;
-    const items = parts.slice(0, 16).map((p) => ({ label: p.label, px: cx + p.x, py: cy + p.y, w: ctx.measureText(p.label).width + 8 })).sort((a, b) => a.px - b.px);
+    const items = parts.slice(0, 16).map((p) => { const lb = p.zh || p.label; return { label: lb, px: cx + p.x, py: cy + p.y, w: ctx.measureText(lb).width + 8 }; }).sort((a, b) => a.px - b.px);
     // parts above the axis label upward, parts below label downward; parts on the axis go to whichever lane is emptier
     const count = { up: 0, down: 0 };
     for (const it of items) { it.side = it.py < cy - 3 ? 'up' : it.py > cy + 3 ? 'down' : null; if (it.side) count[it.side]++; }
@@ -1363,7 +1365,7 @@
   function drawCalloutsLR(ctx, parts, cx, cy, W, H, fit) {
     ctx.font = LABEL_FONT;
     const STEP = 13, TOP = 32, BOT = H - 40, mid = W / 2;
-    const items = parts.slice(0, 16).map((p) => ({ label: p.label, px: cx + p.x, py: cy + p.y, w: ctx.measureText(p.label).width + 8 })).sort((a, b) => a.px - b.px || a.py - b.py);
+    const items = parts.slice(0, 16).map((p) => { const lb = p.zh || p.label; return { label: lb, px: cx + p.x, py: cy + p.y, w: ctx.measureText(lb).width + 8 }; }).sort((a, b) => a.px - b.px || a.py - b.py);
     let k = items.findIndex((it) => it.px >= mid); if (k < 0) k = items.length;
     // neither column carries more than two labels over the other
     while (k > items.length - k + 2) k--;
@@ -1404,7 +1406,7 @@
     const L0 = Math.min(W * 0.84, H * (view === 'top' ? 1.05 : 1.7));
     let labels = null;
     if (pic.level === 'full' && typeof OD.ShipArt.callouts === 'function' && OD.Render.artReady(artId(ship))) {
-      try { labels = (OD.ShipArt.callouts(artId(ship), OD.Render.artOpts(ship, sim, { x: 0, y: 0, size: 120, view: ART_VIEW[view] || view, rotation: 0 })) || []).slice(0, 16).map((p) => p.label); } catch (e) { labels = null; }
+      try { labels = (OD.ShipArt.callouts(artId(ship), OD.Render.artOpts(ship, sim, { x: 0, y: 0, size: 120, view: ART_VIEW[view] || view, rotation: 0 })) || []).slice(0, 16).map((p) => p.zh || p.label); } catch (e) { labels = null; }
     }
     let mode = 'plain', fit;
     // no labels: small margins for the class caption above and the scale bar below
@@ -1449,8 +1451,8 @@
     let drawn = false;
     if (pic.level === 'contact') {
       ctx.font = '13px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = 'rgba(224,232,240,0.8)'; ctx.textAlign = 'center';
-      ctx.fillText('Contact only: a bearing and a rough range.', W / 2, H / 2 - 12);
-      ctx.fillText('No picture until the track improves.', W / 2, H / 2 + 10);
+      ctx.fillText('只有接触：一个方位和大致距离。', W / 2, H / 2 - 12);
+      ctx.fillText('跟踪改善之前没有图像。', W / 2, H / 2 + 10);
       ctx.textAlign = 'left';
     } else drawn = drawHull(ctx, ship, cx, cy, L, view, pic.level === 'track' ? { quality: 'high', plain: true } : { quality: 'high', live: true });
     if (pic.level !== 'contact') {
@@ -1459,7 +1461,7 @@
       const bw = bar / mPer;
       ctx.strokeStyle = 'rgba(224,232,240,0.7)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(16, H - 18); ctx.lineTo(16 + bw, H - 18); ctx.moveTo(16, H - 22); ctx.lineTo(16, H - 14); ctx.moveTo(16 + bw, H - 22); ctx.lineTo(16 + bw, H - 14); ctx.stroke();
       ctx.font = '11px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = 'rgba(224,232,240,0.8)'; ctx.textAlign = 'left'; ctx.fillText(bar + ' m', 16, H - 26);
-      ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(127,145,167,0.9)'; ctx.fillText(VIEW_NAMES[view] + ' · nose right', W - 12, H - 12);
+      ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(127,145,167,0.9)'; ctx.fillText(VIEW_NAMES[view] + ' · 舰首朝右', W - 12, H - 12);
       ctx.textAlign = 'left'; ctx.fillText(cls.name.toUpperCase(), 12, 16);
     }
     // callouts from the art module, when it offers them
@@ -1476,11 +1478,11 @@
         const fac = OD.Ships.FACTIONS[ship.faction].name;
         let line;
         if (ship.faction === sim.playerFaction) line = cls.name + ' · ' + fac + '. ' + cls.blurb + (cls.advice ? ' ' + cls.advice : '');
-        else if (ship.faction === 'CIV') line = cls.name + ' · ' + fac + ' · civilian. ' + cls.blurb;
-        else if (ship.destroyed) line = cls.name + ' · ' + fac + '. Destroyed. ' + cls.blurb;
-        else if (pic.level === 'full') line = cls.name + ' · ' + fac + '. We hold a firing solution on her, so this is everything. ' + cls.blurb;
-        else if (pic.level === 'track') line = cls.name + ' · ' + fac + '. We hold a track on her: the class and her radiators, nothing more.';
-        else line = 'Class unknown · ' + fac + '. A bearing and a rough range, nothing more.';
+        else if (ship.faction === 'CIV') line = cls.name + ' · ' + fac + ' · 民用。' + cls.blurb;
+        else if (ship.destroyed) line = cls.name + ' · ' + fac + '。已被击毁。' + cls.blurb;
+        else if (pic.level === 'full') line = cls.name + ' · ' + fac + '。我们对她有射击解算，所以这里显示的是全部。' + cls.blurb;
+        else if (pic.level === 'track') line = cls.name + ' · ' + fac + '。我们对她保持跟踪：只知道舰级和她的散热板。';
+        else line = '舰级未知 · ' + fac + '。只有一个方位和大致距离。';
         if (sub.textContent !== line) { sub.textContent = line; sub.title = line; }
         // v15: beside a fight the class line stops at two lines; when it is cut, the part list ends with all of it
         if (sub.clientHeight > 0 && sub.scrollHeight > sub.clientHeight + 1) subCut = line;
@@ -1490,18 +1492,18 @@
       // v15: a hull built without a drive shows one Drive row saying so, not a 1 m/s exhaust and 0 N of thrust
       const drv = hasDrive(ship), round = armourAllRound(ship);
       const rows = [
-        ['Length', known ? cls.length + ' m' : dash], ['Dry mass', full ? U.fmt.mass(ship.dryMass) : dash]]
-        .concat(drv ? [['Propellant', full ? U.fmt.mass(ship.propMass) + ' / ' + U.fmt.mass(ship.fullPropMass) : dash],
-          ['Delta-v', full ? U.fmt.dv(ship.deltaV()) + ' / ' + U.fmt.dv(ship.deltaVFull()) : dash], ['Exhaust', known ? U.fmt.speed(ship.exhaustVelocity) : dash], ['Thrust', known ? U.fmt.si(ship.thrust, 'N') : dash], ['Accel.', full ? U.fmt.accel(liveAccel(ship)) : dash]]
-          : [['Drive', known ? 'none fitted' : dash]])
-        .concat([['Radiators', known ? U.fmt.num(ship.radiatorArea) + ' m² · ' + Math.round(ship.radiators.state * 100) + '% out' : dash], ['Heat sink', full ? Math.round(ship.thermalLoad() * 100) + '% full' : dash]])
-        .concat(round ? [['Armour', full ? ship.armour.nose + ' cm all round' : dash]] : [['Armour nose', full ? ship.armour.nose + ' cm' : dash], ['Armour flank / tail', full ? ship.armour.flank + ' / ' + ship.armour.tail + ' cm' : dash]])
-        .concat([['Hull', full ? Math.round(ship.hull * 100) + '%' : dash]], drv ? [['Drive', full ? Math.round(ship.systems.drive * 100) + '%' : dash]] : [], [['Sensors', full ? Math.round(ship.systems.sensors * 100) + '%' : dash]]);
-      const fitted = full ? (ship.mounts.length ? ship.mounts.map((m) => m.name).join(' · ') : 'nothing') : known ? 'unknown until we hold a solution' : 'unknown';
+        ['长度', known ? cls.length + ' m' : dash], ['干重', full ? U.fmt.mass(ship.dryMass) : dash]]
+        .concat(drv ? [['推进剂', full ? U.fmt.mass(ship.propMass) + ' / ' + U.fmt.mass(ship.fullPropMass) : dash],
+          ['Delta-v', full ? U.fmt.dv(ship.deltaV()) + ' / ' + U.fmt.dv(ship.deltaVFull()) : dash], ['排气速度', known ? U.fmt.speed(ship.exhaustVelocity) : dash], ['推力', known ? U.fmt.si(ship.thrust, 'N') : dash], ['Accel.', full ? U.fmt.accel(liveAccel(ship)) : dash]]
+          : [['推进器', known ? '未安装' : dash]])
+        .concat([['散热板', known ? U.fmt.num(ship.radiatorArea) + ' 平方米 · 展开 ' + Math.round(ship.radiators.state * 100) + '%' : dash], ['热沉', full ? Math.round(ship.thermalLoad() * 100) + '% 满' : dash]])
+        .concat(round ? [['装甲', full ? ship.armour.nose + ' 厘米，全向' : dash]] : [['舰首装甲', full ? ship.armour.nose + ' 厘米' : dash], ['舷侧 / 舰尾装甲', full ? ship.armour.flank + ' / ' + ship.armour.tail + ' 厘米' : dash]])
+        .concat([['舰体', full ? Math.round(ship.hull * 100) + '%' : dash]], drv ? [['推进器', full ? Math.round(ship.systems.drive * 100) + '%' : dash]] : [], [['Sensors', full ? Math.round(ship.systems.sensors * 100) + '%' : dash]]);
+      const fitted = full ? (ship.mounts.length ? ship.mounts.map((m) => m.name).join(' · ') : '无') : known ? '拿到解算前未知' : '未知';
       const html = rows.map(([k, v]) => '<span class="k">' + esc(k) + '</span><span class="v">' + esc(v) + '</span>').join('') +
-        '<span class="k" style="grid-column:1/-1;margin-top:6px">Fitted</span><span class="v" style="grid-column:1/-1;white-space:normal;text-align:left">' + esc(fitted) + '</span>';
+        '<span class="k" style="grid-column:1/-1;margin-top:6px">装配</span><span class="v" style="grid-column:1/-1;white-space:normal;text-align:left">' + esc(fitted) + '</span>';
       if (kv && kv.innerHTML !== html) kv.innerHTML = html;
-      let pt = parts && parts.length ? parts.map((p) => p.label + (p.text ? ': ' + p.text : '')).join('\n') : (drawn || pic.level === 'contact' ? '' : 'No detailed render for this hull yet. This is the structural silhouette.');
+      let pt = parts && parts.length ? parts.map((p) => (p.zh || p.label) + (p.text ? '：' + p.text : '')).join('\n') : (drawn || pic.level === 'contact' ? '' : '这型舰体还没有细致模型，现在看到的是结构轮廓。');
       if (subCut) pt = pt ? pt + '\n' + subCut : subCut;
       if (pl && pl.textContent !== pt) pl.textContent = pt;
       const strip = $('hullParties');
@@ -1581,16 +1583,16 @@
     if (bound.ostate) bound.ostate.className = 'pill ' + (ship.destroyed ? '' : pic.level === 'full' ? 'good' : pic.level === 'track' ? 'warn' : 'crit');
     const rng = fix ? (fix.err > 0 ? km(two(fix.d)) + ' ± ' + km(two(fix.err)) : '≈ ' + km(two(fix.d))) : '';
     let text, sub = '';
-    if (ship.destroyed) text = 'She is destroyed.';
+    if (ship.destroyed) text = '她已被击毁。';
     else if (pic.level === 'full') {
       const g = ship.throttle > 0.02 && typeof ship.accel === 'function' ? (ship.accel() * ship.throttle) / 9.80665 : 0;
-      text = (fix ? fix.from.name + ' holds' : 'We hold') + ' a firing solution on her. ' + (ship.disabled ? 'She is disabled.' : g > 0 ? 'She is burning at ' + U.fmt.num(g, 2) + ' g.' : 'She is coasting.');
+      text = (fix ? fix.from.name + ' 持有' : '我们持有') + '对她的射击解算。' + (ship.disabled ? '她已失能。' : g > 0 ? '她正以 ' + U.fmt.num(g, 2) + ' g 加速。' : '她在滑行。');
     } else if (pic.level === 'track') {
-      text = fix ? fix.from.name + ' holds a track on her at ' + rng + '.' : 'We hold a track on her.';
-      sub = 'We know her class and see her radiators, nothing more.';
+      text = fix ? fix.from.name + ' 在 ' + rng + ' 上跟踪着她。' : '我们对她保持跟踪。';
+      sub = '我们知道她的舰级，能看到她的散热板，仅此而已。';
     } else {
-      text = fix ? fix.from.name + ' has a bearing on her and a range of ' + rng + '.' : 'We have a bearing on her and a rough range.';
-      sub = 'No class and no picture until the track improves.';
+      text = fix ? fix.from.name + ' 只有她的方位，距离 ' + rng + '。' : '我们只有她的方位和大致距离。';
+      sub = '跟踪改善之前，没有舰级也没有图像。';
     }
     set('navtext', text); set('navsub', sub);
     if (bound.navsub) bound.navsub.hidden = !sub;
@@ -1607,10 +1609,10 @@
         const r = U.dist(ship.pos, tg.pos);
         const rel = U.sub(tg.vel, ship.vel), los = U.norm(U.sub(tg.pos, ship.pos));
         const closing = -(rel.x * los.x + rel.y * los.y);
-        bits.push('target ' + tg.name + ' · ' + U.fmt.dist(r) + ' · ' + (Math.abs(closing) < 0.5 ? 'range steady' : (closing > 0 ? 'closing ' : 'opening ') + U.fmt.speed(Math.abs(closing))));
+        bits.push('目标 ' + tg.name + ' · ' + U.fmt.dist(r) + ' · ' + (Math.abs(closing) < 0.5 ? '距离不变' : (closing > 0 ? '接近 ' : '拉开 ') + U.fmt.speed(Math.abs(closing))));
       }
-      if (E && E.shipReadout) { try { const row = (E.shipReadout(ship) || []).find((x) => /^fire mode$/i.test(x.label || '')); if (row && row.value) bits.push('beams ' + row.value); } catch (e) { /* optional */ } }
-      if (!bits.length) bits.push('no threats · no target');
+      if (E && E.shipReadout) { try { const row = (E.shipReadout(ship) || []).find((x) => /^fire mode$/i.test(x.label || '')); if (row && row.value) bits.push('光束 ' + row.value); } catch (e) { /* optional */ } }
+      if (!bits.length) bits.push('无威胁 · 无目标');
     } else if (ship.faction !== 'CIV') {
       // from the ship we command, and then from the nearest of ours if that is someone else; with none of ours
       // selected, from the ship the map measures from. A range under a solution runs to where the track puts her, the plot's two figures with its
@@ -1639,7 +1641,7 @@
     const d = document.createElement('div');
     d.className = 'line ' + (e.kind || '');
     // the speaker column is one line wide; a name longer than it keeps the whole name on hover
-    d.innerHTML = '<span class="t">' + U.fmt.clock(e.t) + '</span><span class="who"' + (e.speaker ? ' title="' + esc(e.speaker) + '"' : '') + '>' + esc(e.speaker || '') + '</span><span class="msg">' + esc(nbPct(e.text)) + '</span>';
+    d.innerHTML = '<span class="t">' + U.fmt.clock(e.t) + '</span><span class="who"' + (e.speaker ? ' title="' + esc(speakerZh(e.speaker)) + '"' : '') + '>' + esc(speakerZh(e.speaker)) + '</span><span class="msg">' + esc(nbPct(e.text)) + '</span>';
     el.appendChild(d);
     while (el.children.length > 80) el.removeChild(el.firstChild);
     el.scrollTop = el.scrollHeight;
@@ -1714,7 +1716,7 @@
       folded = !!(fl && fl.clientHeight > 0 && fl.scrollHeight > fl.clientHeight + 1);
     }
     lg.classList.toggle('folded', folded);
-    if (fold) { fold.textContent = folded ? 'Show' : 'Hide'; fold.setAttribute('aria-expanded', String(!folded)); fold.setAttribute('aria-label', folded ? 'Show the map key' : 'Hide the map key'); }
+    if (fold) { fold.textContent = folded ? '显示' : '隐藏'; fold.setAttribute('aria-expanded', String(!folded)); fold.setAttribute('aria-label', folded ? '显示图例' : '隐藏图例'); }
   }
 
   // ------------------------------------------------------------------ hints & toasts
@@ -1735,7 +1737,7 @@
     const el = $('hint');
     if (!hintActive) { el.hidden = true; return; }
     $('hintText').textContent = hintActive.text;
-    $('hintStep').textContent = hintActive.step ? 'Step ' + hintActive.step[0] + ' of ' + hintActive.step[1] : 'Hint';
+    $('hintStep').textContent = hintActive.step ? '第 ' + hintActive.step[0] + ' / ' + hintActive.step[1] + ' 步' : '提示';
     $('hintSkip').hidden = !hintActive.step;
     el.classList.toggle('tour', !!hintActive.step);
     // v13: a hint may carry one action, for the phone where the key it would name does not exist
@@ -1775,7 +1777,7 @@
   let toastTimer = null;
   function toast(text, ms = 2600, speaker, tag) {
     const el = $('toast');
-    if (speaker) { el.className = 'comms'; el.innerHTML = '<b>' + esc(speaker) + '</b>' + esc(text) + (tag ? '<span class="tag">' + esc(tag) + '</span>' : ''); } else { el.className = ''; el.textContent = text; }
+    if (speaker) { el.className = 'comms'; el.innerHTML = '<b>' + esc(speakerZh(speaker)) + '</b>' + esc(text) + (tag ? '<span class="tag">' + esc(tag) + '</span>' : ''); } else { el.className = ''; el.textContent = text; }
     el.hidden = false;
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, ms);
   }
@@ -1785,24 +1787,24 @@
   // way bridge.js names its own screens ('Bridge · Chapters'), so moving between the canvas console and a DOM
   // screen keeps one look. opts.head overrides the name; opts.close = { id, label, run } puts a close key (Esc) in
   // the strip for a long screen whose other close key is at the bottom.
-  const SCREEN_HEADS = { physics: 'Physics', help: 'How to play', campaign: 'Campaign', campend: 'Campaign', configurator: 'Ship configurator', skirmish: 'Skirmish',
-    menu: 'Main console', chapters: 'Chapters', briefing: 'Briefing', situation: 'Situation', hangar: 'Hangar', inspect: 'Hull view', pause: 'Paused', debrief: 'Debrief' };
+  const SCREEN_HEADS = { physics: '物理', help: '玩法说明', campaign: '战役', campend: '战役', configurator: '舰船设计台', skirmish: '遭遇战',
+    menu: '主控台', chapters: '章节', briefing: '简报', situation: '局势', hangar: '机库', inspect: '舰体视图', pause: '已暂停', debrief: '战报' };
   function screenKeys(host, opts) {
     const keys = host.querySelector('.scr-keys'); if (!keys) return;
     const add = (label, aria, run, cls) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sm' + (cls ? ' ' + cls : ''); b.innerHTML = label; if (aria) b.setAttribute('aria-label', aria); b.addEventListener('click', run); keys.appendChild(b); return b; };
     if (opts.close && typeof opts.close.run === 'function') {
-      const b = add(esc(opts.close.label || 'Close') + '<kbd>Esc</kbd>', null, opts.close.run, 'scr-close');
+      const b = add(esc(opts.close.label || '关闭') + '<kbd>Esc</kbd>', null, opts.close.run, 'scr-close');
       if (opts.close.id) b.id = opts.close.id;
       b.dataset.esc = '';
     }
     // the same two keys the console's header carries: sound and text size
     if (OD.Sound && typeof OD.Sound.setEnabled === 'function') {
       const snd = add('', null, () => { const on = !!(OD.Sound.enabled == null ? true : OD.Sound.enabled); try { OD.Sound.setEnabled(!on); if (!on && OD.Sound.unlock) OD.Sound.unlock(); } catch (e) { /* optional */ } sndLabel(); });
-      const sndLabel = () => { const on = !!(OD.Sound.enabled == null ? true : OD.Sound.enabled); snd.textContent = 'SND ' + (on ? '●' : '○'); snd.setAttribute('aria-label', 'Sound ' + (on ? 'on: switch off' : 'off: switch on')); };
+      const sndLabel = () => { const on = !!(OD.Sound.enabled == null ? true : OD.Sound.enabled); snd.textContent = 'SND ' + (on ? '●' : '○'); snd.setAttribute('aria-label', '声音' + (on ? '：开，点击关闭' : '：关，点击打开')); };
       sndLabel();
     }
     const aa = add('AA', null, () => { UI.setTextSize(UI.textSize === 'large' ? 'normal' : 'large', true); aaLabel(); });
-    const aaLabel = () => aa.setAttribute('aria-label', 'Text size: ' + (UI.textSize === 'large' ? 'large, switch to normal' : 'normal, switch to large'));
+    const aaLabel = () => aa.setAttribute('aria-label', '字号：' + (UI.textSize === 'large' ? '大号，切回标准' : '标准，切到大号'));
     aaLabel();
   }
   function screen(id, html, opts = {}) {
@@ -1832,27 +1834,27 @@
     const target = ship && ship.target ? sim.byId(ship.target) : null;
     const boxes = [];
     if (ship) {
-      boxes.push({ t: 'The rocket equation', p: 'Delta-v is the total speed change the tanks can buy. It comes from two numbers only: the exhaust velocity vₑ, and the ratio of full mass m₀ to dry mass m₁. The ratio sits inside a logarithm, so doubling a ship\u2019s delta-v costs far more than double the propellant.', f: !hasDrive(ship)
-        ? 'Δv = vₑ · ln(m₀/m₁)\nno drive and no propellant: m₀ = m₁ = ' + U.fmt.mass(ship.dryMass) + ', so Δv = 0'
-        : 'Δv = vₑ · ln(m₀/m₁)\nvₑ = ' + U.fmt.speed(ship.exhaustVelocity) + '\nm₀ = ' + U.fmt.mass(ship.mass()) + '   m₁ = ' + U.fmt.mass(ship.dryMass) + '\nΔv = ' + U.fmt.dv(ship.deltaV()) + ' now, ' + U.fmt.dv(ship.deltaVFull()) + ' full\nspent this sortie: ' + U.fmt.dv(ship.stats.dvSpent) });
+      boxes.push({ t: '火箭方程', p: '速度增量是推进剂箱能买到的总速度变化。它只由两个数决定：排气速度 vₑ，以及满载质量 m₀ 与干重 m₁ 的比值。这个比值在自然对数里，所以要把速度增量翻一倍，推进剂要多花远不止一倍。', f: !hasDrive(ship)
+        ? 'Δv = vₑ · ln(m₀/m₁)\n没有推进器也没有推进剂：m₀ = m₁ = ' + U.fmt.mass(ship.dryMass) + '，所以 Δv = 0'
+        : 'Δv = vₑ · ln(m₀/m₁)\nvₑ = ' + U.fmt.speed(ship.exhaustVelocity) + '\nm₀ = ' + U.fmt.mass(ship.mass()) + '   m₁ = ' + U.fmt.mass(ship.dryMass) + '\nΔv = 当前 ' + U.fmt.dv(ship.deltaV()) + '，满箱 ' + U.fmt.dv(ship.deltaVFull()) + '\n本次出击已花：' + U.fmt.dv(ship.stats.dvSpent) });
       // the figures are the ones the simulation is using now: a hurt drive scales the thrust, a wrecked one has none
       const a = ship.accelNominal(), tw = thrustWhy(ship), live = tw.live, fac = tw.fac;
       const aLine = live > 0
         ? 'a = F/m = ' + U.fmt.si(ship.thrust, 'N') + (fac < 0.995 ? ' × ' + Math.round(fac * 100) + ' %' + (tw.why ? ' (' + tw.why + ')' : '') : '') + ' / ' + U.fmt.mass(ship.mass()) + ' = ' + U.fmt.accel(live)
         : tw.none + '\nrated a = F/m = ' + U.fmt.si(ship.thrust, 'N') + ' / ' + U.fmt.mass(ship.mass()) + ' = ' + U.fmt.accel(a);
-      boxes.push({ t: 'Thrust and acceleration', p: 'Acceleration a is thrust F divided by current mass m. The drive puts out the same force all through a burn, so as propellant burns off the ship accelerates harder. The flip time is how long it takes to swing 180° before a braking burn.', f: !hasDrive(ship)
+      boxes.push({ t: '推力与加速度', p: '加速度 a 是推力 F 除以当前质量 m。一次点火全程推力不变，所以推进剂烧掉后舰会越加速越猛。掉头时间是反推之前把舰首转过 180° 要多久。', f: !hasDrive(ship)
         // v15: a hull without a drive has no burn to flip for and no tanks to run dry
-        ? 'no drive: F = 0, so a = 0 at any mass\nshe holds her orbit'
-        : aLine + (ship.propMass > 0 ? '\nwhen dry: ' + U.fmt.accel(ship.thrust / ship.dryMass) : '') + '\nflip 180°: ' + U.fmt.time(OD.Autopilot.flipTimeFor(typeof OD.Autopilot.turnFactor === 'function' ? { angAccel: ship.angAccel * OD.Autopilot.turnFactor(ship), maxAngVel: ship.maxAngVel } : ship)) });
+        ? '没有推进器：F = 0，所以不管质量多大，加速度都是 0\n她留在自己的轨道上'
+        : aLine + (ship.propMass > 0 ? '\n烧干后：' + U.fmt.accel(ship.thrust / ship.dryMass) : '') + '\n掉头 180°：' + U.fmt.time(OD.Autopilot.flipTimeFor(typeof OD.Autopilot.turnFactor === 'function' ? { angAccel: ship.angAccel * OD.Autopilot.turnFactor(ship), maxAngVel: ship.maxAngVel } : ship)) });
     }
     if (ship && target) {
       const d = U.dist(ship.pos, target.pos), a = liveAccel(ship);
       const b = a > 0 ? P.brachistochrone(d, a) : null;
-      if (hasDrive(ship)) boxes.push({ t: 'Brachistochrone transfer', p: 'The quickest transfer a torch drive can fly. Burn toward the target for half the distance, flip, then burn against your motion for the other half. d is the range and a the acceleration. Time and delta-v both grow with the square root of the distance, so a target twice as far costs about 1.4 times as much of each.', f: 'range d = ' + U.fmt.dist(d) + (b ? '\nt = 2·√(d/a) = ' + U.fmt.time(b.time) + '   peak ' + U.fmt.speed(b.peakV) + '\nΔv = 2·√(d·a) = ' + U.fmt.dv(b.dv) + '\n\ncapped at a 1.5 km/s cruise: ' + U.fmt.time(P.transferWithBudget(d, a, 3000).time) + ' and ' + U.fmt.dv(Math.min(3000, b.dv)) + ' of Δv' : '\n' + thrustWhy(ship).none + ', and she cannot fly this transfer'), plot: true });
+      if (hasDrive(ship)) boxes.push({ t: '直线转移', p: '火炬推进器能飞的最快转移。朝目标点火飞完一半距离，掉头，再朝反方向点火飞完另一半。d 是距离，a 是加速度。时间和速度增量都随距离的平方根增长，所以目标远一倍，两者各约多花 1.4 倍。', f: '距离 d = ' + U.fmt.dist(d) + (b ? '\nt = 2·√(d/a) = ' + U.fmt.time(b.time) + '   峰值 ' + U.fmt.speed(b.peakV) + '\nΔv = 2·√(d·a) = ' + U.fmt.dv(b.dv) + '\n\n压在 1.5 公里/秒巡航：' + U.fmt.time(P.transferWithBudget(d, a, 3000).time) + '，耗速度增量 ' + U.fmt.dv(Math.min(3000, b.dv)) : '\n' + thrustWhy(ship).none + '，飞不了这次转移'), plot: true });
       const lag = P.lightLag(d);
-      boxes.push({ t: 'No stealth in space', p: 'A lit drive throws gigawatts of light and heat at a 3 K sky, so every sensor in the engagement sees it. What changes from ship to ship is how well they see you. Light takes time to cross the range as well. The box below says how far the target has moved since the light you are seeing left it.', f: (hasDrive(ship) ? 'drive plume: ' + U.fmt.power(0.5 * (ship.thrust || 0) * (ship.exhaustVelocity || 0) * ((OD.Sensors && OD.Sensors.T && OD.Sensors.T.plumeFraction) || 0.02)) + ' at full thrust' : 'drive plume: none, she has no drive') + '\nlight lag to target: ' + (lag < 1 ? Math.round(lag * 1000) + ' ms' : lag.toFixed(1) + ' s') + '\ntarget has moved ' + U.fmt.dist(U.len(target.vel) * lag) + ' since that picture' });
+      boxes.push({ t: '太空里没有隐身', p: '点着的推进器把吉瓦级的光和热扔进 3 K 的太空背景，交战范围内每台传感器都看得见。各舰的差别只在于看得多清楚。光穿过这段距离也要时间。下面这行说的是：你看到的那束光离开目标之后，它又移动了多远。', f: (hasDrive(ship) ? '尾焰：满推力 ' + U.fmt.power(0.5 * (ship.thrust || 0) * (ship.exhaustVelocity || 0) * ((OD.Sensors && OD.Sensors.T && OD.Sensors.T.plumeFraction) || 0.02)) : '尾焰：无，她没有推进器') + '\n到目标的光行时：' + (lag < 1 ? Math.round(lag * 1000) + ' 毫秒' : lag.toFixed(1) + ' 秒') + '\n在这段时间里目标移动了 ' + U.fmt.dist(U.len(target.vel) * lag) });
       const facet = facetSeen(ship, target);
-      boxes.push({ t: 'Facing armour', p: 'Armour is mass, and mass costs delta-v, so it is thickest on the nose that faces the enemy while closing. The tail carries the least and holds the drive. Braking toward an enemy points that tail at them.', f: armourAllRound(ship) ? ship.armour.nose + ' cm on every facet\nthe target sees the same ' + ship.armour.nose + ' cm from any bearing' : 'nose ' + ship.armour.nose + ' cm   flank ' + ship.armour.flank + ' cm   tail ' + ship.armour.tail + ' cm\nthe target currently sees our ' + facet });
+      boxes.push({ t: '受弹装甲', p: '装甲就是质量，质量要花速度增量，所以最厚的装甲在舰首——接近时它正对敌人。舰尾最薄，而推进器就在那里。朝敌人反推，等于把舰尾递过去。', f: armourAllRound(ship) ? '每一面都是 ' + ship.armour.nose + ' 厘米\n目标从任何方向看到的都是 ' + ship.armour.nose + ' 厘米' : '舰首 ' + ship.armour.nose + ' 厘米   舷侧 ' + ship.armour.flank + ' 厘米   舰尾 ' + ship.armour.tail + ' 厘米\n目标当前看到的是我方' + facet });
     }
     if (ship && OD.Sensors && typeof OD.Sensors.signature === 'function') {
       try {
@@ -1864,7 +1866,7 @@
         if (OD.Crew && typeof OD.Crew.sensorFactor === 'function') { try { const w = OD.Crew.sensorFactor(ship); if (typeof w === 'number' && isFinite(w) && w > 0) watch = w; } catch (e) { watch = 1; } }
         const S0 = Sh * watch;
         const FF = (e) => Math.pow((OD.Sensors && OD.Sensors.T && OD.Sensors.T.farFactor) || 4, e); // the quality law: q 2.7 sits 4^0.15 beyond the pinned range, q 1.8 at 4^0.6
-        boxes.push({ t: 'Being seen', p: 'A sensor picks up the waste heat and the drive plume of a ship against the sky. Signal falls with the square of range, so the range R_sol for a firing solution grows only with the square root of the power P a ship radiates: a hundred times the power buys ten times the range. S is our own sensor range, where it pins a 1 MW hull. An active sensor skips all of this and hands everyone a solution at once.', f: 'R_sol = S · √(P / 1 MW)\nour signature P = ' + U.fmt.power(sig.total) + '  (plume ' + U.fmt.power(sig.plume) + ', radiators ' + U.fmt.power(sig.radiators) + ', hull ' + U.fmt.power(sig.hull) + ')' + (sf && sf.solution > 0 ? '\ntheir best sensor' + (sf.by ? ' (' + sf.by + ')' : '') + ': solution from ' + km(sf.solution) + ', a track from ' + km(sf.track) : '\nno hostile sensor in play') + '\nour sensor S = ' + km(S0) + (Math.abs(watch - 1) > 1e-9 ? ' (' + km(Sh) + ' of hardware, and the sensor watch is at ' + U.fmt.pct(watch) + ')' : '') + ': pinned on a 1 MW hull at ' + km(S0) + ', a firing solution from ' + km(S0 * FF(0.15)) + ', a track from ' + km(S0 * FF(0.6)) + '. On 100 MW of radiators, ten times as far' + (ship.activeRange > 0 ? '\nactive sensor: a solution inside ' + km(ship.activeRange) + ' at once, seen by everyone' : '') });
+        boxes.push({ t: '被看见', p: '传感器在天空背景上拾取一艘舰的废热和尾焰。信号随距离的平方衰减，所以能拿到射击解算的距离 R_sol 只随舰辐射功率 P 的平方根增长：功率一百倍，距离十倍。S 是我们自己的传感器距离，也就是它锁定 1 兆瓦舰体的距离。主动传感器绕开这一切，一次性把解算发给所有人。', f: 'R_sol = S · √(P / 1 MW)\n我方信号特征 P = ' + U.fmt.power(sig.total) + '（尾焰 ' + U.fmt.power(sig.plume) + '，散热板 ' + U.fmt.power(sig.radiators) + '，舰体 ' + U.fmt.power(sig.hull) + '）' + (sf && sf.solution > 0 ? '\n对方最好的传感器' + (sf.by ? '（' + sf.by + '）' : '') + '：解算距离 ' + km(sf.solution) + '，跟踪距离 ' + km(sf.track) : '\n没有敌方传感器在盯') + '\n我方传感器 S = ' + km(S0) + (Math.abs(watch - 1) > 1e-9 ? '（硬件 ' + km(Sh) + '，传感器值班在 ' + U.fmt.pct(watch) + '）' : '') + '：对 1 兆瓦舰体的锁定距离 ' + km(S0) + '，解算距离 ' + km(S0 * FF(0.15)) + '，跟踪距离 ' + km(S0 * FF(0.6)) + '。对 100 兆瓦的散热板，距离远十倍' + (ship.activeRange > 0 ? '\n主动传感器：' + km(ship.activeRange) + ' 内立刻拿到解算，但所有人都看得见' : '') });
       } catch (e) { /* the box is optional */ }
     }
     if (ship) {
@@ -1872,26 +1874,26 @@
       const pout = ship.radiatorPower();
       const net = pin - pout;
       const tSat = net > 0 ? (ship.sinkCapacity - ship.heat) / net : Infinity;
-      let sinkWord = net > 0 ? ', saturates in ' + U.fmt.time(tSat) : ', draining';
+      let sinkWord = net > 0 ? '，' + U.fmt.time(tSat) + ' 后充满' : '，正在排空';
       if (typeof P.sinkForecast === 'function') {
         let f = null; try { f = P.sinkForecast(ship.heat, ship.sinkCapacity, typeof ship.radiatorRating === 'function' ? ship.radiatorRating() : pout, pin, 7200, ship.radiatorTemp); } catch (e) { f = null; }
-        if (f) sinkWord = f.tFull != null && isFinite(f.tFull) ? ', full in ' + U.fmt.time(f.tFull) : f.tEmpty != null && isFinite(f.tEmpty) && ship.heat > 0.05 * ship.sinkCapacity ? ', empty in ' + U.fmt.time(f.tEmpty) : f.settle != null && isFinite(f.settle) ? ', settles near ' + Math.round(f.settle * 100) + '%' : '';
+        if (f) sinkWord = f.tFull != null && isFinite(f.tFull) ? '，' + U.fmt.time(f.tFull) + ' 后充满' : f.tEmpty != null && isFinite(f.tEmpty) && ship.heat > 0.05 * ship.sinkCapacity ? '，' + U.fmt.time(f.tEmpty) + ' 后排空' : f.settle != null && isFinite(f.settle) ? '，稳定在 ' + Math.round(f.settle * 100) + ' % 附近' : '';
       }
-      boxes.push({ t: 'Heat has to go somewhere', p: 'There is no air to carry heat away, so everything the reactor and the drive waste goes into a heat sink and only the radiators shed it. A panel radiates by the fourth power of its temperature: below 60 % of the sink the panels run cool and shed little, above it they run at 1000 K and shed their full rating. A is the panel area, ε 0.9 the emissivity and σ the Stefan\u2013Boltzmann constant. The drive is open cycle, so almost all of its waste leaves with the exhaust and only tens of megawatts soak back into the hull, which is why a 16 GW plume shows up as a 30 MW heat load.', f: 'P_rad = 2·A·ε·σ·T⁴ = 2 · ' + ship.radiatorArea + ' m² · 0.9 · 5.67e-8 · (' + ship.radiatorTemp + ' K)⁴\n      = ' + U.fmt.power(P.radiatorPower(ship.radiatorArea, ship.radiatorTemp)) + ' fully extended\nnow: in ' + U.fmt.power(pin) + '   out ' + U.fmt.power(pout) + '\nsink ' + Math.round(ship.thermalLoad() * 100) + '%' + sinkWord });
+      boxes.push({ t: '热总得有个去处', p: '真空里没有空气把热带走，所以反应堆和推进器浪费的每一焦耳都进热沉，只有散热板能排掉。散热板按温度的四次方辐射：热沉低于 60 % 时板子温度低、排得少；超过之后板子跑到 1000 K，排出额定值。A 是板面积，ε 取 0.9 是发射率，σ 是斯特藩–玻尔兹曼常数。推进器是开式循环，绝大部分废热随排气走了，只有几十兆瓦渗回舰体——所以 16 吉瓦的尾焰在热账上只算 30 兆瓦。', f: 'P_rad = 2·A·ε·σ·T⁴ = 2 · ' + ship.radiatorArea + ' m² · 0.9 · 5.67e-8 · (' + ship.radiatorTemp + ' K)⁴\n      = ' + U.fmt.power(P.radiatorPower(ship.radiatorArea, ship.radiatorTemp)) + '（完全展开）\n当前：进 ' + U.fmt.power(pin) + '   出 ' + U.fmt.power(pout) + '\n热沉 ' + Math.round(ship.thermalLoad() * 100) + '%' + sinkWord });
     }
     if (sim.body && ship) {
       const el = P.orbitalElements(sim.body.mu, ship.pos, ship.vel);
       const r = U.len(ship.pos);
-      boxes.push({ t: 'Orbit around ' + sim.body.name, p: 'Everything here is falling around ' + sim.body.name + '. A burn changes the ellipse you coast on, not only your position. Put the periapsis below the surface and the coast ends on the ground.', f: 'altitude ' + U.fmt.dist(r - sim.body.radius) + '   speed ' + U.fmt.speed(U.len(ship.vel)) + '\ncircular here: ' + U.fmt.speed(P.circularVelocity(sim.body.mu, r)) + '   escape: ' + U.fmt.speed(P.escapeVelocity(sim.body.mu, r)) + '\n' + (el.bound ? 'periapsis ' + U.fmt.dist(el.periapsis - sim.body.radius) + '   apoapsis ' + U.fmt.dist(el.apoapsis - sim.body.radius) + '\nperiod ' + U.fmt.time(P.orbitalPeriod(sim.body.mu, el.a)) : 'on an escape trajectory') });
+      boxes.push({ t: '绕 ' + sim.body.name, p: '这里的一切都在绕 ' + sim.body.name + '。点火改变的是你滑行所在的椭圆，不只是你的位置。把近点压到地面以下，这段滑行就会落在地上。', f: '高度 ' + U.fmt.dist(r - sim.body.radius) + '   速度 ' + U.fmt.speed(U.len(ship.vel)) + '\n此处圆轨道速度：' + U.fmt.speed(P.circularVelocity(sim.body.mu, r)) + '   逃逸速度：' + U.fmt.speed(P.escapeVelocity(sim.body.mu, r)) + '\n' + (el.bound ? '近点 ' + U.fmt.dist(el.periapsis - sim.body.radius) + '   远点 ' + U.fmt.dist(el.apoapsis - sim.body.radius) + '\n周期 ' + U.fmt.time(P.orbitalPeriod(sim.body.mu, el.a)) : '在逃逸轨道上') });
     }
     const R = ship && target ? U.dist(ship.pos, target.pos) : 300e3;
-    boxes.push({ t: 'Beams spread with distance', p: 'A laser cannot be focused tighter than diffraction allows. The spot grows with the range R and the wavelength λ, and shrinks with the mirror diameter D. A wider spot spreads the same power over more armour, so it burns through more slowly.', f: 'spot = 2.44 · λ · R / D\n1.0 m mirror, 1064 nm, R = ' + U.fmt.dist(R) + ': spot ' + spotFmt(P.beamSpotDiameter(1064e-9, R, 1.0)) + '\n1.6 m mirror: ' + spotFmt(P.beamSpotDiameter(1064e-9, R, 1.6)) });
+    boxes.push({ t: '光束随距离散开', p: '激光的聚焦精度受衍射限制。光斑随距离 R 和波长 λ 变大，随反射镜口径 D 变小。光斑越大，同样的功率摊在更多装甲上，烧穿就越慢。', f: 'spot = 2.44 · λ · R / D\n1.0 米镜，1064 纳米，R = ' + U.fmt.dist(R) + '：光斑 ' + spotFmt(P.beamSpotDiameter(1064e-9, R, 1.0)) + '\n1.6 米镜：' + spotFmt(P.beamSpotDiameter(1064e-9, R, 1.6)) });
     const tf = P.slugFlightTime(R, 4000);
-    boxes.push({ t: 'Slugs take time to arrive', p: 'A coilgun slug is unguided, so it is fired at where the target will be. The target has the whole flight time to be somewhere else, and a short sideways burn is enough to move that far. That is what jinking does.', f: 'flight time = R / v = ' + U.fmt.dist(R) + ' / 4 km/s = ' + U.fmt.time(tf) + '\n2 s of 10 m/s² sideways: ' + U.fmt.dist(20 * (tf - 1)) + ' off the aim point\nan interceptor carries 7.8 km/s of its own Δv and closes that gap. A slug cannot.' });
+    boxes.push({ t: '弹丸要飞一段时间', p: '线圈炮弹丸不带制导，所以是朝“目标将会在的位置”打的。目标有整个飞行时间可以挪开，一次短的侧向点火就够。规避做的就是这件事。', f: '飞行时间 = R / v = ' + U.fmt.dist(R) + ' / 4 公里/秒 = ' + U.fmt.time(tf) + '\n以 10 米/秒² 侧推 2 秒：偏离瞄准点 ' + U.fmt.dist(20 * (tf - 1)) + '\n拦截弹自带 7.8 公里/秒的速度增量，能追上这个偏差；弹丸不能。' });
     if (OD.Engagement && OD.Engagement.physicsNotes && ship) {
       for (const n of OD.Engagement.physicsNotes(ship, target) || []) boxes.push({ t: n.title, p: '', f: n.body });
     }
-    return boxes.map((b) => '<div class="box' + (b.plot ? ' wide' : '') + '"><h4>' + esc(b.t) + '</h4>' + (b.p ? '<p>' + keepNums(esc(nbPct(b.p))) + '</p>' : '') + '<div class="f">' + keepNums(esc(nbPct(b.f))) + '</div>' + (b.plot ? '<canvas id="physPlot" class="plot" width="640" height="220" aria-label="Transfer time and delta-v against distance"></canvas>' : '') + '</div>').join('');
+    return boxes.map((b) => '<div class="box' + (b.plot ? ' wide' : '') + '"><h4>' + esc(b.t) + '</h4>' + (b.p ? '<p>' + keepNums(esc(nbPct(b.p))) + '</p>' : '') + '<div class="f">' + keepNums(esc(nbPct(b.f))) + '</div>' + (b.plot ? '<canvas id="physPlot" class="plot" width="640" height="220" aria-label="转移时间和速度增量随距离的变化"></canvas>' : '') + '</div>').join('');
   }
   // Transfer time and delta-v against distance for this ship: the fast burn-flip-burn and the capped cruise.
   function drawTransferPlot(canvas, ship, range, vmax) {
@@ -1911,8 +1913,8 @@
     const cap = vmax || 1500;
     const pane = narrow ? [{ x0: 54, x1: W - gut, y0: 0, y1: 196 }, { x0: 54, x1: W - gut, y0: 204, y1: 400 }] : [{ x0: 54, x1: W / 2 - gut, y0: 0, y1: H - 24 }, { x0: W / 2 + 54, x1: W - gut, y0: 0, y1: H - 24 }];
     const panels = [
-      { ...pane[0], title: 'time to arrive', ticks: [[60, '1 min'], [600, '10 min'], [3600, '1 h'], [36000, '10 h']], f: (d) => P.brachistochrone(d, a).time, g: (d) => P.transferWithBudget(d, a, 2 * cap).time, ymin: 60, ymax: 36000 * 3, line: null, lineLabel: '' },
-      { ...pane[1], title: 'delta-v needed, km/s', ticks: [[100, '0.1'], [1000, '1'], [10000, '10'], [100000, '100']], f: (d) => P.brachistochrone(d, a).dv, g: (d) => Math.min(2 * cap, P.brachistochrone(d, a).dv), ymin: 100, ymax: 200000, line: ship.deltaV(), lineLabel: 'delta-v you have left' },
+      { ...pane[0], title: '到达时间', ticks: [[60, '1 min'], [600, '10 min'], [3600, '1 h'], [36000, '10 h']], f: (d) => P.brachistochrone(d, a).time, g: (d) => P.transferWithBudget(d, a, 2 * cap).time, ymin: 60, ymax: 36000 * 3, line: null, lineLabel: '' },
+      { ...pane[1], title: '所需速度增量，公里/秒', ticks: [[100, '0.1'], [1000, '1'], [10000, '10'], [100000, '100']], f: (d) => P.brachistochrone(d, a).dv, g: (d) => Math.min(2 * cap, P.brachistochrone(d, a).dv), ymin: 100, ymax: 200000, line: ship.deltaV(), lineLabel: '你剩下的速度增量' },
     ];
     const dmin = 10e3, dmax = 100e6;
     const lx = (x0, x1, d) => x0 + ((Math.log10(d) - Math.log10(dmin)) / (Math.log10(dmax) - Math.log10(dmin))) * (x1 - x0);
@@ -1934,15 +1936,15 @@
         // the caption sits on whichever side the 'now' tick is not
         const right = rx == null || rx < (p.x0 + p.x1) / 2; ctx.textAlign = right ? 'right' : 'left'; ctx.fillText(p.lineLabel, right ? p.x1 - 4 : p.x0 + 4, y - 4); ctx.textAlign = 'left';
       }
-      if (rx != null) { ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(rx, p.y0 + 20); ctx.lineTo(rx, p.y1 - 28); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#fff'; ctx.textAlign = rx > (p.x0 + p.x1) / 2 ? 'right' : 'left'; ctx.fillText('now', rx + (rx > (p.x0 + p.x1) / 2 ? -4 : 4), p.y0 + 30); ctx.textAlign = 'left'; }
+      if (rx != null) { ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(rx, p.y0 + 20); ctx.lineTo(rx, p.y1 - 28); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#fff'; ctx.textAlign = rx > (p.x0 + p.x1) / 2 ? 'right' : 'left'; ctx.fillText('现在', rx + (rx > (p.x0 + p.x1) / 2 ? -4 : 4), p.y0 + 30); ctx.textAlign = 'left'; }
     }
     // legend: one line when there is room, two when there is not
     const legY = narrow ? [H - 26, H - 10] : [H - 10, H - 10];
     const legX = narrow ? [54, 54] : [54, 210];
-    ctx.fillStyle = '#4fd1c5'; ctx.fillRect(legX[0], legY[0] - 4, 14, 2); ctx.fillStyle = '#a9b6c6'; ctx.fillText('fast burn-flip-burn', legX[0] + 18, legY[0]);
-    ctx.fillStyle = '#8fa6bf'; ctx.fillRect(legX[1], legY[1] - 4, 14, 2); ctx.fillStyle = '#a9b6c6'; ctx.fillText('cruise capped at ' + U.fmt.speed(cap), legX[1] + 18, legY[1]);
+    ctx.fillStyle = '#4fd1c5'; ctx.fillRect(legX[0], legY[0] - 4, 14, 2); ctx.fillStyle = '#a9b6c6'; ctx.fillText('快速：点火-掉头-反推', legX[0] + 18, legY[0]);
+    ctx.fillStyle = '#8fa6bf'; ctx.fillRect(legX[1], legY[1] - 4, 14, 2); ctx.fillStyle = '#a9b6c6'; ctx.fillText('巡航上限 ' + U.fmt.speed(cap), legX[1] + 18, legY[1]);
     if (!(a > 0)) {
-      const tw = thrustWhy(ship), note = (tw.none ? tw.none.charAt(0).toUpperCase() + tw.none.slice(1) : 'No thrust') + '. She cannot fly these transfers.';
+      const tw = thrustWhy(ship), note = (tw.none || '无推力') + '。她飞不了这些转移。';
       ctx.font = '600 13px "Rajdhani", sans-serif'; ctx.textAlign = 'left';
       const w = ctx.measureText(note).width, nx = pane[0].x0 + 8, ny = (pane[0].y0 + pane[0].y1) / 2;
       ctx.fillStyle = 'rgba(6,10,16,0.92)'; ctx.fillRect(nx - 6, ny - 14, w + 12, 22);
@@ -1963,49 +1965,49 @@
     const ship = physicsShip(game.sim);
     const prevWarp = game.warp; game.setWarp(0);
     const back = () => { closeScreen(); game.setWarp(prevWarp || 1); };
-    const el = screen('physics', '<div class="eyebrow">Physics</div><h2 class="title">The numbers behind the ship</h2><p class="sub">' + (ship ? 'For ' + esc(ship.name) + (ship.target && game.sim.byId(ship.target) ? ' and her target ' + esc(game.sim.byId(ship.target).name) : ', with no target set: pick one to fill in the transfer, facing and light-lag cards') : 'No ship selected') + '. These are the values the simulation is using right now.</p><div class="phys" id="physBoxes"></div><div class="actions"><button class="primary" id="physClose">Back to the bridge</button></div>', { wide: true, close: { id: 'physCloseTop', label: 'Close', run: back } });
+    const el = screen('physics', '<div class="eyebrow">物理</div><h2 class="title">舰船背后的数字</h2><p class="sub">' + (ship ? '对象：' + esc(ship.name) + (ship.target && game.sim.byId(ship.target) ? '，目标 ' + esc(game.sim.byId(ship.target).name) : '，还没有目标：选一个才能填上转移、受弹面和光行时三张卡') : '没有选中舰船') + '。以下是模拟此刻正在使用的数值。</p><div class="phys" id="physBoxes"></div><div class="actions"><button class="primary" id="physClose">返回舰桥</button></div>', { wide: true, close: { id: 'physCloseTop', label: '关闭', run: back } });
     refreshPhysics(game.sim, ship);
     el.querySelector('#physClose').addEventListener('click', back);
   }
 
   function help(back) {
     const close = () => { closeScreen(); if (back) back(); };
-    const el = screen('help', '<div class="eyebrow">How to play</div><h2 class="title">How to command a ship</h2>' +
+    const el = screen('help', '<div class="eyebrow">玩法说明</div><h2 class="title">怎么指挥一艘舰</h2>' +
       '<div class="help">' +
-      '<section><h4>The idea</h4><p>Nothing in space slows down unless the drive burns to slow it. Every burn spends delta-v you cannot get back, and every burn and every shot puts heat into a sink that only the radiators can shed. You give the orders. The autopilot does the turning and the burning.</p></section>' +
-      '<section><h4>Reading the bridge</h4><ul>' +
-      '<li>The <b>Navigator</b> line at the top of the ship panel says what the ship is doing now and what it does next: turning, burning, flipping, braking or holding.</li>' +
-      '<li>The <b>plotted path</b> on the map is that same plan: bright where the ship burns, dashed where it turns or coasts, blue-grey where it brakes tail-first. The first ring is the flip, the second the arrival.</li>' +
-      '<li>The <b>delta-v gauge</b> is your fuel. The hatched part is what the current order will spend, and each order button shows its cost before you press it.</li>' +
-      '<li><b>Essentials</b> hides the numbers you do not need yet. <kbd>D</kbd> switches to <b>Full</b>, which adds mass, speed, heading, altitude, the systems bars and the gunnery rows.</li>' +
+      '<section><h4>基本道理</h4><p>太空里没有东西会自己慢下来，除非推进器朝反方向点火。每次点火都要花掉拿不回来的速度增量；每次点火、每一次开火，都会把热积进热沉，而只有散热板能把热排出去。你下指令，转向和点火由自动驾驶去做。</p></section>' +
+      '<section><h4>怎么看舰桥</h4><ul>' +
+      '<li>舰船面板顶上那行<b>导航官</b>说的是这艘舰现在在做什么、下一步做什么：转向、点火、掉头、反推还是保持。</li>' +
+      '<li>地图上的<b>规划路径</b>就是同一份计划：亮的地方在点火，虚线在转向或滑行，蓝灰色是掉头反推。第一个圈是掉头点，第二个圈是到达点。</li>' +
+      '<li><b>速度增量条</b>就是你的油量。斜纹那一段是当前指令要花的，每个指令按钮在按下之前就会显示代价。</li>' +
+      '<li><b>精简</b>会藏起暂时用不上的数字。按 <kbd>D</kbd> 切到<b>完整</b>，会多出质量、速度、航向、高度、系统状态条和炮术行。</li>' +
       '</ul></section>' +
-      '<section><h4>Controls</h4><ul>' +
+      '<section><h4>操作</h4><ul>' +
       (window.innerWidth < 900
-        ? '<li>Tap one of your ships to command it. Tap another ship to make it the target.</li>' +
-          '<li>Orders are in the panel below the map, which scrolls: Intercept, Keep range, Match speed, Hold, Retreat, Manual. A finger held on a hostile keeps range on it; so does Keep range in the panel with her targeted.</li>'
-        : '<li>Click one of your ships, or its row on the left, to command it. Click another ship to make it the target. <kbd>Tab</kbd> steps through your ships.</li>' +
-          '<li>Right-click a hostile to keep range on it. Right-click a friendly or a civilian to intercept it.</li>' +
-          '<li>Orders are in the right panel: Intercept <kbd>I</kbd>, Keep range <kbd>K</kbd>, Match speed <kbd>M</kbd>, Hold <kbd>H</kbd>, Retreat <kbd>R</kbd>, and Manual for a heading and a throttle you set.</li>') +
-      '<li><kbd>J</kbd> jinks. <kbd>X</kbd> extends or stows the radiators. <kbd>S</kbd> toggles the active sensor. <kbd>Space</kbd> pauses, and <kbd>1</kbd>–<kbd>4</kbd> set the time warp when no decision is open.</li>' +
-      '<li>Fire control: <kbd>W</kbd> weapons free, <kbd>B</kbd> beam mode, <kbd>T</kbd> aim point, <kbd>L</kbd> a salvo of two (shift for four), <kbd>A</kbd> every bay. Your other ships run their own bays and aim once their weapons are free.</li>' +
-      '<li>Scroll to zoom and drag to pan. <kbd>F</kbd> follows the selected ship and <kbd>Home</kbd> fits everyone on screen. <kbd>P</kbd> opens the Physics panel, <kbd>V</kbd> the hull view, <kbd>C</kbd> the damage-control board, <kbd>Enter</kbd> clears a hint.</li>' +
-      '<li>Damage control: a hit part shows on the board and on the hull at close zoom. Send a party and the part comes back to a jury-rig cap, never full: a wrecked drive to 30 %. The party comes off fire control or the sensor watch. A party cannot work a part that is running: the drive has to be cold and the radiators in. Above 1.2 g the crew straps in and repairs pause. Above 3 g people are injured. The g limit is on the board.</li>' +
+        ? '<li>点一艘我方舰船来指挥它。再点另一艘舰船，把它设为目标。</li>' +
+          '<li>指令在地图下方的面板里，可以滚动：拦截、保持距离、速度匹配、待命、撤退、手动。手指按住一艘敌舰，就会对它保持距离；在面板里锁定她之后按保持距离也一样。</li>'
+        : '<li>点一艘我方舰船，或者点左侧列表里它那一行，来指挥它。点另一艘舰船把它设为目标。<kbd>Tab</kbd> 在我方舰船之间切换。</li>' +
+          '<li>右键点一艘敌舰，对它保持距离。右键点友舰或民用船，则是拦截它。</li>' +
+          '<li>指令在右侧面板：拦截 <kbd>I</kbd>、保持距离 <kbd>K</kbd>、速度匹配 <kbd>M</kbd>、待命 <kbd>H</kbd>、撤退 <kbd>R</kbd>，以及自己设航向和推力的手动。</li>') +
+      '<li><kbd>J</kbd> 规避。<kbd>X</kbd> 展开或收起散热板。<kbd>S</kbd> 开关主动传感器。<kbd>Space</kbd> 暂停；没有决策卡时，<kbd>1</kbd>–<kbd>4</kbd> 设时间加速。</li>' +
+      '<li>火控：<kbd>W</kbd> 自由开火，<kbd>B</kbd> 光束模式，<kbd>T</kbd> 瞄准部位，<kbd>L</kbd> 齐射两枚（加 Shift 是四枚），<kbd>A</kbd> 全部发射舱。其他舰船在自由开火后自行管理发射舱和瞄准。</li>' +
+      '<li>滚轮缩放，拖动平移。<kbd>F</kbd> 跟随选中的舰船，<kbd>Home</kbd> 让所有舰船都在画面里。<kbd>P</kbd> 打开物理面板，<kbd>V</kbd> 打开舰体视图，<kbd>C</kbd> 打开损管面板，<kbd>Enter</kbd> 清掉一条提示。</li>' +
+      '<li>损管：被打中的部件会显示在面板上，放大后也能在舰体上看到。派一个班组过去，部件只能恢复到应急抢修的上限，永远不是满值：报废的推进器恢复到 30 %。班组要从火控或传感器值班里抽。正在运转的部件不能修：推进器必须先冷却，散热板必须先收起。超过 1.2 g，船员要绑进抗荷座椅，修理暂停；超过 3 g 会有人受伤。过载上限在面板上设。</li>' +
       '</ul></section>' +
-      '<section><h4>What matters</h4><ul>' +
-      '<li><b>Delta-v</b> is the fuel gauge. A fast transfer costs 2·√(d·a), so twice the distance costs about 1.4 times as much. Capping the cruise at 1.5 km/s costs a fraction of that and arrives later.</li>' +
-      '<li><b>Heat</b> builds while you burn and fight. The radiators shed it, and they are the easiest part of the ship to hit. Stow them with <kbd>X</kbd> when slugs are on the way and extend them as soon as the shooting stops.</li>' +
-      '<li><b>Facing</b>: a corvette carries 20 cm of armour on the nose and 4 cm on the tail. Braking toward an enemy shows them that tail.</li>' +
-      '<li><b>Jink</b> makes unguided slugs miss, and each nudge costs delta-v. Beams do not miss. They weaken with range instead.</li>' +
-      '<li><b>Boarding</b>: hold within 3 km of a hostile at under 25 m/s relative speed. The party crosses in 90 seconds against a crew the size of yours, longer against a bigger one, and the ship changes hands. A crew more than twice yours throws it back.</li>' +
+      '<section><h4>要紧的几件事</h4><ul>' +
+      '<li><b>速度增量</b>就是油表。快速转移要花 2·√(d·a)，所以距离翻倍大约多花 1.4 倍。把巡航压到 1.5 公里/秒只花其中一小部分，代价是到得晚。</li>' +
+      '<li><b>热量</b>在点火和开火时累积。散热板负责排热，而它又是全舰最容易被打中的部位。弹丸飞来时按 <kbd>X</kbd> 收起，炮声一停就赶紧展开。</li>' +
+      '<li><b>受弹面</b>：护卫艇舰首有 20 厘米装甲，舰尾只有 4 厘米。朝敌人反推，等于把舰尾给他看。</li>' +
+      '<li><b>规避</b>能让不带制导的弹丸打空，但每次都要花速度增量。光束不会打空，它只是随距离变弱。</li>' +
+      '<li><b>接舷</b>：在 3 公里内、相对速度低于 25 米/秒保持住。对方船员和你差不多时，班组 90 秒过去；更多就更久；过去之后船就易主。对方船员超过你两倍，班组会被打回来。</li>' +
       '</ul></section>' +
-      '<section><h4>Seeing and being seen</h4><ul>' +
-      '<li>Nothing hides in space, but a track has a quality. A <b>contact</b> is a bearing and a rough range, drawn as a ? on a line along that bearing. The ship is somewhere between the ticks at its ends. A <b>track</b> adds the class. A <b>solution</b> is good enough to fire on, so the beams and coilguns open up.</li>' +
-      '<li>Signal falls with the square of range, so what you radiate sets how far off you are a solution. A cold coasting hull is about 1 MW and stays a contact until close. Hot radiators are tens of megawatts. A lit drive is gigawatts and hands everyone a solution. The <b>Signature</b> line in the panel says which you are.</li>' +
-      '<li><b>Active</b> (<kbd>S</kbd>) buys a solution on everything in reach within seconds, and hands one to every ship out there. Staying passive costs you range or time instead.</li>' +
-      '<li>When a real choice comes up, a <b>Decision</b> band opens above the log with two or three options, each with its cost in plain words and the navigator\'s pick lit. <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> answer it, and <kbd>Esc</kbd> leaves it for later. A repair, sick-bay or burn question carries a clock: leave it and the ship\'s routine settles it when the clock runs out.</li>' +
+      '<section><h4>看见与被看见</h4><ul>' +
+      '<li>太空里没有东西能藏，但跟踪是有质量等级的。<b>接触</b>只是一个方位和大致距离，画成那条方位线上的一个 ?，舰就在两端刻度之间的某处。<b>跟踪</b>多出舰级。<b>解算</b>好到可以开火，光束和线圈炮就会打。</li>' +
+      '<li>信号随距离的平方衰减，所以你辐射多少，决定了对方在多远处能拿到解算。冷着滑行的舰体大约 1 兆瓦，要靠近才会变成解算。展开的散热板是几十兆瓦。点着的推进器是吉瓦级，等于把解算送给所有人。面板里的<b>信号特征</b>那行会告诉你现在是哪一种。</li>' +
+      '<li><b>主动</b>（<kbd>S</kbd>）能在几秒内对射程内一切拿到解算，同时也把解算送给外面每一艘船。保持被动，代价是距离或时间。</li>' +
+      '<li>真正需要抉择时，日志上方会弹出<b>决策</b>栏，两三个选项，每个都用大白话写清代价，导航官建议的那个会亮着。<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> 作答，<kbd>Esc</kbd> 留到稍后。修理、医务、点火这类问题带倒计时：不管它，时间一到舰上的例行程序就替你定了。</li>' +
       '</ul></section>' +
-      '<section><p>Hover any label for the number behind it. Large text and the panel you start in are on the main menu.</p></section></div>' +
-      '<div class="actions"><button class="primary" id="helpClose">Close</button></div>', { wide: true, close: { id: 'helpCloseTop', label: 'Close', run: close } });
+      '<section><p>把鼠标停在任何一个标签上，都能看到它背后的数字。大字号和默认面板在主菜单里设。</p></section></div>' +
+      '<div class="actions"><button class="primary" id="helpClose">关闭</button></div>', { wide: true, close: { id: 'helpCloseTop', label: '关闭', run: close } });
     el.querySelector('#helpClose').addEventListener('click', close);
   }
 
@@ -2093,7 +2095,7 @@
     '.help section>*:first-child{margin-top:0}',
     '@media (min-width:1000px){#help .help{column-count:2;column-gap:40px;column-fill:balance}#help .help p,#help .help li{max-width:none}#help .help section{margin:0 0 16px}}',
   ].join('\n');
-  const LEGEND_V11 = [['contact', 'contact · where it might be'], ['seen', 'a solution on us from here in']];
+  const LEGEND_V11 = [['contact', '接触 · 可能位置'], ['seen', '从这里起能对我们解算']];
   // v15: the contact swatch is the map's own mark (render.js drawUncertainty): the '?' diamond on its error bar,
   // a thin line broken round the diamond, a tick across each end and a faint strip as wide as the ticks, in grey
   const SWATCH_SVG = {
@@ -2113,7 +2115,7 @@
     if (!$('decision')) {
       const hint = $('hint');
       const el = document.createElement('div');
-      el.id = 'decision'; el.hidden = true; el.setAttribute('role', 'group'); el.setAttribute('aria-live', 'polite'); el.setAttribute('aria-label', 'Decision');
+      el.id = 'decision'; el.hidden = true; el.setAttribute('role', 'group'); el.setAttribute('aria-live', 'polite'); el.setAttribute('aria-label', '决策');
       el.innerHTML = '<div class="dc-head"><span class="dc-eyebrow" id="dcEyebrow">Decision</span><span class="dc-title" id="dcTitle"></span><button class="dc-why" id="dcWhy" type="button" hidden>Why?</button></div><p id="dcText"></p><p class="dc-teach" id="dcTeach" hidden></p><div class="dc-opts" id="dcOpts"></div><div class="dc-fade"></div><div class="dc-more">▾ scroll for the rest</div>';
       el.querySelector('#dcWhy').addEventListener('click', () => { el.classList.toggle('why'); });
       if (hint && hint.parentNode) hint.parentNode.insertBefore(el, hint); else document.body.appendChild(el);
@@ -2189,13 +2191,13 @@
     if (K && typeof K === 'object') return !!K[d.kind];
     return !!CREW_KINDS[d.kind];
   }
-  function laterLabel(d) { return crewCard(d) ? 'Let the crew decide' : 'Later'; }
+  function laterLabel(d) { return crewCard(d) ? '让船员决定' : '稍后'; }
   function deadlineWords(sim, d) {
     const t = d ? d.deadline : null;
     if (!sim || !(typeof t === 'number' && isFinite(t))) return '';
     const left = t - sim.time;
-    if (!(left > 0)) return 'the crew settles this now';
-    return 'the crew settles this in ' + (left < 60 ? Math.ceil(left) + ' s' : U.fmt.time(left));
+    if (!(left > 0)) return '船员现在就会定下来';
+    return '船员会在 ' + (left < 60 ? Math.ceil(left) + ' s' : U.fmt.time(left));
   }
   function laterHtml(sim, d) {
     return '<button class="dc-opt later" data-key="esc"><kbd>Esc</kbd><b>' + esc(laterLabel(d)) + '</b><small data-dk="esc">' + esc(deadlineWords(sim, d)) + '</small></button>';
@@ -2203,7 +2205,7 @@
   function renderBand(sim, d, opened) {
     const el = $('decision'); if (!el) return;
     const ship = sim.byId(d.shipId);
-    $('dcEyebrow').textContent = 'Decision · ' + (d.kind || '') + (ship && ship.id !== UI.selected ? ' · ' + ship.name + ((coarseQuery && coarseQuery.matches) || window.innerWidth <= 900 ? ' (tap to select)' : ' (click to select)') : '');
+    $('dcEyebrow').textContent = 'Decision · ' + (d.kind || '') + (ship && ship.id !== UI.selected ? ' · ' + ship.name + ((coarseQuery && coarseQuery.matches) || window.innerWidth <= 900 ? '（点按选中）' : '（点击选中）') : '');
     $('dcEyebrow').style.cursor = ship && ship.id !== UI.selected ? 'pointer' : '';
     $('dcEyebrow').onclick = ship && ship.id !== UI.selected ? () => { UI.select(ship.id); } : null;
     setKept($('dcTitle'), d.title);
@@ -2274,7 +2276,7 @@
     if (key === 'esc') { try { if (typeof D.dismiss === 'function') D.dismiss(sim, d.id); } catch (e) { /* closes anyway */ } markTaught(d.kind); closeBand(); dcId = null; return true; }
     const o = (d.options || []).find((x) => x.key === key);
     if (!o) return false;
-    try { D.choose(sim, d.id, key); } catch (e) { toast('That option is no longer available.', 2000); closeBand(); dcId = null; return true; }
+    try { D.choose(sim, d.id, key); } catch (e) { toast('这个选项已经不可用了。', 2000); closeBand(); dcId = null; return true; }
     if (sim.flags) sim.flags.decisionAnswered = true;
     markTaught(d.kind); closeBand(); dcId = null;
     decisionToast(sim, d, ' → ' + o.label, 2600);
@@ -2289,16 +2291,16 @@
     const m = / · (\d+ ships)$/.exec(t); if (m) { tag = m[1]; t = t.slice(0, m.index); if (!/[.?!]$/.test(t)) t += '.'; }
     if (ship && ship.name && t.indexOf(ship.name + ': ') === 0) t = t.slice(ship.name.length + 2);
     t = t.charAt(0).toUpperCase() + t.slice(1);
-    toast(t + (extra || ''), ms, ship ? ship.name : 'Decision', tag);
+    toast(t + (extra || ''), ms, ship ? ship.name : '决策', tag);
   }
   // S: the active sensor on the selected ship
   function toggleActive(ship) {
     const S = OD.Sensors; ship = ship || selected();
     if (!S || typeof S.setActive !== 'function' || !ship || ship.faction !== game.sim.playerFaction) return false;
-    if (!(ship.activeRange > 0)) { toast(ship.name + ' has no active sensor.', 2000); return true; }
+    if (!(ship.activeRange > 0)) { toast(ship.name + ' 没有主动传感器。', 2000); return true; }
     const on = !(typeof S.isActive === 'function' ? S.isActive(ship) : ship.activeSensor);
     S.setActive(ship, on);
-    toast(on ? ship.name + ': active sensor on. A firing solution on everything inside ' + km(ship.activeRange) + ' within seconds, and everyone out there now has one on us.' : ship.name + ': active sensor off. Passive again.', 3500);
+    toast(on ? ship.name + '：主动传感器已开。' + km(ship.activeRange) + '内的一切几秒内都会拿到解算，外面每艘船也同时拿到对我们的解算。' : ship.name + '：主动传感器已关，回到被动。', 3500);
     return true;
   }
   function trackOf(sim, ship, target) { const S = OD.Sensors; if (!S || typeof S.track !== 'function' || !target) return null; try { return S.track(sim, ship.faction, target); } catch (e) { return null; } }
@@ -2311,14 +2313,14 @@
     const word = sig.word || 'cold';
     const cap = word.charAt(0).toUpperCase() + word.slice(1);
     // a hostile's panel: what she radiates, which is what we read off her; the lines below speak for our side
-    if (sim.playerFaction && ship.faction !== sim.playerFaction) return { text: (sig.active ? 'Active' : cap) + ' · ' + U.fmt.power(sig.total), cls: '', sig, sf };
+    if (sim.playerFaction && ship.faction !== sim.playerFaction) return { text: (sig.active ? '主动' : cap) + ' · ' + U.fmt.power(sig.total), cls: '', sig, sf };
     const any = sim.ships.some((h) => !h.destroyed && sim.isHostile(h, ship));
     let text, cls = '';
-    if (sig.active) { text = 'Active: a firing solution for everyone in reach'; cls = 'crit'; }
-    else if (word === 'burning') { text = 'Burning: every sensor out here has a solution on us'; cls = 'crit'; }
-    else if (!any || !sf || !(sf.solution > 0)) { text = cap + ' · ' + U.fmt.power(sig.total) + (any ? '' : ' · no hostile sensor in play'); cls = word === 'radiating' ? 'warn' : 'good'; }
-    else if (word === 'radiating') { text = 'Radiating: a solution on us from ' + km(sf.solution); cls = 'warn'; }
-    else { text = cap + ': a track on us from ' + km(sf.track > sf.solution ? sf.track : sf.solution) + ', a solution from ' + km(sf.solution); cls = 'good'; }
+    if (sig.active) { text = '主动：射程内所有人都拿到了射击解算'; cls = 'crit'; }
+    else if (word === 'burning') { text = '点火中：这里每台传感器都拿到了对我们的解算'; cls = 'crit'; }
+    else if (!any || !sf || !(sf.solution > 0)) { text = cap + ' · ' + U.fmt.power(sig.total) + (any ? '' : ' · 没有敌方传感器在盯'); cls = word === 'radiating' ? 'warn' : 'good'; }
+    else if (word === 'radiating') { text = '辐射中：对方从 ' + km(sf.solution) + ' 起能对我们解算'; cls = 'warn'; }
+    else { text = cap + '：对方从 ' + km(sf.track > sf.solution ? sf.track : sf.solution) + ' 起能跟踪我们，从 ' + km(sf.solution) + ' 起能解算'; cls = 'good'; }
     return { text, cls, sig, sf };
   }
 
@@ -2341,7 +2343,7 @@
     $('btnMenu').addEventListener('click', () => game.pauseMenu());
     $('hintOk').addEventListener('click', () => nextHint());
     $('hintSkip').addEventListener('click', () => skipTour());
-    $('btnSkip').addEventListener('click', () => { game.setWarp(64); toast('Running at 64×. Time drops back to 1× just before the next event.'); });
+    $('btnSkip').addEventListener('click', () => { game.setWarp(64); toast('以 64× 快进。下一事件之前会自动降回 1×。'); });
     installV8(); v8Keys(); installV11();
     const lg = $('legend'), fold = $('legendFold');
     if (lg && fold) {
@@ -2372,7 +2374,7 @@
   // ---- v8 per-frame wiring: sound cues and ambient level, warp drop and a toast on every new launch at our ships ----
   let v8Seq = 0, v8Sim = null, v8LastToast = -1e9, v8Salvo = null;
   // v15: several hulls launching at one of ours in the same moment raised one 'incoming' event each, and the banner
-  // showed only the last ('3 interceptors inbound' while the map read 32). The banner now adds up every salvo at each
+  // showed only the last ('3 枚拦截弹来袭' while the map read 32). The banner now adds up every salvo at each
   // of our ships launched within its 6 s window and says the total, the number of launching ships and the shortest
   // time out. The count and the time are read back from the event's own words (engagement.js salvo line).
   const INBOUND_RE = /^(\d+) interceptors? inbound on .*?(?:, ((?:\d+h )?(?:\d+m )?\d+s) out)?\.$/;
@@ -2380,13 +2382,13 @@
   function salvoText(sim, byShip) {
     const list = Array.from(byShip.entries()).map(([id, k]) => Object.assign({ ship: sim.byId(id) }, k)).filter((k) => k.ship && k.n > 0).sort((a, b) => b.n - a.n);
     if (!list.length) return '';
-    const darts = (n) => n + (n === 1 ? ' interceptor' : ' interceptors');
+    const darts = (n) => n + ' 枚拦截弹';
     const first = list.reduce((m, k) => (k.eta < m.eta ? k : m), list[0]);
     const top = list[0], one = list.length === 1 && top.from.size <= 1;
-    const out = isFinite(first.eta) ? (one ? ', ' : ', the first ') + first.etaText + ' out.' : '.';
-    if (list.length === 1) return darts(top.n) + ' inbound on ' + top.ship.name + (top.from.size > 1 ? ' from ' + top.from.size + ' ships' : '') + out;
+    const out = isFinite(first.eta) ? (one ? '，' : '，最近的一枚 ') + first.etaText + '。' : '。';
+    if (list.length === 1) return darts(top.n) + '来袭，目标 ' + top.ship.name + (top.from.size > 1 ? '，来自 ' + top.from.size + ' 艘船' : '') + out;
     const rest = list.slice(1), restN = rest.reduce((a, k) => a + k.n, 0);
-    return darts(top.n) + ' inbound on ' + top.ship.name + ' and ' + restN + (rest.length === 1 ? ' on ' + rest[0].ship.name : ' on ' + rest.length + ' other ships') + out;
+    return darts(top.n) + '来袭，目标 ' + top.ship.name + '，另有 ' + restN + (rest.length === 1 ? ' 枚打向 ' + rest[0].ship.name : ' 枚打向其他 ' + rest.length + ' 艘舰') + out;
   }
   function v8Frame(sim, now) {
     if (v8Sim !== sim) { v8Sim = sim; v8Seq = (sim.eng && sim.eng.eventSeq) || 0; v8LastToast = -1e9; v8Salvo = null; }
@@ -2423,7 +2425,7 @@
     // a salvo at one of ours updates the banner in its window with the running total; anything else waits 6 s
     const total = inbound ? salvoText(sim, v8Salvo.byShip) : '';
     if (total) { v8LastToast = now; toast(total, 4500); }
-    else if (now - v8LastToast > 6000) { v8LastToast = now; toast(alert.text || 'Incoming.', 4500); }
+    else if (now - v8LastToast > 6000) { v8LastToast = now; toast(alert.text || '来袭。', 4500); }
   }
   function v8Keys() {
     const unlock = () => { try { if (OD.Sound && OD.Sound.unlock) OD.Sound.unlock(); } catch (e) { /* optional */ } };
@@ -2476,7 +2478,7 @@
     const p = OD.Guide.plan(sim, ship);
     if (!p.active) return null;
     const list = [['flip', p.flip], ['braking', p.brake], ['arrival', p.arrive], ['impact', p.crash]].map(([n, e]) => [n, OD.Guide.eta(sim, p, e)]).filter((x) => x[1] != null && x[1] > 1.5).sort((a, b) => a[1] - b[1]);
-    if (p.turnFirst > 0 && sim.time - p.t0 < p.turnFirst && Math.abs(U.angleDiff(ship.cmdHeading, ship.heading)) > 0.05) list.unshift(['turn done', p.turnFirst - (sim.time - p.t0)]);
+    if (p.turnFirst > 0 && sim.time - p.t0 < p.turnFirst && Math.abs(U.angleDiff(ship.cmdHeading, ship.heading)) > 0.05) list.unshift(['转向完成', p.turnFirst - (sim.time - p.t0)]);
     return list.length ? { name: list[0][0], t: list[0][1] } : null;
   }
 

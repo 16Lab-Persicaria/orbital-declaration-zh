@@ -10,17 +10,17 @@
   // and to find the node under a click: every transfer cost is in EDGES. No route passes under a node it does not
   // join: Metis sits off the Europa–Io route and Depot L5 off the Callisto–Ganymede route, at both map sizes.
   const NODES = [
-    { id: 'callisto', name: 'Callisto · Valhalla Station', kind: 'port', body: 'callisto', x: 0.90, y: 0.78, owner: 'JC', desc: 'Compact capital and home port. Full refuel and repair. If it falls, the war is over.' },
-    { id: 'ganymede', name: 'Ganymede · Galileo Regio Yards', kind: 'yard', body: 'ganymede', x: 0.72, y: 0.30, owner: 'JC', desc: 'The Compact\'s shipyards. New hulls are commissioned here.' },
-    { id: 'europa', name: 'Europa · Conamara Station', kind: 'station', body: 'europa', x: 0.42, y: 0.20, owner: 'JC', desc: 'Ice farm and refuelling stop. Two 20 MW station lasers defend it.' },
-    { id: 'io', name: 'Io · Loki Foundry', kind: 'base', body: 'io', x: 0.30, y: 0.62, owner: 'ISA', desc: 'The Authority\'s foothold. Hold Io and Amalthea together and the war is won.' },
-    { id: 'amalthea', name: 'Amalthea · Forward Anchorage', kind: 'base', body: 'jupiter', x: 0.55, y: 0.50, owner: 'ISA', desc: 'Authority forward base in low Jupiter orbit. Hold it and Io together and the war is won.' },
-    { id: 'thebe', name: 'Thebe Yards', kind: 'yard', body: 'jupiter', x: 0.56, y: 0.66, owner: 'ISA', desc: 'A Compact yard the Authority took. Retake it for a second slipway and 22 requisition a turn.' },
-    { id: 'metis', name: 'Metis Ring Refinery', kind: 'depot', body: 'jupiter', x: 0.44, y: 0.35, owner: 'none', desc: 'Propellant mined from Jupiter\'s ring. Whoever holds it refuels here and earns 6 requisition a turn.' },
-    { id: 'anvil', name: 'Anvil High Station', kind: 'station', body: 'jupiter', x: 0.58, y: 0.14, owner: 'none', desc: 'Neutral station in high Jupiter orbit. It pays 12 requisition a turn to whoever takes it.' },
-    { id: 'himalia', name: 'Himalia Picket', kind: 'depot', body: null, x: 0.14, y: 0.20, owner: 'ISA', desc: 'Outer depot. Authority reinforcements arrive here from the inner system.' },
-    { id: 'l4', name: 'Depot L4', kind: 'depot', body: null, x: 0.20, y: 0.86, owner: 'none', desc: 'Unmanned propellant depot on the Ganymede–Jupiter L4 point.' },
-    { id: 'l5', name: 'Depot L5', kind: 'depot', body: null, x: 0.87, y: 0.50, owner: 'none', desc: 'Unmanned propellant depot on the L5 point.' },
+    { id: 'callisto', name: 'Callisto (木卫四) · Valhalla Station (瓦尔哈拉站)', kind: 'port', body: 'callisto', x: 0.90, y: 0.78, owner: 'JC', desc: '盟约首都兼母港。可以补满推进剂并完成修理。它一旦失守，战争就结束了。' },
+    { id: 'ganymede', name: 'Ganymede (木卫三) · Galileo Regio (伽利略区) 船坞', kind: 'yard', body: 'ganymede', x: 0.72, y: 0.30, owner: 'JC', desc: '盟约的船坞。新舰在这里下水服役。' },
+    { id: 'europa', name: 'Europa (木卫二) · Conamara Station (科纳马拉站)', kind: 'station', body: 'europa', x: 0.42, y: 0.20, owner: 'JC', desc: '冰场兼补给站。两门 20 兆瓦的空间站激光守着它。' },
+    { id: 'io', name: 'Io (木卫一) · Loki 铸造厂', kind: 'base', body: 'io', x: 0.30, y: 0.62, owner: 'ISA', desc: '管理局的落脚点。同时守住 Io 和 Amalthea，战争就赢了。' },
+    { id: 'amalthea', name: 'Amalthea (木卫五) · 前进锚地', kind: 'base', body: 'jupiter', x: 0.55, y: 0.50, owner: 'ISA', desc: '管理局在木星低轨的前进基地。把它和 Io 一起守住，战争就赢了。' },
+    { id: 'thebe', name: 'Thebe (木卫十四) 船坞', kind: 'yard', body: 'jupiter', x: 0.56, y: 0.66, owner: 'ISA', desc: '管理局夺下的一座盟约船坞。夺回来就多一条船台，每回合还有 22 点征用点。' },
+    { id: 'metis', name: 'Metis (木卫十六) 环带精炼厂', kind: 'depot', body: 'jupiter', x: 0.44, y: 0.35, owner: 'none', desc: '从 Jupiter (木星) 的环带采出的推进剂。谁占着它就能在这里补给，每回合还有 6 点征用点。' },
+    { id: 'anvil', name: 'Anvil 高轨空间站', kind: 'station', body: 'jupiter', x: 0.58, y: 0.14, owner: 'none', desc: '木星高轨的中立空间站。谁拿下它，每回合进账 12 点征用点。' },
+    { id: 'himalia', name: 'Himalia (木卫六) 警戒站', kind: 'depot', body: null, x: 0.14, y: 0.20, owner: 'ISA', desc: '外围补给站。管理局的增援从这里进入木星系。' },
+    { id: 'l4', name: 'Depot L4', kind: 'depot', body: null, x: 0.20, y: 0.86, owner: 'none', desc: 'Ganymede (木卫三) 与木星之间 L4 点的无人推进剂补给站。' },
+    { id: 'l5', name: 'Depot L5', kind: 'depot', body: null, x: 0.87, y: 0.50, owner: 'none', desc: 'L5 点的无人推进剂补给站。' },
   ];
   const EDGES = [
     ['callisto', 'ganymede', 3.2], ['callisto', 'l5', 2.1], ['callisto', 'thebe', 4.6], ['callisto', 'l4', 3.8],
@@ -56,7 +56,7 @@
         { id: 'c_larkspur', name: 'JCS Larkspur', cls: 'corvette', propFraction: 1, hull: 1, systems: { drive: 1, radiators: 1, sensors: 1, weapons: 1 } },
         { id: 'c_anselm', name: 'JCS Anselm', cls: 'frigate', propFraction: 1, hull: 1, systems: { drive: 1, radiators: 1, sensors: 1, weapons: 1 } },
       ],
-      log: ['Turn 1. The fleet is at Callisto. Take Io and Amalthea. Keep Callisto.'],
+      log: ['第 1 回合。舰队在 Callisto (木卫四)。拿下 Io (木卫一) 和 Amalthea (木卫五)。守住 Callisto。'],
       outcome: null,
     };
   }
@@ -78,9 +78,9 @@
   function shipDv(s) { const c = OD.Ships.CLASSES[s.cls]; return P.tsiolkovsky(c.exhaustVelocity, c.dryMass + c.propMass * s.propFraction, c.dryMass); }
   function canMove(state, to) {
     const dv = edgeDv(state.fleetAt, to);
-    if (dv == null) return { ok: false, why: 'Not adjacent.' };
+    if (dv == null) return { ok: false, why: '不相邻。' };
     const short = state.fleet.filter((s) => shipDv(s) < km(dv) + 6000);
-    if (short.length) return { ok: false, why: short[0].name + ' has ' + U.fmt.dv(shipDv(short[0])) + '. The transfer costs ' + dv.toFixed(1) + ' km/s and every ship keeps 6 km/s to fight with.' };
+    if (short.length) return { ok: false, why: short[0].name + ' 只剩 ' + U.fmt.dv(shipDv(short[0])) + '。这次转移要花 ' + dv.toFixed(1) + ' 公里/秒，而每艘船都要留 6 公里/秒用来打仗。' };
     return { ok: true, dv };
   }
   function spendDv(s, dvms) {
@@ -94,7 +94,7 @@
     if (!r.ok) return r;
     for (const s of state.fleet) spendDv(s, km(r.dv));
     state.fleetAt = to;
-    state.log.push('Turn ' + state.turn + '. Fleet transferred to ' + node(to).name + ' for ' + r.dv.toFixed(1) + ' km/s.');
+    state.log.push('第 ' + state.turn + ' 回合。舰队转移到 ' + node(to).name + '，花掉 ' + r.dv.toFixed(1) + ' 公里/秒。');
     return r;
   }
   function battleHere(state) { const n = state.nodes[state.fleetAt]; return n.owner !== 'JC' && n.garrison.length > 0; }
@@ -117,14 +117,14 @@
   }
   function buy(state, cls) {
     const def = node(state.fleetAt);
-    if (def.kind !== 'yard' && def.kind !== 'port') return 'Ships are commissioned at yards and at Callisto.';
-    if (state.nodes[state.fleetAt].owner !== 'JC') return 'Not ours.';
-    if (state.rp < costOf(cls)) return 'That hull costs ' + costOf(cls) + ' requisition. You have ' + state.rp + '.';
+    if (def.kind !== 'yard' && def.kind !== 'port') return '舰船只能在船坞和 Callisto (木卫四) 下单建造。';
+    if (state.nodes[state.fleetAt].owner !== 'JC') return '这里不是我们的。';
+    if (state.rp < costOf(cls)) return '这型舰体要花 ' + costOf(cls) + ' 点征用点。你只有 ' + state.rp + ' 点。';
     state.rp -= costOf(cls);
     const name = 'JCS ' + JC_NAMES[state.nameIdx % JC_NAMES.length] + (state.nameIdx >= JC_NAMES.length ? ' II' : '');
     state.nameIdx++;
     state.fleet.push({ id: 'c_' + U.uid(), name, cls, propFraction: 1, hull: 1, systems: { drive: 1, radiators: 1, sensors: 1, weapons: 1 } });
-    state.log.push(name + ' commissioned (' + OD.Ships.CLASSES[cls].name + ').');
+    state.log.push(name + ' 下水服役（' + OD.Ships.CLASSES[cls].name + '）。');
     return null;
   }
   function endTurn(state) {
@@ -137,15 +137,15 @@
     const rng = U.rng(state.turn * 7919 + 13);
     if (state.turn % 3 === 0) {
       const isa = NODES.filter((n) => state.nodes[n.id].owner === 'ISA');
-      if (isa.length) { const n = rng.pick(isa); const cls = rng.pick(['corvette', 'frigate', 'frigate', 'lancer', 'destroyer']); state.nodes[n.id].garrison.push(cls); notes.push('An Authority ' + cls + ' arrived at ' + n.name + '.'); }
+      if (isa.length) { const n = rng.pick(isa); const cls = rng.pick(['corvette', 'frigate', 'frigate', 'lancer', 'destroyer']); state.nodes[n.id].garrison.push(cls); notes.push('一艘管理局' + (OD.Ships.roleName ? OD.Ships.roleName({ role: cls }) : cls) + '抵达 ' + n.name + '。'); }
     }
     if (state.turn % 4 === 0) {
       const targets = NODES.filter((n) => state.nodes[n.id].owner === 'JC' && n.id !== 'callisto' && neighbours(n.id).some((nb) => state.nodes[nb.id].owner === 'ISA' && state.nodes[nb.id].garrison.length));
       if (targets.length) {
         const t = rng.pick(targets);
-        if (state.fleetAt === t.id) notes.push('An Authority raid on ' + t.name + ' turned back when it saw the fleet.');
-        else if (t.kind === 'station') notes.push((t.name.split(' · ')[1] || t.name) + ' drove off an Authority raid with its station lasers.');
-        else { state.nodes[t.id].owner = 'ISA'; state.nodes[t.id].garrison = ['frigate', 'corvette']; notes.push(t.name + ' has fallen to an Authority raid.'); }
+        if (state.fleetAt === t.id) notes.push('管理局对 ' + t.name + ' 的袭击，看到舰队就掉头了。');
+        else if (t.kind === 'station') notes.push((t.name.split(' · ')[1] || t.name) + ' 用空间站激光打退了管理局的袭击。');
+        else { state.nodes[t.id].owner = 'ISA'; state.nodes[t.id].garrison = ['frigate', 'corvette']; notes.push(t.name + ' 已被管理局的袭击拿下。'); }
       }
     }
     state.log.push(...notes);
@@ -185,8 +185,8 @@
     }
     return {
       name: def.name, body, sunAngle: (state.turn * 0.7) % U.TAU, playerFaction: 'JC', ships,
-      objectives: [{ id: 'n', text: 'Neutralise the Authority garrison', type: 'neutralize', targets: 'hostiles' }],
-      intro: [{ speaker: 'Tactical', text: 'Authority garrison at ' + def.name + ', ' + n.garrison.length + ' ships.', kind: 'info' }],
+      objectives: [{ id: 'n', text: '使管理局驻军失能', type: 'neutralize', targets: 'hostiles' }],
+      intro: [{ speaker: 'Tactical', text: '管理局驻军，位于 ' + def.name + ', ' + n.garrison.length + ' ships.', kind: 'info' }],
       triggers: [],
     };
   }
@@ -194,7 +194,7 @@
     const next = [];
     for (const s of state.fleet) {
       const sh = sim.byId(s.id);
-      if (!sh || sh.destroyed) { state.log.push(s.name + ' was lost at ' + node(state.fleetAt).name + '.'); continue; }
+      if (!sh || sh.destroyed) { state.log.push(s.name + ' 在 ' + node(state.fleetAt).name + ' 损失。'); continue; }
       s.propFraction = sh.propMass / sh.fullPropMass; s.hull = sh.hull; s.systems = { ...sh.systems };
       if (OD.Damage && OD.Damage.toRecord) s.components = OD.Damage.toRecord(sh);
       if (OD.Crew && typeof OD.Crew.toRecord === 'function') { s.crew = OD.Crew.toRecord(sh); if (typeof OD.Crew.afterBattle === 'function') OD.Crew.afterBattle(s.crew, true); }
@@ -206,12 +206,12 @@
       const prize = { id: 'c_' + U.uid(), name: sh.name.replace('ISV', 'JCS'), cls: sh.cls, propFraction: sh.propMass / sh.fullPropMass, hull: sh.hull, systems: { ...sh.systems, weapons: Math.min(sh.systems.weapons, 0.6) } };
       if (OD.Damage && OD.Damage.toRecord) { prize.components = OD.Damage.toRecord(sh); OD.Damage.limitWeapons(prize, 0.6); } // a prize crew works only part of the rack
       next.push(prize);
-      state.log.push(sh.name + ' taken as a prize.');
+      state.log.push(sh.name + ' 被俘获，编入舰队。');
     }
     state.fleet = next;
     const n = state.nodes[state.fleetAt];
-    if (outcome === 'victory') { n.owner = 'JC'; n.garrison = []; state.log.push(node(state.fleetAt).name + ' is now under Compact control.'); }
-    else { n.garrison = n.garrison.filter((c, i) => { const g = sim.byId('g' + i); return g && !g.neutralised(); }); if (!n.garrison.length) { n.owner = 'JC'; state.log.push('The garrison is gone. ' + node(state.fleetAt).name + ' is ours.'); } }
+    if (outcome === 'victory') { n.owner = 'JC'; n.garrison = []; state.log.push(node(state.fleetAt).name + ' 现已由盟约控制。'); }
+    else { n.garrison = n.garrison.filter((c, i) => { const g = sim.byId('g' + i); return g && !g.neutralised(); }); if (!n.garrison.length) { n.owner = 'JC'; state.log.push('驻军被打光了，' + node(state.fleetAt).name + ' 归我们了。'); } }
     checkOutcome(state);
   }
 
@@ -497,13 +497,13 @@
       const row = (k, v) => '<div class="camp-kv"><span class="k">' + k + '</span><span class="v">' + v.join(' · ') + '</span></div>';
       return row('Crew', parts) + row('Experience', exp);
     };
-    const fleetHtml = () => state.fleet.map((s) => '<div class="ship"><span><b>' + U.escapeHtml(s.name) + '</b> <span style="color:var(--dim)">' + OD.Ships.CLASSES[s.cls].role + '</span></span><span class="num">' + U.fmt.dv(shipDv(s)) + '</span><div class="bars"><div class="bar dv"><i style="width:' + Math.round(s.propFraction * 100) + '%"></i></div><div class="bar hull' + (s.hull < 0.35 ? ' crit' : '') + '"><i style="width:' + Math.round(s.hull * 100) + '%"></i></div></div>' + crewLine(s) + '</div>').join('') || '<div style="color:var(--dim)">No ships. Commission one.</div>';
+    const fleetHtml = () => state.fleet.map((s) => '<div class="ship"><span><b>' + U.escapeHtml(s.name) + '</b> <span style="color:var(--dim)">' + OD.Ships.CLASSES[s.cls].role + '</span></span><span class="num">' + U.fmt.dv(shipDv(s)) + '</span><div class="bars"><div class="bar dv"><i style="width:' + Math.round(s.propFraction * 100) + '%"></i></div><div class="bar hull' + (s.hull < 0.35 ? ' crit' : '') + '"><i style="width:' + Math.round(s.hull * 100) + '%"></i></div></div>' + crewLine(s) + '</div>').join('') || '<div style="color:var(--dim)">没有舰船。先造一艘。</div>';
     // the turn and the requisition in hand read as two figures beside the title, not one long eyebrow line
-    const html = '<div class="camp-head"><div><div class="eyebrow">Campaign</div><h2 class="title camp-title">The Jovian system</h2></div>' +
-      '<div class="camp-stats"><div><span class="k">Turn</span><span class="v" id="cTurn">' + state.turn + '</span></div><div><span class="k">Requisition</span><span class="v" id="cRp">' + state.rp + '</span></div></div></div>' +
+    const html = '<div class="camp-head"><div><div class="eyebrow">战役</div><h2 class="title camp-title">The Jovian system</h2></div>' +
+      '<div class="camp-stats"><div><span class="k">回合</span><span class="v" id="cTurn">' + state.turn + '</span></div><div><span class="k">征用点</span><span class="v" id="cRp">' + state.rp + '</span></div></div></div>' +
       '<div class="camp-grid"><div><canvas id="campMap"></canvas><p class="camp-routekey" id="cRouteKey" hidden></p><p class="sub" id="cNodeDesc" style="margin-top:8px;font-size:13px"></p></div>' +
       '<div class="camp-side"><div class="box"><h4>Selected</h4><div id="cNodeInfo"></div><div class="actions" id="cNodeActions" style="margin-top:8px"></div></div>' +
-      '<div class="box"><h4>Fleet · at ' + U.escapeHtml(def().name.split(' · ')[0]) + '</h4><div id="cFleet">' + fleetHtml() + '</div><div class="actions" id="cBuy" style="margin-top:8px"></div></div>' +
+      '<div class="box"><h4>舰队 · 位于 ' + U.escapeHtml(def().name.split(' · ')[0]) + '</h4><div id="cFleet">' + fleetHtml() + '</div><div class="actions" id="cBuy" style="margin-top:8px"></div></div>' +
       '<div class="box"><h4>Log</h4><div id="cLog" style="max-height:120px;overflow:auto;font-size:11px;color:var(--ink-2)">' + state.log.slice(-8).map((l) => '<div>' + U.escapeHtml(l) + '</div>').join('') + '</div></div></div></div>' +
       '<div class="actions"><button class="primary" id="cEnd">End turn</button><button id="cResupply">Refuel &amp; repair here</button><button id="cBack">Menu</button></div>' +
       // the restart key stands apart from the turn keys, and asks once before it wipes the save
@@ -517,22 +517,22 @@
     if (shortRoutes.length && state.fleet.length) {
       const low = state.fleet.reduce((m, f) => (shipDv(f) < shipDv(m) ? f : m), state.fleet[0]);
       const key = el.querySelector('#cRouteKey');
-      key.innerHTML = 'A cost in <b>amber</b> is more than the fleet can spend: ' + U.escapeHtml(low.name) + ' has ' + U.fmt.dv(shipDv(low)) + ' and keeps 6 km/s to fight with.';
+      key.innerHTML = '标成<b>琥珀色</b>的价钱是舰队付不起的：' + U.escapeHtml(low.name) + ' 只剩 ' + U.fmt.dv(shipDv(low)) + '，还要留 6 公里/秒用来打仗。';
       key.hidden = false;
     }
     const refreshSide = () => {
       const n = node(sel), st = state.nodes[sel];
       el.querySelector('#cNodeDesc').textContent = n.name + ' — ' + n.desc;
-      el.querySelector('#cNodeInfo').innerHTML = '<b>' + U.escapeHtml(n.name) + '</b><br>Owner: <span style="color:' + (st.owner === 'JC' ? 'var(--accent)' : st.owner === 'ISA' ? 'var(--accent-2)' : 'var(--dim)') + '">' + (st.owner === 'JC' ? 'Compact' : st.owner === 'ISA' ? 'Authority' : 'unclaimed') + '</span>' + (st.garrison.length ? '<br>Garrison: ' + st.garrison.map((c) => OD.Ships.CLASSES[c].role).join(', ') : '') + (sel !== state.fleetAt && edgeDv(state.fleetAt, sel) != null ? '<br>Transfer: ' + edgeDv(state.fleetAt, sel).toFixed(1) + ' km/s per ship' : '');
+      el.querySelector('#cNodeInfo').innerHTML = '<b>' + U.escapeHtml(n.name) + '</b><br>归属：<span style="color:' + (st.owner === 'JC' ? 'var(--accent)' : st.owner === 'ISA' ? 'var(--accent-2)' : 'var(--dim)') + '">' + (st.owner === 'JC' ? '盟约' : st.owner === 'ISA' ? '管理局' : '无主') + '</span>' + (st.garrison.length ? '<br>驻军：' + st.garrison.map((c) => OD.Ships.CLASSES[c].role).join('、') : '') + (sel !== state.fleetAt && edgeDv(state.fleetAt, sel) != null ? '<br>转移：每艘 ' + edgeDv(state.fleetAt, sel).toFixed(1) + ' 公里/秒' : '');
       const acts = el.querySelector('#cNodeActions'); acts.innerHTML = '';
       if (sel !== state.fleetAt) {
         const r = canMove(state, sel);
-        const b = document.createElement('button'); b.className = 'primary'; b.textContent = 'Move fleet'; b.disabled = !r.ok; b.title = r.ok ? '' : r.why;
+        const b = document.createElement('button'); b.className = 'primary'; b.textContent = '调动舰队'; b.disabled = !r.ok; b.title = r.ok ? '' : r.why;
         b.addEventListener('click', () => { const m = move(state, sel); if (!m.ok) { UI.toast(m.why); return; } save(state); if (battleHere(state)) launchBattle(); else screen(game, state); });
         acts.appendChild(b);
         if (!r.ok) { const s = document.createElement('span'); s.style.cssText = 'color:var(--dim);font-size:11px;align-self:center'; s.textContent = r.why; acts.appendChild(s); }
       } else if (battleHere(state)) {
-        const b = document.createElement('button'); b.className = 'primary'; b.textContent = 'Engage garrison'; b.addEventListener('click', launchBattle); acts.appendChild(b);
+        const b = document.createElement('button'); b.className = 'primary'; b.textContent = '攻击驻军'; b.addEventListener('click', launchBattle); acts.appendChild(b);
       }
       const buyEl = el.querySelector('#cBuy'); buyEl.innerHTML = '';
       const here = def();
@@ -544,8 +544,8 @@
         }
         // v8: the slipway. Inspect each ship of the fleet and swap a hull for a saved design of the same family for the RP difference.
         if (game && typeof game.refitFleet === 'function' && OD.Configurator && state.fleet && state.fleet.length) {
-          const b = document.createElement('button'); b.className = 'sm'; b.textContent = 'Refit fleet';
-          b.title = 'Inspect each ship and swap its hull for a saved design of the same family. You pay the requisition difference.';
+          const b = document.createElement('button'); b.className = 'sm'; b.textContent = '改装舰队';
+          b.title = '逐艘检视，把舰体换成同族的已保存设计，只需补征用点差价。';
           b.addEventListener('click', () => { save(state); game.refitFleet(state); });
           buyEl.appendChild(b);
         }
@@ -553,11 +553,11 @@
     };
     const launchBattle = () => {
       const scenario = buildBattle(state);
-      game.startScenario(scenario, { mode: 'Campaign', brief: { title: def().name, text: [def().desc, 'Whatever survives carries its damage and its propellant into the next turn. Prizes join the fleet.'] }, onEnd: (outcome, sim) => { applyBattle(state, sim, outcome); save(state); if (state.outcome) finish(); else screen(game, state); } });
+      game.startScenario(scenario, { mode: 'Campaign', brief: { title: def().name, text: [def().desc, '活下来的舰船会带着损伤和剩下的推进剂进入下一回合。战利品加入舰队。'] }, onEnd: (outcome, sim) => { applyBattle(state, sim, outcome); save(state); if (state.outcome) finish(); else screen(game, state); } });
     };
     const finish = () => {
       const v = state.outcome === 'victory';
-      const e = UI.screen('campend', '<div class="eyebrow">Campaign</div><h2 class="title ' + (v ? 'debrief-victory' : '') + '" style="color:' + (v ? 'var(--accent)' : 'var(--crit)') + '">' + (v ? 'The Jovian system is Compact' : 'The Compact has fallen') + '</h2><p class="sub">' + (v ? 'Io and Amalthea are yours on turn ' + state.turn + '. The Authority\'s remaining hulls burned for the inner system, and the blockade is over.' : 'Callisto is gone or the fleet is. The Authority runs the moons as a customs territory again.') + '</p><div class="actions"><button class="primary" id="ceNew">New campaign</button><button id="ceMenu">Menu</button></div>');
+      const e = UI.screen('campend', '<div class="eyebrow">战役</div><h2 class="title ' + (v ? 'debrief-victory' : '') + '" style="color:' + (v ? 'var(--accent)' : 'var(--crit)') + '">' + (v ? '木星系属于盟约' : '盟约已经陷落') + '</h2><p class="sub">' + (v ? 'Io 和 Amalthea 在第 ' + state.turn + ' 回合归你。管理局剩下的舰船往内星系烧去了，封锁结束了。' : 'Callisto 没了，或者舰队没了。管理局又把各卫星当关税区管起来。') + '</p><div class="actions"><button class="primary" id="ceNew">新战役</button><button id="ceMenu">菜单</button></div>');
       e.querySelector('#ceNew').addEventListener('click', () => { clear(); screen(game, newState()); });
       e.querySelector('#ceMenu').addEventListener('click', () => game.showMenu());
     };
@@ -571,11 +571,11 @@
     canvas.addEventListener('mousemove', (ev) => { const h = hit(ev); if (h !== hover) { hover = h; redraw(); } canvas.style.cursor = h ? 'pointer' : 'default'; });
     canvas.addEventListener('click', (ev) => { const h = hit(ev); if (h) { sel = h; refreshSide(); redraw(); } });
     el.querySelector('#cEnd').addEventListener('click', () => { const notes = endTurn(state); save(state); if (state.outcome) finish(); else { screen(game, state); UI.toast(notes[notes.length - 1]); } });
-    el.querySelector('#cResupply').addEventListener('click', () => { if (state.nodes[state.fleetAt].owner !== 'JC') { UI.toast('Only at a Compact port, yard, station or depot.'); return; } if (resupply(state)) { save(state); screen(game, state); UI.toast('Tanks full.'); } else UI.toast('Tanks are full and there is nothing to repair.'); });
+    el.querySelector('#cResupply').addEventListener('click', () => { if (state.nodes[state.fleetAt].owner !== 'JC') { UI.toast('只能在盟约的港口、船坞、空间站或补给站补给。'); return; } if (resupply(state)) { save(state); screen(game, state); UI.toast('已补给完毕。'); } else UI.toast('推进剂是满的，也没有东西要修。'); });
     // first press arms the key and says what goes; a second press within five seconds wipes the campaign
     const restartBtn = el.querySelector('#cRestart'), restartNote = el.querySelector('#cRestartNote');
     let armed = 0;
-    const disarm = () => { clearTimeout(armed); armed = 0; restartBtn.classList.remove('armed'); restartBtn.textContent = 'Restart campaign'; restartNote.textContent = ''; };
+    const disarm = () => { clearTimeout(armed); armed = 0; restartBtn.classList.remove('armed'); restartBtn.textContent = '重新开始战役'; restartNote.textContent = ''; };
     restartBtn.addEventListener('click', () => {
       if (armed) { disarm(); clear(); screen(game, newState()); return; }
       // name only what there is to lose: no "0 ships" once the fleet is gone
@@ -583,8 +583,8 @@
       if (state.rp > 0) lost.push(state.rp + ' requisition');
       if (ships > 0) lost.push(ships + (ships === 1 ? ' ship' : ' ships'));
       const list = lost.length > 1 ? lost.slice(0, -1).join(', ') + ' and ' + lost[lost.length - 1] : lost[0];
-      restartNote.textContent = 'Restarting loses ' + list + '. Press Confirm restart within 5 s.';
-      restartBtn.textContent = 'Confirm restart'; restartBtn.classList.add('armed');
+      restartNote.textContent = '重新开始会失去 ' + list + '。5 秒内按确认重新开始。';
+      restartBtn.textContent = '确认重新开始'; restartBtn.classList.add('armed');
       armed = setTimeout(disarm, 5000);
     });
     el.querySelector('#cBack').addEventListener('click', () => game.showMenu());

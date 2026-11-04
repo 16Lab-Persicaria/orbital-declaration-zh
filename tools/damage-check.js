@@ -164,21 +164,21 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     return {
       venting: sh.venting, vented: tank.vented, share: tank.share,
       propFell: sh.propMass < prop0, dvFell: sh.deltaV() < dv0, fx: sim.fx.length - fx0,
-      logged: sim.log.slice(logs0).filter((l) => l.speaker === 'Damage control' && /venting/.test(l.text)).map((l) => l.speaker + ': ' + l.text),
+      logged: sim.log.slice(logs0).filter((l) => l.speaker === 'Damage control' && /破口泄漏/.test(l.text)).map((l) => l.speaker + ': ' + l.text),
       row, rows: rows.length, states: rows.map((r) => r.state).filter((v, i, a) => a.indexOf(v) === i),
     };
   });
   check('a holed tank drains propellant', vented.vented > 0 && vented.propFell && vented.dvFell, 'vented ' + Math.round(vented.vented) + ' kg of ' + Math.round(vented.share));
   check('venting logs one line', vented.logged.length === 1, vented.logged.join(' | '));
   check('venting throws puffs behind the hull', vented.fx > 0, String(vented.fx));
-  check('the report calls the tank venting', vented.row && vented.row.state === 'venting' && /km\/s lost so far/.test(vented.row.effect), vented.row ? vented.row.effect : 'no row');
+  check('the report calls the tank venting', vented.row && vented.row.state === 'venting' && /已经损失/.test(vented.row.effect), vented.row ? vented.row.effect : 'no row');
   check('report has a row per component', vented.rows > 10, String(vented.rows));
   check('report states stay in the vocabulary', vented.states.every((s) => ['ok', 'worn', 'damaged', 'wrecked', 'venting', 'isolated'].indexOf(s) >= 0), vented.states.join(','));
   // DC 2 (writing N10d): the line that announces the hole carries the figure and the cure, in the
   // same words the isolate line uses, instead of "the delta-v in it is going out through the hole".
   check('the venting line names the delta-v going out and what stops it',
-    /^Damage control: .+ — Tank \d+ holed and venting: [\d.]+ km\/s of delta-v going out through the hole until a party valves it out of the feed\.$/.test(vented.logged[0] || '')
-      && parseFloat((/: ([\d.]+) km\/s of delta-v/.exec(vented.logged[0] || '') || [0, 0])[1]) > 0,
+    /^Damage control: .+ — 推进剂箱 \d+ 破口泄漏：正在漏掉 [\d.]+[\s\u00a0\u202f]km\/s 速度增量 从破口往外流，直到班组把它从管路里关掉。$/.test(vented.logged[0] || '')
+      && parseFloat((/漏掉 ([\d.]+) ?km\/s/.exec(vented.logged[0] || '') || [0, 0])[1]) > 0,
     vented.logged.join(' | '));
 
   // A tank holed this second has lost nothing yet, and '0 km/s lost so far' is not a figure.
@@ -197,15 +197,15 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     const said = sim.log.slice(n0).filter((l) => l.speaker === 'Damage control').map((l) => l.text);
     return {
       venting: sh.venting, atOnce, after,
-      zero: said.filter((t) => /0 km\/s lost so far/.test(t)).length,
-      holed: said.filter((t) => /holed and venting/.test(t)).length,
+      zero: said.filter((t) => /已经损失 0 /.test(t)).length,
+      holed: said.filter((t) => /破口泄漏/.test(t)).length,
     };
   });
   check('a tank holed this second is not rolled up as a nought',
-    fresh.venting && fresh.zero === 0 && !!fresh.atOnce && !/lost so far/.test(fresh.atOnce.effect),
+    fresh.venting && fresh.zero === 0 && !!fresh.atOnce && !/已经损失/.test(fresh.atOnce.effect),
     fresh.zero + ' noughts logged · ' + (fresh.atOnce ? fresh.atOnce.effect : 'no venting row'));
   check('and the hole is still announced once', fresh.holed === 1, fresh.holed + ' lines');
-  check('the roll-up starts with the first figure', !!fresh.after && /km\/s lost so far/.test(fresh.after.effect),
+  check('the roll-up starts with the first figure', !!fresh.after && /已经损失/.test(fresh.after.effect),
     fresh.after ? fresh.after.effect : 'no venting row');
 
   // A tank blown right out vents fastest, and a tank patched back to half stops.
@@ -250,10 +250,10 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     const drive = sh.components.find((c) => c.id === 'drive');
     for (let i = 0; i < 24 && drive.hp > 0; i++) OD.Damage.hit(sim, sh, { joules: 1.4e8, facet: 'tail', aim: 'drive', kind: 'beam' });
     const lines = sim.log.slice(n0).filter((l) => l.speaker === 'Damage control').map((l) => l.text);
-    return { lines, drive: drive.hp, driveLines: lines.filter((t) => /Drive/.test(t)) };
+    return { lines, drive: drive.hp, driveLines: lines.filter((t) => /主推进器/.test(t)) };
   });
   check('damage control logs the drive going', logged.driveLines.length >= 1, logged.driveLines.join(' | '));
-  check('the drive line reads in plain words', logged.driveLines.some((t) => /acceleration/.test(t)), logged.driveLines.join(' | '));
+  check('the drive line reads in plain words', logged.driveLines.some((t) => /加速度/.test(t)), logged.driveLines.join(' | '));
   check('each state is logged once', logged.driveLines.length <= 2, String(logged.driveLines.length));
 
   // artState is what the hull art merges in.
@@ -368,9 +368,9 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     .map((k) => jury[k].line).join('\n    '));
 
   // The words the board puts on a row: what a party buys, and what it cannot.
-  check('the drive row says what a party buys', /^A party swaps the burnt driver modules and brings the drive to 30 %: acceleration at 30 %, turn rate at 65 %\. \d+ min\.$/.test(jury.driveWrecked.buys), jury.driveWrecked.buys);
-  check('the panel row says when there is nothing to do', jury.panelWrecked.buys === 'Nothing a party can do for radiator panel 1: the panel is gone.', jury.panelWrecked.buys);
-  check('the mount row says when there is nothing to do', /^Nothing a party can do for the /.test(jury.mountWrecked.buys), jury.mountWrecked.buys);
+  check('the drive row says what a party buys', /^班组更换烧毁的驱动模块，把主推进器修到 30 %：加速度 30 %，转向速度 65 %。\d+ ?分钟。$/.test(jury.driveWrecked.buys), jury.driveWrecked.buys);
+  check('the panel row says when there is nothing to do', jury.panelWrecked.buys === '这个部件班组无能为力：这块板已经没了。', jury.panelWrecked.buys);
+  check('the mount row says when there is nothing to do', /^这个部件班组无能为力：/.test(jury.mountWrecked.buys), jury.mountWrecked.buys);
   console.log('    ' + ['driveWrecked', 'reactorWrecked', 'sensorsDamaged', 'panelWrecked', 'panelDamaged', 'mountDamaged', 'tankDented', 'driveAboveCap']
     .map((k) => jury[k].buys).join('\n    '));
 
@@ -399,20 +399,20 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     };
   });
   check('the radiator row states the cooling level, not the drop',
-    /^Radiator panel 1 25 %: the ship's cooling is at \d+ %$/.test(said.panel) && said.panel.indexOf(said.cooling) > 0, said.panel);
-  check('a wrecked panel states it the same way', /^Radiator panel 2 wrecked: the ship's cooling is at \d+ %$/.test(said.panelGone), said.panelGone);
+    /^散热板 1 25 %：全舰散热能力只剩 \d+ %$/.test(said.panel) && said.panel.indexOf(said.cooling) > 0, said.panel);
+  check('a wrecked panel states it the same way', /^散热板 2 报废：全舰散热能力只剩 \d+ %$/.test(said.panelGone), said.panelGone);
   check('the row and the repair under it are the same quantity',
-    /cooling back to \d+ %/.test(said.panelBuys) && !/cooling down by/.test(said.everything), said.panelBuys);
+    /散热恢复到 \d+ %/.test(said.panelBuys) && !/散热降了/.test(said.everything), said.panelBuys);
   check('a mount repair is priced in damage, not in margin',
-    /^A party brings the .+ to 80 %: it keeps firing, and 4 times the damage to wreck it\. \d+ min\.$/.test(said.mountBuys)
-      && !/more margin/.test(said.everything), said.mountBuys);
+    /^班组把.+修到 80 %：它还能继续开火，但要打坏它需要 4 倍的伤害。\d+ ?分钟。$/.test(said.mountBuys)
+      && !/更多余量/.test(said.everything), said.mountBuys);
   check('the mount mend line carries the same number',
-    / jury-rigged to 80 %: it keeps firing, and 4 times the damage to wreck it$/.test(said.mountLine), said.mountLine);
+    /抢修到 80 %：它还能继续开火，但要打坏它需要 4 倍的伤害$/.test(said.mountLine), said.mountLine);
   check('the drive names the work and keeps its eight minutes',
-    /^A party swaps the burnt driver modules and brings the drive to 30 %: acceleration at 30 %, turn rate at 65 %\. 8 min\.$/.test(said.drive), said.drive);
+    /^班组更换烧毁的驱动模块，把主推进器修到 30 %：加速度 30 %，转向速度 65 %。8 ?分钟。$/.test(said.drive), said.drive);
   check('the reactor and the sensor suite name theirs, at the same times',
-    /^A party cross-connects the spare feed line and brings the reactor to 25 %: .+\. 7 min\.$/.test(said.reactor)
-      && /^A party swaps the burnt receiver boards and brings the sensor suite to 50 %: .+\. 5 min\.$/.test(said.sensors),
+    /^班组把备用供给管路跨接过去，把反应堆修到 25 %：[^。]+。7 ?分钟。$/.test(said.reactor)
+      && /^班组更换烧毁的接收板，把传感器组修到 50 %：[^。]+。5 ?分钟。$/.test(said.sensors),
     said.reactor + ' · ' + said.sensors);
   console.log('    ' + [said.panel, said.panelBuys, said.mountBuys, said.mountLine, said.drive, said.reactor, said.sensors].join('\n    '));
 
@@ -441,7 +441,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     out.mendDamaged = OD.Damage.mend(sh, 'drive');
     // every turn figure the drive prints, against the loop's own number
     out.quoted = [out.wrecked.effect, out.v20.effect, out.v70.effect, out.wrecked.buys, out.mendWrecked, out.mendDamaged]
-      .map((t) => (/turn rate at (\d+ %)/.exec(t) || [])[1] || null);
+      .map((t) => (/转向速度(?:只剩)? (\d+ %)/.exec(t) || [])[1] || null);
     out.want = [F(0), F(0.2), F(0.7), F(0.3), F(0.3), F(0.7)];
     // with the autopilot's number gone the words fall back to the one figure they printed before
     const save = OD.Autopilot.turnFactor;
@@ -454,24 +454,24 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     turn.has && turn.model.wrecked === '50 %' && turn.model.v20 === '60 %' && turn.model.v30 === '65 %' && turn.model.v70 === '85 %',
     JSON.stringify(turn.model));
   check('a hurt drive names both numbers, not one twice',
-    turn.v20.effect === 'Drive 20 %: acceleration at 20 %, turn rate at 60 %'
-      && turn.v70.effect === 'Drive 70 %: acceleration at 70 %, turn rate at 85 %',
+    turn.v20.effect === '主推进器 20 %：加速度 20 %，转向速度只剩 60 %'
+      && turn.v70.effect === '主推进器 70 %：加速度 70 %，转向速度只剩 85 %',
     turn.v20.effect + ' · ' + turn.v70.effect);
   check('a wrecked drive still turns on the attitude thrusters',
-    turn.wrecked.effect === 'Drive wrecked: no acceleration, turn rate at 50 % on the attitude thrusters',
+    turn.wrecked.effect === '主推进器报废：无法加速，转向速度只剩 50 %，靠姿控推进器',
     turn.wrecked.effect);
   check('what a party buys and the mend line name both numbers too',
-    /^A party swaps the burnt driver modules and brings the drive to 30 %: acceleration at 30 %, turn rate at 65 %\. \d+ min\.$/.test(turn.wrecked.buys)
-      && turn.mendWrecked === 'Drive jury-rigged to 30 %: acceleration at 30 %, turn rate at 65 %'
-      && turn.mendDamaged === 'Drive jury-rigged to 70 %: acceleration at 70 %, turn rate at 85 %',
+    /^班组更换烧毁的驱动模块，把主推进器修到 30 %：加速度 30 %，转向速度 65 %。\d+ ?分钟。$/.test(turn.wrecked.buys)
+      && turn.mendWrecked === '主推进器抢修到 30 %：加速度 30 %，转向速度 65 %'
+      && turn.mendDamaged === '主推进器抢修到 70 %：加速度 70 %，转向速度 85 %',
     turn.wrecked.buys + ' · ' + turn.mendWrecked);
   check('every turn figure the drive prints is the loop\'s own',
     turn.quoted.length === turn.want.length && turn.quoted.every((v, i) => v === turn.want[i]),
     turn.quoted.join(',') + ' against ' + turn.want.join(','));
   check('without the autopilot number the drive words fall back to the one figure',
-    turn.fallbackDamaged.effect === 'Drive 40 %: acceleration and turn rate at 40 %'
-      && turn.fallbackWrecked.effect === 'Drive wrecked: no acceleration and no attitude control'
-      && / to 30 %: some thrust, slow turns\./.test(turn.fallbackWrecked.buys),
+    turn.fallbackDamaged.effect === '主推进器 40 %：加速度和转向速度只剩 40 %'
+      && turn.fallbackWrecked.effect === '主推进器报废：无法加速，也没有姿控'
+      && /修到 30 %：还有部分推力，转向很慢/.test(turn.fallbackWrecked.buys),
     turn.fallbackDamaged.effect + ' · ' + turn.fallbackWrecked.effect);
   console.log('    ' + [turn.wrecked.effect, turn.v20.effect, turn.wrecked.buys, turn.mendDamaged].join('\n    '));
 
@@ -553,28 +553,28 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     return {
       names, states, times,
       // the word on the row and the word in the line under it are the same word
-      firing: rows.filter((r) => /, still firing$/.test(r.effect)).map((r) => r.state + ' | ' + r.effect),
-      agree: rows.every((r) => !/, still firing$/.test(r.effect) || r.effect.indexOf(': ' + r.state + ', still firing') > 0),
+      firing: rows.filter((r) => /，仍在开火$/.test(r.effect)).map((r) => r.state + ' | ' + r.effect),
+      agree: rows.every((r) => !/，仍在开火$/.test(r.effect) || r.effect.indexOf('：' + ({ ok: '完好', worn: '磨损', damaged: '受损', isolated: '已隔离', venting: '泄漏', wrecked: '报废' }[r.state] || r.state) + '，仍在开火') > 0),
       noOkBelow: rows.every((r) => r.hp >= 1 || r.state !== 'ok'),
       wornIsPastHelp: rows.every((r) => r.state !== 'worn' || r.repairable === false),
       // every priced row prints the board's own time, in the one format
       timed: rows.filter((r) => r.repairable)
-        .every((r) => r.buys.indexOf(' ' + OD.Damage.timeWords(r.eta) + (r.kind === 'radiator' ? ', with the radiators in.' : '.')) > 0),
+        .every((r) => r.buys.indexOf(OD.Damage.timeWords(r.eta) + (r.kind === 'radiator' ? '，期间散热板要一直收起。' : '。')) > 0),
       panelBuys: states.panelDamaged.buys,
       others: rows.filter((r) => r.repairable && r.kind !== 'radiator').map((r) => r.buys),
     };
   });
   check('plainName names every part the way a sentence wants it',
-    r2.names.drive === 'the drive' && r2.names.reactor === 'the reactor' && r2.names.sensors === 'the sensor suite'
-      && r2.names.panel === 'radiator panel 1' && /^tank \d+$/.test(r2.names.tank) && /^the \S/.test(r2.names.mount)
+    r2.names.drive === '主推进器' && r2.names.reactor === '反应堆' && r2.names.sensors === '传感器组'
+      && r2.names.panel === '散热板 1' && /^推进剂箱 \d+$/.test(r2.names.tank) && !!r2.names.mount
       && r2.names.row === r2.names.panel && r2.names.nothing === '',
     JSON.stringify(r2.names));
   check('a mount inside a jury-rig\'s reach reads damaged on the row and under it',
-    r2.states.mountDamaged.state === 'damaged' && /: damaged, still firing$/.test(r2.states.mountDamaged.effect)
+    r2.states.mountDamaged.state === 'damaged' && /：受损，仍在开火$/.test(r2.states.mountDamaged.effect)
       && r2.states.mountDamaged.repairable === true,
     r2.states.mountDamaged.state + ' · ' + r2.states.mountDamaged.effect);
   check('a mount past it reads worn on both, and asks for nobody',
-    r2.states.mountWorn.state === 'worn' && /: worn, still firing$/.test(r2.states.mountWorn.effect)
+    r2.states.mountWorn.state === 'worn' && /：磨损，仍在开火$/.test(r2.states.mountWorn.effect)
       && r2.states.mountWorn.repairable === false,
     r2.states.mountWorn.state + ' · ' + r2.states.mountWorn.effect);
   check('the same threshold reads the other kinds',
@@ -586,12 +586,12 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
   check('no row calls a part ok under 100 %, and worn always means past help',
     r2.noOkBelow && r2.wornIsPastHelp && r2.agree && r2.firing.length > 0, r2.firing.join(' · '));
   check('a panel repair says the radiators are in for the shift',
-    /^A party brings radiator panel 1 to 70 %: cooling back to \d+ %\. \d+ min, with the radiators in\.$/.test(r2.panelBuys)
-      && r2.others.every((b) => !/radiators in/.test(b)),
+    /^班组把散热板 1修到 70 %：散热恢复到 \d+ %。\d+ ?分钟，期间散热板要一直收起。$/.test(r2.panelBuys)
+      && r2.others.every((b) => !/散热板要一直收起/.test(b)),
     r2.panelBuys);
   check('timeWords is the one repair-time format',
-    r2.times.s45 === '45 s' && r2.times.s59 === '59 s' && r2.times.m60 === '1 min' && r2.times.m84 === '1 min'
-      && r2.times.m360 === '6 min' && r2.times.none === '1 s' && r2.times.junk === '1 s',
+    r2.times.s45 === '45 秒' && r2.times.s59 === '59 秒' && r2.times.m60 === '1 分钟' && r2.times.m84 === '1 分钟'
+      && r2.times.m360 === '6 分钟' && r2.times.none === '1 秒' && r2.times.junk === '1 秒',
     JSON.stringify(r2.times));
   check('every priced row prints its own time in that format', r2.timed, r2.others.slice(0, 2).join(' · '));
   console.log('    ' + [r2.states.mountDamaged.effect, r2.states.mountWorn.effect, r2.panelBuys].join('\n    '));
@@ -606,7 +606,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
       capSane: rows.every((r) => r.cap >= r.hp - 1e-6 && r.cap <= 1),
       etaSane: rows.every((r) => r.eta > 0 && r.eta < 4000),
       agrees: rows.every((r) => r.repairable === (r.cap > r.hp + 1e-6)),
-      sentence: rows.every((r) => /\.$/.test(r.buys) && /^(A party|Nothing a party)/.test(r.buys)),
+      sentence: rows.every((r) => /[。.]$/.test(r.buys) && /^(班组|这个部件)/.test(r.buys)),
       sample: rows.slice(0, 3).map((r) => r.name + ' [' + r.state + ' ' + Math.round(r.hp * 100) + '%, cap ' + Math.round(r.cap * 100) + '%, ' + r.eta + 's, ' + (r.repairable ? 'send' : 'no') + '] ' + r.buys),
     };
   });
@@ -647,18 +647,18 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
       keptMass: tank.share - tank.vented, keptWords: OD.U.fmt.mass(tank.share - tank.vented),
     };
   });
-  check('a venting tank is worth a party', isolate.wasVenting && /^A party valves tank \d+ out of the feed and pumps its .+ across: the venting stops\. \d+ min\.$/.test(isolate.buys) && isolate.eta > 0, isolate.buys);
+  check('a venting tank is worth a party', isolate.wasVenting && /^班组把推进剂箱 \d+从管路里关掉，把剩下的 .+ 泵到别的箱里，泄漏就此停止。\d+ ?分钟。$/.test(isolate.buys) && isolate.eta > 0, isolate.buys);
   check('isolating holds the tank at 50 %', isolate.line !== null && isolate.hp === 0.5, isolate.line);
-  check('the board reads the tank isolated', isolate.state === 'isolated' && /^Tank \d+ valved out of the feed and its .+ pumped across: the venting has stopped/.test(isolate.effect), isolate.state + ': ' + isolate.effect);
+  check('the board reads the tank isolated', isolate.state === 'isolated' && /^推进剂箱 \d+ 已从管路里关掉，剩下的 .+ 已经泵到别的箱里：泄漏停了/.test(isolate.effect), isolate.state + ': ' + isolate.effect);
   check('isolating stops the venting for good', isolate.held && !isolate.venting && isolate.again === 'isolated', 'state after a second hit: ' + isolate.again);
   check('what vented stays gone', isolate.ventedOut > 0 && Math.abs(isolate.ventedStill - isolate.ventedOut) < 1e-6 && isolate.dvHeld, Math.round(isolate.ventedOut) + ' kg out of the hole');
   check('an isolated tank asks for nothing more', !isolate.repairable, 'cap ' + isolate.capAfter);
   // realism 10 round 1: the propellant that had not gone out of the hole stays in the ship, so the
   // words say where it went. The same figure on the row a party is offered, the row after, and the log.
   check('the words name the propellant that stayed aboard',
-    isolate.keptMass > 0 && isolate.buys.indexOf(isolate.keptWords + ' across') > 0
-      && isolate.effect.indexOf(isolate.keptWords + ' pumped across') > 0
-      && isolate.line.indexOf(isolate.keptWords + ' pumped across') > 0,
+    isolate.keptMass > 0 && isolate.buys.indexOf(isolate.keptWords + ' 泵到别的箱里') > 0
+      && isolate.effect.indexOf(isolate.keptWords + ' 已经泵到别的箱里') > 0
+      && isolate.line.indexOf(isolate.keptWords + ' 已经泵到别的箱里') > 0,
     isolate.keptWords + ' kept of ' + Math.round((isolate.keptMass + isolate.ventedOut) / 1000) + ' t · ' + isolate.line);
   check('a mend with a sim logs one line', isolate.logged.length === 1 && /Damage control/.test(isolate.logged[0]), isolate.logged.join(' | '));
 
@@ -825,29 +825,29 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     return { names, turret, bayDamaged, coilgun, bayMend, bayWrecked, letteredBay };
   });
   check('a lettered mount is named without an article',
-    rack.names.turret === 'laser turret A' && rack.names.pd === 'point-defence laser 1'
-      && rack.names.letteredBay === 'interceptor bay A' && rack.names.row === rack.names.turret,
+    rack.names.turret === '激光炮塔 A' && rack.names.pd === '点防御激光 1'
+      && rack.names.letteredBay === '拦截弹发射舱 A' && rack.names.row === rack.names.turret,
     JSON.stringify(rack.names));
   check('a bare name keeps its article',
-    rack.names.coilgun === 'the coilgun' && rack.names.bay === 'the interceptor bay'
-      && rack.names.panel === 'radiator panel 1',
+    rack.names.coilgun === '线圈炮' && rack.names.bay === '拦截弹发射舱'
+      && rack.names.panel === '散热板 1',
     rack.names.coilgun + ' · ' + rack.names.bay);
   check('the sentence around a lettered mount still reads',
-    /^A party brings laser turret A to 80 %: it keeps firing, and 4 times the damage to wreck it\. \d+ min\.$/.test(rack.turret.buys),
+    /^班组把激光炮塔 A修到 80 %：它还能继续开火，但要打坏它需要 4 倍的伤害。\d+ ?分钟。$/.test(rack.turret.buys),
     rack.turret.buys);
   check('a damaged bay is still launching',
-    rack.bayDamaged.state === 'damaged' && rack.bayDamaged.effect === 'Interceptor bay 55 %: damaged, still launching'
-      && / to 80 %: it keeps launching, and 1\.5 times the damage to wreck it\./.test(rack.bayDamaged.buys),
+    rack.bayDamaged.state === 'damaged' && rack.bayDamaged.effect === '拦截弹发射舱 55 %：受损，仍在发射'
+      && /修到 80 %：它还能继续发射，但要打坏它需要 1\.5 倍的伤害/.test(rack.bayDamaged.buys),
     rack.bayDamaged.effect + ' · ' + rack.bayDamaged.buys);
   check('the mend line launches too, and a lettered bay reads the same',
-    / jury-rigged to 80 %: it keeps launching, and 1\.5 times the damage to wreck it$/.test(rack.bayMend)
-      && rack.letteredBay.effect === 'Interceptor bay A 55 %: damaged, still launching',
+    /抢修到 80 %：它还能继续发射，但要打坏它需要 1\.5 倍的伤害$/.test(rack.bayMend)
+      && rack.letteredBay.effect === '拦截弹发射舱 A 55 %：受损，仍在发射',
     rack.bayMend + ' · ' + rack.letteredBay.effect);
   check('nothing launches from a wrecked bay',
-    rack.bayWrecked.state === 'wrecked' && rack.bayWrecked.effect === 'Interceptor bay wrecked: nothing launches from it',
+    rack.bayWrecked.state === 'wrecked' && rack.bayWrecked.effect === '拦截弹发射舱 报废：里面打不出任何东西',
     rack.bayWrecked.effect);
   check('the other mounts keep the firing words',
-    /: damaged, still firing$/.test(rack.coilgun.effect) && /it keeps firing, and /.test(rack.coilgun.buys),
+    /：受损，仍在开火$/.test(rack.coilgun.effect) && /它还能继续开火/.test(rack.coilgun.buys),
     rack.coilgun.effect);
   console.log('    ' + [rack.names.turret, rack.turret.buys, rack.bayDamaged.effect, rack.bayMend, rack.bayWrecked.effect].join('\n    '));
 

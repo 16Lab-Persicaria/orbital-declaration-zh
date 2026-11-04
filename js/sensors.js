@@ -317,12 +317,12 @@
     const d = rangeWords(tr, lvl);
     const by = tr.by || tr.pby, ear = by && by.name ? by.name : '';
     let text = '';
-    if (up && lvl === 1) text = (ear ? ear + ' has a contact' : 'Contact') + ' bearing ' + bearing(tr) + ', range ' + d + '. Class unknown.';
-    else if (up && lvl === 2) text = 'Track: ' + ship.name + ', a ' + roleOf(ship) + ' at ' + d + (ear ? ' from ' + ear : '') + '.';
-    else if (up && lvl === 3) text = 'Solution on ' + ship.name + ' at ' + d + (ear ? ' from ' + ear : '') + '.';
-    else if (lvl === 2) text = 'Solution lost on ' + (name || 'the contact') + '. We hold a track at ' + d + '.';
-    else if (lvl === 1) text = 'Track lost on ' + (name || 'the contact') + '. We hold a contact at ' + d + '.';
-    else text = name ? 'Contact lost on ' + name + '.' : 'Contact lost.';
+    if (up && lvl === 1) text = (ear ? ear + '有一个接触' : '有一个接触') + '，方位 ' + bearing(tr) + '，距离 ' + d + '。舰级未知。';
+    else if (up && lvl === 2) text = '跟踪：' + ship.name + '，' + roleOf(ship) + '，距离 ' + d + (ear ? '，来自 ' + ear : '') + '。';
+    else if (up && lvl === 3) text = '解算：' + ship.name + '，距离 ' + d + (ear ? '，来自 ' + ear : '') + '。';
+    else if (lvl === 2) text = '失去解算：' + (name || '接触目标') + '. We hold a track at ' + d + '.';
+    else if (lvl === 1) text = '失去跟踪：' + (name || '接触目标') + '. We hold a contact at ' + d + '.';
+    else text = name ? '失去接触：' + name + '.' : '失去接触。';
     tr.level = lvl; tr.logT = sim.time;
     if (typeof sim.addLog === 'function') sim.addLog(text, 'Sensors', 'info');
   }
@@ -537,23 +537,23 @@
     const rows = [];
     if (!ship) return rows;
     const sig = signature(ship);
-    const cap = sig.word.charAt(0).toUpperCase() + sig.word.slice(1);
-    rows.push({ label: 'Signature', value: cap + ' · ' + U.fmt.power(sig.total), tip: 'sig_signature' });
-    rows.push({ label: 'By source', value: 'plume ' + U.fmt.power(sig.plume) + ' · radiators ' + U.fmt.power(sig.radiators) + ' · hull ' + U.fmt.power(sig.hull), tip: 'sig_sources' });
+    const cap = ({ burning: '点火中', active: '主动', radiating: '辐射中', warm: '偏热', cold: '冷' })[sig.word] || sig.word;
+    rows.push({ label: '信号特征', value: cap + ' · ' + U.fmt.power(sig.total), tip: 'sig_signature' });
+    rows.push({ label: '按来源', value: '尾焰 ' + U.fmt.power(sig.plume) + ' · 散热板 ' + U.fmt.power(sig.radiators) + ' · 舰体 ' + U.fmt.power(sig.hull), tip: 'sig_sources' });
     const seen = seenFrom(sim, ship);
-    rows.push({ label: 'Seen from', value: seen.by ? U.fmt.dist(seen.solution) + ' solution · ' + U.fmt.dist(seen.track) + ' track (' + seen.by + ')' : 'nobody is looking', tip: 'sig_seen' });
+    rows.push({ label: '被谁看到', value: seen.by ? U.fmt.dist(seen.solution) + ' 解算 · ' + U.fmt.dist(seen.track) + ' 跟踪（' + seen.by + '）' : '没有人在看', tip: 'sig_seen' });
     rows.push({
-      label: 'Our sensor',
-      value: U.fmt.dist(sensorS(ship)) + ' passive · ' + ((ship.activeRange || 0) > 0 ? U.fmt.dist(ship.activeRange) + ' active (' + (ship.activeSensor ? 'on' : 'off') + ')' : 'no active set'),
+      label: '我方传感器',
+      value: U.fmt.dist(sensorS(ship)) + ' 被动 · ' + ((ship.activeRange || 0) > 0 ? U.fmt.dist(ship.activeRange) + ' 主动（' + (ship.activeSensor ? '开' : '关') + '）' : '无主动传感器'),
       tip: 'sig_sensor',
     });
     const target = ship.target && sim && sim.byId ? sim.byId(ship.target) : null;
     if (target && typeof sim.isHostile === 'function' && sim.isHostile(target, ship)) {
       const tr = track(sim, ship, target);
       if (tr) {
-        rows.push({ label: 'Track', value: tr.word + ' · q ' + tr.q.toFixed(1) + (tr.posErr > 0 ? ' · ±' + U.fmt.dist(tr.posErr) : ' · pinned'), tip: 'sig_track' });
+        rows.push({ label: '跟踪', value: ({ contact: '接触', track: '跟踪', solution: '解算' }[tr.word] || tr.word) + ' · q ' + tr.q.toFixed(1) + (tr.posErr > 0 ? ' · ±' + U.fmt.dist(tr.posErr) : ' · 已钉住'), tip: 'sig_track' });
         const eta = solutionEta(sim, ship, target);
-        rows.push({ label: 'Solution in', value: tr.q >= T.solutionQ ? 'held' : eta == null ? 'not at this range' : U.fmt.time(eta), tip: 'sig_eta' });
+        rows.push({ label: '解算还需', value: tr.q >= T.solutionQ ? '已获得' : eta == null ? '此距离无解' : U.fmt.time(eta), tip: 'sig_eta' });
       }
     }
     return rows;

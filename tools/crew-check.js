@@ -134,7 +134,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
   check('the corvette pulls the sensor party to the drive', routine.corvette === 'fire repair:drive', routine.corvette);
   check('fire control is left alone while a sensor party is free', /^fire /.test(routine.corvette));
   check('the destroyer sends a standby party instead', routine.destroyer === 'fire sensors repair:drive standby', routine.destroyer);
-  check('the routine says so in the log', routine.lines.some((l) => /Crew: .*Party 2 is on the drive/.test(l)), routine.lines.join(' | '));
+  check('the routine says so in the log', routine.lines.some((l) => /Crew: .*班组 2 正在处理主推进器/.test(l)), routine.lines.join(' | '));
   // The work is priced by damage.js; the crew module only has to spend it at one second a second.
   check('the time to done is the work damage.js prices', routine.eta0 === routine.time, routine.eta0 + ' vs ' + routine.time + ' s');
   check('progress is time over the work', near(routine.progress, 96 / routine.time, 1.5 / routine.time), routine.progress + ' after 96 s of ' + routine.time + ' s');
@@ -155,10 +155,10 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     return { first, second: { hp: Math.round(CC.part(sh, 'drive').hp * 100) / 100, tasks: CC.tasks(sh) }, lines: sim.texts() };
   });
   check('the mend lands at the jury-rig cap, 30 % of a wrecked drive', near(mend.first.hp, 0.3, 1e-6) && near(mend.first.sys, 0.3, 1e-6), String(mend.first.hp));
-  check('one crew line for the work, naming the party and the number', mend.first.lines.filter((l) => /has the drive back to 30 %/.test(l)).length === 1, mend.first.lines.filter((l) => /back to/.test(l)).join(' | '));
+  check('one crew line for the work, naming the party and the number', mend.first.lines.filter((l) => /把主推进器修到 30 %/.test(l)).length === 1, mend.first.lines.filter((l) => /修到/.test(l)).join(' | '));
   check('the party goes back to its station when the work is done', mend.first.tasks === 'fire sensors' && mend.first.parties === 0, mend.first.tasks);
   check('a second shift takes a jury-rigged drive from 30 % to 70 %', mend.second.hp === 0.7 && mend.second.tasks === 'fire sensors', mend.second.hp + ' / ' + mend.second.tasks);
-  console.log('    ' + mend.lines.filter((l) => /back to/.test(l)).join(' | '));
+  console.log('    ' + mend.lines.filter((l) => /修到/.test(l)).join(' | '));
 
   // ------------------------------------------------------------------ paused under acceleration
   // Two hulls: one repairing the sensor suite, a part the ship is not using, so the burn is the
@@ -234,8 +234,8 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
   check('a 3.4 g burn wounds the crew', hurt.hard.wounded >= 3 && hurt.hard.wounded <= 5, hurt.hard.wounded + ' wounded of 24');
   check('nobody is lost to acceleration alone', hurt.hard.lost === 0 && hurt.hard.sum === 24, JSON.stringify(hurt.hard));
   check('1.3 g straps the crew in and hurts nobody', hurt.easy.wounded === 0 && hurt.easy.fit === 24 && hurt.easy.strapped === true, JSON.stringify(hurt.easy));
-  check('one log line for the burst, with the count and the g', hurt.lines.filter((l) => / wounded at 3\.4 g\./.test(l)).length === 1, hurt.lines.join(' | '));
-  console.log('    ' + hurt.lines.filter((l) => /wounded at/.test(l)).join(' | '));
+  check('one log line for the burst, with the count and the g', hurt.lines.filter((l) => /人受伤，在 3\.4 g。$/.test(l)).length === 1, hurt.lines.join(' | '));
+  console.log('    ' + hurt.lines.filter((l) => /人受伤，在/.test(l)).join(' | '));
   console.log('    ' + hurt.board);
 
   // CR 10: the couch limit teaches a share of the crew, not a corvette's own count sold as the
@@ -252,7 +252,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     return out;
   });
   check('the couch limit teaches the rate as a share of the crew',
-    /about 1 in 12 of the crew are hurt every minute for every g over, twice that above 5 g/.test(share.teach), share.teach);
+    /每超出 1 g，每分钟大约 12 人里有 1 人受伤，超过 5 g 再翻一倍/.test(share.teach), share.teach);
   check('and a minute 0.8 g over costs every hull that share of her own crew',
     ['corvette', 'frigate', 'cruiser'].every((c) => Math.abs(share[c].hurt - (share[c].total * 0.8) / 12) <= Math.max(1, share[c].total * 0.02)),
     ['corvette', 'frigate', 'cruiser'].map((c) => c + ' ' + share[c].hurt + ' of ' + share[c].total).join(', '));
@@ -272,7 +272,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
   check('with nobody in the sick bay the wounded stay down', medical.alone === 6, String(medical.alone));
   check('a party in the sick bay brings one back every 45 s', medical.after.wounded === 2 && medical.after.fit === 58, JSON.stringify(medical.after));
   check('the sick bay empties and the crew is whole again', medical.done.wounded === 0 && medical.done.fit === 60, JSON.stringify(medical.done));
-  check('the log says who is back on duty', medical.lines.some((l) => /back on duty/.test(l)), medical.lines.join(' | '));
+  check('the log says who is back on duty', medical.lines.some((l) => /回到岗位/.test(l)), medical.lines.join(' | '));
   console.log('    ' + medical.words);
   console.log('    ' + medical.party);
 
@@ -297,10 +297,10 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
   });
   check('a hit on a part wounds the crew at it', cas.r.wounded + cas.r.lost > 0 && cas.mid.fit === cas.before.fit - (cas.r.wounded + cas.r.lost), JSON.stringify(cas.r));
   check('some of them are lost, and the complement still adds up', cas.r.lost >= 1 && cas.mid.fit + cas.mid.wounded + cas.mid.lost === 140, JSON.stringify(cas.mid));
-  check('one line for the casualties, named by part', cas.lines.some((l) => /on the drive\./.test(l)), cas.lines.join(' | '));
+  check('one line for the casualties, named by part', cas.lines.some((l) => /在主推进器上/.test(l)), cas.lines.join(' | '));
   check('real hits through damage.js reach the crew', cas.hit.wounded + cas.hit.lost > 0 && cas.hit.sum === 24, JSON.stringify(cas.hit));
   check('a hit that takes nothing hurts nobody', cas.nobody.wounded === 0 && cas.nobody.lost === 0);
-  console.log('    ' + cas.lines.filter((l) => /wounded|lost/.test(l)).join(' | '));
+  console.log('    ' + cas.lines.filter((l) => /人受伤|人阵亡/.test(l)).join(' | '));
 
   // ------------------------------------------------------------------ small hits, carried (CR 1)
   // Beam fire chips a part a few per cent at a time. Rounded hit by hit that is nobody, for ever;
@@ -429,11 +429,11 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     const safe = [OD.Crew.assign(bareSh, 'p1', 'repair', 'drive'), OD.Crew.release(bareSh, 'p1'), OD.Crew.setG(bareSh, 'work')];
     return { send, twice, sound, gone, bad, tank, back, stood, tasks: CC.tasks(sh), safe };
   });
-  check('a party can be sent to a hurt part by hand', /^Party 3 to the drive: \d+ min to 70 %\.$/.test(orders.send), orders.send);
+  check('a party can be sent to a hurt part by hand', /^班组 3 去修主推进器：\d+ ?(秒|分钟)，能修到 70 %。$/.test(orders.send), orders.send);
   check('two parties are not sent to the same part', orders.twice === null);
   check('a party is not sent where a jury-rig changes nothing', orders.sound === null && orders.gone === null && orders.bad === null);
-  check('a venting tank can be isolated', /^Party 4 to tank 1: \d+ (s|min) to 50 %\.$/.test(orders.tank), orders.tank);
-  check('release puts a party back on its station', orders.back === 'Party 3 stood down.' && orders.stood === 'Party 4 stood down.' && orders.tasks === 'fire sensors standby standby', orders.tasks);
+  check('a venting tank can be isolated', /^班组 4 去修推进剂箱 1：\d+ ?(秒|分钟)，能修到 50 %。$/.test(orders.tank), orders.tank);
+  check('release puts a party back on its station', orders.back === '班组 3 已撤下。' && orders.stood === '班组 4 已撤下。' && orders.tasks === 'fire sensors standby standby', orders.tasks);
   check('orders on a ship with no crew are refused, not thrown', orders.safe.every((v) => v === null));
   console.log('    ' + orders.send);
   console.log('    ' + orders.tank);
@@ -600,7 +600,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
         drive: Math.round(CC.part(sh, 'drive').hp * 100) / 100,
       })),
       lines: sim.lines.length,
-      burst: sim.texts().filter((l) => /wounded at/.test(l)),
+      burst: sim.texts().filter((l) => /人受伤，在/.test(l)),
     };
   });
   check('1800 s of crew time on four hulls throws nothing', soak.threw === null, soak.threw || '');
@@ -648,13 +648,13 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     return { lit, cold, outPanel, stowed, busyTasks, coldTasks: CC.tasks(ai) };
   });
   check('a lit drive cannot be worked, whatever the g', running.lit.progress === 0 && running.lit.strapped === false, JSON.stringify(running.lit));
-  check('the board row says why, and the ring reads paused', running.lit.blocked === 'the drive has to be cold, throttle to 0' && running.lit.working === false, String(running.lit.blocked));
+  check('the board row says why, and the ring reads paused', running.lit.blocked === '主推进器必须先冷却，推力归零' && running.lit.working === false, String(running.lit.blocked));
   check('throttle to 0 and the work starts', running.cold.progress > 0 && running.cold.blocked === null, JSON.stringify(running.cold));
-  check('an extended radiator panel cannot be worked either', running.outPanel.progress === 0 && running.outPanel.blocked === 'the radiators have to be in', JSON.stringify(running.outPanel));
+  check('an extended radiator panel cannot be worked either', running.outPanel.progress === 0 && running.outPanel.blocked === '散热板必须先收起', JSON.stringify(running.outPanel));
   // CR 11: each reason is one short clause with no colon and no second sentence, so a caller can
   // set it in a sentence of its own. What the ship gives up for the shift is TEACH.inUse's job.
   check('and the party line sets the reason in a sentence of its own',
-    running.outPanel.words === 'Party 1 on radiator panel 1, held. The radiators have to be in.', running.outPanel.words);
+    running.outPanel.words === '班组 1 在散热板 1上，等着。散热板必须先收起。', running.outPanel.words);
   check('neither reason carries a colon or a second sentence',
     [running.lit.blocked, running.outPanel.blocked].every((w) => !/[:.]/.test(String(w))),
     running.lit.blocked + ' | ' + running.outPanel.blocked);
@@ -670,7 +670,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
   console.log('scenario: a party left standing on a part the ship keeps using');
   const downs = await page.evaluate(() => {
     const last = (sim) => { const t = sim.texts(); return t[t.length - 1] || ''; };
-    const stoodDown = (sim) => sim.texts().filter((l) => /stands down/.test(l));
+    const stoodDown = (sim) => sim.texts().filter((l) => /撤下/.test(l));
     // The routine pulls the sensor watch for the drive, and then the captain lights the drive.
     const sh = CC.ship('corvette'), sim = CC.sim([sh]);
     sh.name = 'JCS Larkspur';
@@ -711,7 +711,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     downs.sent + ' → ' + downs.waiting.tasks + ' at ' + downs.waiting.clock + ' s');
   check('at 60 s she stands down to the watch she came from', downs.back.tasks === 'fire sensors' && downs.back.downs === 1, downs.back.tasks);
   check('and the log gets one line: the part, what the ship is doing with it, the station she is back on',
-    downs.back.line === 'Crew: JCS Larkspur — Party 2 stands down from the drive: she is burning. Back on the sensor watch.', downs.back.line);
+    downs.back.line === 'Crew: JCS Larkspur — 班组 2 撤下主推进器：她还在点火。回到传感器值班。', downs.back.line);
   check('the part is held, so the routine does not send her straight back out',
     downs.inHold === 'fire sensors' && /repair:drive/.test(downs.afterHold), downs.inHold + ' → ' + downs.afterHold);
   check('a party on a part she can work is left where she is',
@@ -719,7 +719,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     downs.cold.tasks + ' at ' + Math.round(downs.cold.progress * 100) + ' %');
   check('a hand-sent party stands down the same way, and a panel names the radiators',
     downs.panel.tasks === 'fire sensors' && downs.panel.downs === 1
-    && downs.panel.line === 'Crew: JCS Tallow — Party 1 stands down from radiator panel 1: the radiators are out. Back on fire control.',
+    && downs.panel.line === 'Crew: JCS Tallow — 班组 1 撤下散热板 1：散热板还展开着。回到火控。',
     downs.panel.line);
   console.log('    ' + downs.back.line);
   console.log('    ' + downs.panel.line);
@@ -757,7 +757,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
   });
   check('the drive counts as in use for T.driveHold = 5 s after the thrust', mod.T && mod.T.driveHold === 5, mod.T ? String(mod.T.driveHold) : '');
   check('a one-second throttle pulse does not clear the block',
-    pulse.lit === 'the drive has to be cold, throttle to 0' && pulse.pulsed.blocked === pulse.lit && pulse.pulsed.progress === 0 && pulse.relit === pulse.lit,
+    pulse.lit === '主推进器必须先冷却，推力归零' && pulse.pulsed.blocked === pulse.lit && pulse.pulsed.progress === 0 && pulse.relit === pulse.lit,
     String(pulse.pulsed.blocked));
   check('nor does the order still asking for the burn', pulse.ordered === pulse.lit, String(pulse.ordered));
   check('the block stands for the 5 s after the last of it', pulse.mid === pulse.lit, String(pulse.mid));
@@ -893,9 +893,9 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     CC.run(sim, 5);
     whole.destroyed = true;
     CC.run(sim, 10);
-    const first = { crew: Object.assign({}, { fit: whole.crew.fit, wounded: whole.crew.wounded, lost: whole.crew.lost }), rec: OD.Crew.toRecord(whole), lines: sim.texts().filter((l) => /lost with the ship/.test(l)) };
+    const first = { crew: Object.assign({}, { fit: whole.crew.fit, wounded: whole.crew.wounded, lost: whole.crew.lost }), rec: OD.Crew.toRecord(whole), lines: sim.texts().filter((l) => /随舰沉没/.test(l)) };
     CC.run(sim, 60);                      // and it is said once, not every pass
-    const again = sim.texts().filter((l) => /lost with the ship/.test(l)).length;
+    const again = sim.texts().filter((l) => /随舰沉没/.test(l)).length;
     // a hull that had already lost people names the ones who were still aboard
     const part = CC.ship('corvette'), partSim = CC.sim([part]);
     part.name = 'JCS Tallow';
@@ -903,7 +903,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     CC.run(partSim, 5);
     part.destroyed = true;
     CC.run(partSim, 10);
-    const some = { crew: { fit: part.crew.fit, wounded: part.crew.wounded, lost: part.crew.lost }, rec: OD.Crew.toRecord(part), line: partSim.texts().filter((l) => /lost with the ship/.test(l))[0] || '' };
+    const some = { crew: { fit: part.crew.fit, wounded: part.crew.wounded, lost: part.crew.lost }, rec: OD.Crew.toRecord(part), line: partSim.texts().filter((l) => /随舰沉没/.test(l))[0] || '' };
     // a record taken before any update carries the settled numbers too
     const cold = CC.ship('corvette');
     cold.destroyed = true;
@@ -914,9 +914,9 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
   check('and the record the campaign strikes her off with carries it',
     lostAll.first.rec.fit === 0 && lostAll.first.rec.wounded === 0 && lostAll.first.rec.lost === 24 && lostAll.cold.lost === 24, JSON.stringify(lostAll.first.rec));
   check('one log line for the loss, said once',
-    lostAll.first.lines.length === 1 && lostAll.again === 1 && lostAll.first.lines[0] === 'Crew: JCS Larkspur — 24 lost with the ship.', lostAll.first.lines.join(' | '));
+    lostAll.first.lines.length === 1 && lostAll.again === 1 && lostAll.first.lines[0] === 'Crew: JCS Larkspur — 24 人随舰沉没。', lostAll.first.lines.join(' | '));
   check('a hull that had already lost people names the ones still aboard',
-    lostAll.some.crew.lost === 24 && lostAll.some.rec.lost === 24 && lostAll.some.line === 'Crew: JCS Tallow — The 20 still aboard are lost with the ship.', lostAll.some.line);
+    lostAll.some.crew.lost === 24 && lostAll.some.rec.lost === 24 && lostAll.some.line === 'Crew: JCS Tallow — 船上剩下的 20 人随舰沉没。', lostAll.some.line);
 
   // ------------------------------------------------------------------ what the routine spends (CR 13, CR 14)
   // Chapter 4, 436 s: the routine put the sensor watch on a drive the ship was burning, for a mend
@@ -986,7 +986,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
   check('nobody works the sick bay through a burn', bay.strapped.wounded === 10 && bay.strapped.g === 2, JSON.stringify(bay.strapped));
   check('the wounded come back once the burn eases', bay.eased.wounded === 8 && bay.eased.fit === 52, JSON.stringify(bay.eased));
   check('with nobody fit the sick bay stops', bay.none.wounded === 60 && bay.none.fit === 0, JSON.stringify({ wounded: bay.none.wounded, fit: bay.none.fit }));
-  check('and the board says the stations are unmanned', /nobody fit to stand it/.test(bay.none.party) && /nobody fit to work it/.test(bay.none.medic) && /none fit/.test(bay.none.words), bay.none.party + ' | ' + bay.none.medic);
+  check('and the board says the stations are unmanned', /没人撑得住/.test(bay.none.party) && /没人能干活/.test(bay.none.medic) && /无人可执勤/.test(bay.none.words), bay.none.party + ' | ' + bay.none.medic);
   console.log('    ' + bay.none.words);
 
   // ------------------------------------------------------------------ past what the couches hold (CR 15)
@@ -1003,9 +1003,9 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     return { hard: run(6.5), soft: run(5.5) };
   });
   check('above 6 g some of the hurt are killed', deaths.hard.lost > 0 && deaths.hard.sum === 140, JSON.stringify({ wounded: deaths.hard.wounded, lost: deaths.hard.lost }));
-  check('the burst line carries both numbers and the g', deaths.hard.lines.some((l) => /\d+ wounded and \d+ lost at 6\.5 g\.$/.test(l)), deaths.hard.lines.join(' | '));
+  check('the burst line carries both numbers and the g', deaths.hard.lines.some((l) => /\d+ 人受伤，\d+ 人阵亡，在 6\.5 g。$/.test(l)), deaths.hard.lines.join(' | '));
   check('below 6 g nobody is killed by acceleration', deaths.soft.lost === 0 && deaths.soft.wounded > 0 && deaths.soft.sum === 140, JSON.stringify({ wounded: deaths.soft.wounded, lost: deaths.soft.lost }));
-  check('and the burst line there is the wounded alone', deaths.soft.lines.some((l) => /\d+ wounded at 5\.5 g\.$/.test(l)), deaths.soft.lines.join(' | '));
+  check('and the burst line there is the wounded alone', deaths.soft.lines.some((l) => /\d+ 人受伤，在 5\.5 g。$/.test(l)), deaths.soft.lines.join(' | '));
   console.log('    ' + deaths.hard.gWords);
   console.log('    ' + deaths.hard.lines.filter((l) => /at 6\.5 g/.test(l)).join(' | '));
   console.log('    ' + deaths.soft.lines.filter((l) => /at 5\.5 g/.test(l)).join(' | '));
@@ -1021,16 +1021,16 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     CC.run(sim, 600);
     const texts = sim.texts();
     return {
-      flagLines: texts.filter((l) => /JCS Tallow — Party/.test(l)),
-      otherParty: texts.filter((l) => /JCS Bastion — Party/.test(l)),
-      aggregate: texts.filter((l) => /Bastion's parties/.test(l)),
+      flagLines: texts.filter((l) => /JCS Tallow — 班组/.test(l)),
+      otherParty: texts.filter((l) => /JCS Bastion — 班组/.test(l)),
+      aggregate: texts.filter((l) => /Bastion 的班组/.test(l)),
       all: texts,
     };
   });
   check('the hull on screen gets her parties in the log', logs.flagLines.length >= 2, logs.flagLines.join(' | '));
   check('the other hull gets no line per party move', logs.otherParty.length === 0, logs.otherParty.join(' | '));
   check('she gets one aggregate line instead, naming what her parties are on',
-    logs.aggregate.length >= 1 && logs.aggregate.length <= 4 && logs.aggregate.every((l) => l === "Crew: Bastion's parties are patching her tanks."), logs.aggregate.join(' | '));
+    logs.aggregate.length >= 1 && logs.aggregate.length <= 4 && logs.aggregate.every((l) => l === 'Crew: Bastion 的班组正在补她的推进剂箱。'), logs.aggregate.join(' | '));
   for (const l of logs.flagLines.slice(0, 2)) console.log('    ' + l);
   console.log('    ' + logs.aggregate[0]);
 
@@ -1057,17 +1057,17 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     return { fire, sensors, free, held, panel };
   });
   check('a send off fire control says what fire control costs',
-    cost.fire === 'Party 1 to radiator panel 1: 3 min to 70 %. Fire control drops to 70 % of its rate until she is back.', cost.fire);
+    cost.fire === '班组 1 去修散热板 1：3 分钟，能修到 70 %。火控在她回来之前降到 70 % 的速率。', cost.fire);
   check('a send off the sensor watch says the same for the watch',
-    cost.sensors === 'Party 2 to radiator panel 1: 3 min to 70 %. The sensor watch drops to 70 % of its rate until she is back.', cost.sensors);
+    cost.sensors === '班组 2 去修散热板 1：3 分钟，能修到 70 %。传感器值班在她回来之前降到 70 % 的速率。', cost.sensors);
   // CR 4: the cap and the watch are the same 70 % here, so they may not share a sentence.
   check('the cap and the watch never share a sentence',
-    cost.sensors.split('. ').every((part) => (part.match(/70 %/g) || []).length <= 1), cost.sensors);
+    cost.sensors.split('。').every((part) => (part.match(/70 %/g) || []).length <= 1), cost.sensors);
   check('a standby party costs nothing and the sentence says nothing',
-    cost.free === 'Party 3 to radiator panel 1: 3 min to 70 %.', cost.free);
-  check('a send to a part that is running says it is held', / Held: the drive has to be cold, throttle to 0\.$/.test(cost.held), cost.held);
+    cost.free === '班组 3 去修散热板 1：3 分钟，能修到 70 %。', cost.free);
+  check('a send to a part that is running says it is held', /暂停：主推进器必须先冷却，推力归零。$/.test(cost.held), cost.held);
   check('and a panel send says the same for the radiators',
-    / Held: the radiators have to be in\.$/.test(cost.panel), cost.panel);
+    /暂停：散热板必须先收起。$/.test(cost.panel), cost.panel);
   console.log('    ' + cost.fire);
   console.log('    ' + cost.sensors);
 
@@ -1081,7 +1081,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     return said.join(' ');
   });
   check('one name for the sick bay, everywhere it is named',
-    /the sick bay/.test(naming) && !/\b(on|to|in) medical\b/i.test(naming) && !/medical bay|sickbay/i.test(naming));
+    /医务室/.test(naming) && !/\b(on|to|in) medical\b/i.test(naming) && !/medical bay|sickbay/i.test(naming));
   check('the g limits are written 3 g, never Three g', /\b3 g\b/.test(naming) && !/Three g/i.test(naming));
   const src = require('fs').readFileSync(path.join(ROOT, 'js', 'crew.js'), 'utf8');
   check('and nothing in the module spells it the other way',
@@ -1103,9 +1103,9 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     };
   });
   check('a repair in the minute-and-a-half band prints damage.js words, not crew.js own cut',
-    oneTime.secs > 60 && oneTime.secs < 90 && oneTime.want === '1 min'
-    && oneTime.line.indexOf(': ' + oneTime.want + ' to ') > 0
-    && oneTime.party.indexOf(', ' + oneTime.want + ' to ') > 0
+    oneTime.secs > 60 && oneTime.secs < 90 && oneTime.want === '1 分钟'
+    && oneTime.line.indexOf('：' + oneTime.want + '，能修到 ') > 0
+    && oneTime.party.indexOf('，' + oneTime.want + '能修到 ') > 0
     && oneTime.buys.indexOf(oneTime.want) > 0,
     oneTime.secs + ' s → ' + oneTime.line + ' | ' + oneTime.party + ' | ' + oneTime.buys);
 
@@ -1171,21 +1171,21 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
       thinBurn: at(6, 3.4), thinHard: at(6, 6.5), thinStrapped: at(6, 2),
     };
   });
-  check('with nobody fit the line says so, not that the crew can work', gw.none === 'Nobody is fit to work.', gw.none);
+  check('with nobody fit the line says so, not that the crew can work', gw.none === '没有人能干活。', gw.none);
   check('under a third fit it names the count and what the watches run at',
-    gw.thin === '0.0 g, and 6 of 24 fit: the watches run at 52 %.', gw.thin);
-  check('a whole crew at rest reads as before', gw.full === '0.0 g: the crew can work.', gw.full);
+    gw.thin === '0.0 g，6 / 24 可执勤：值班只能按 52 % 运转。', gw.thin);
+  check('a whole crew at rest reads as before', gw.full === '0.0 g：船员可以干活。', gw.full);
   check('and the burn sentences are untouched',
-    gw.strapped === '2.0 g: the crew is strapped in and repairs are paused.'
-    && gw.burn === '3.6 g: over the couch limit. The crew is taking injuries.', gw.strapped + ' | ' + gw.burn);
+    gw.strapped === '2.0 g：船员已绑进座椅，修理暂停。'
+    && gw.burn === '3.6 g：超过抗荷上限。船员正在受伤。', gw.strapped + ' | ' + gw.burn);
   // A thin crew under a burn that is hurting people: the burn speaks first and the crew follows,
   // so neither the injuries nor the count is lost.
   check('a thin crew past the couch limit keeps the injury clause and adds its own',
-    gw.thinBurn === '3.4 g: over the couch limit. The crew is taking injuries. 6 of 24 fit: the watches run at 52 %.', gw.thinBurn);
+    gw.thinBurn === '3.4 g：超过抗荷上限。船员正在受伤。6 / 24 可执勤：值班只能按 52 % 运转。', gw.thinBurn);
   check('and past the death limit the same, with the killed still named',
-    gw.thinHard === '6.5 g: past what the couches hold. The crew is taking injuries, and some are killed. 6 of 24 fit: the watches run at 52 %.', gw.thinHard);
+    gw.thinHard === '6.5 g：已经超过抗荷座椅能承受的限度。船员在受伤，还有人阵亡。6 / 24 可执勤：值班只能按 52 % 运转。', gw.thinHard);
   check('a thin crew strapped in keeps the paused repairs too',
-    gw.thinStrapped === '2.0 g: the crew is strapped in and repairs are paused. 6 of 24 fit: the watches run at 52 %.', gw.thinStrapped);
+    gw.thinStrapped === '2.0 g：船员已绑进座椅，修理暂停。6 / 24 可执勤：值班只能按 52 % 运转。', gw.thinStrapped);
   console.log('    ' + gw.none + ' | ' + gw.thin);
   console.log('    ' + gw.thinBurn);
 
@@ -1199,15 +1199,15 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     };
   });
   check('one sentence for a damaged part, with its cap',
-    lesson.drive === 'A repair in vacuum is a jury-rig: the drive comes back to 70 %, never further.', lesson.drive);
-  check('a wrecked part gets both shifts', lesson.wrecked === 'A wrecked drive reaches 30 % in one shift and 70 % in a second.', lesson.wrecked);
+    lesson.drive === '真空里的修理就是应急抢修：主推进器能修到 70 %，不能再高。', lesson.drive);
+  check('a wrecked part gets both shifts', lesson.wrecked === '报废的主推进器一个班次能修到 30 %，两个班次能到 70 %。', lesson.wrecked);
   check('a part a jury-rig cannot bring back says so',
-    lesson.gone === 'A wrecked radiator panel 1 is gone. No jury-rig brings it back in a fight.', lesson.gone);
+    lesson.gone === '散热板 1已经报废没了。战斗中没有任何应急抢修能把它救回来。', lesson.gone);
   check('a holed tank is the isolate sentence, never a repair one',
-    lesson.tank === 'A party valves tank 1 out of the feed: the venting stops, the plating holds at 50 %, and what went out is gone.', lesson.tank);
+    lesson.tank === '班组把推进剂箱 1从管路里关掉：泄漏停止，外壳保持在 50 %，漏掉的就再也回不来了。', lesson.tank);
   check('a panel keeps its name without an article, a sound part is not promised a mend',
-    lesson.panel === 'A repair in vacuum is a jury-rig: radiator panel 1 comes back to 70 %, never further.'
-    && / at the cap already/.test(lesson.whole), lesson.panel + ' | ' + lesson.whole);
+    lesson.panel === '真空里的修理就是应急抢修：散热板 1能修到 70 %，不能再高。'
+    && /已经到顶了/.test(lesson.whole), lesson.panel + ' | ' + lesson.whole);
   check('no part falls back on the whole lesson', lesson.none === (await page.evaluate(() => OD.Crew.TEACH.juryRig)), lesson.none);
   for (const k of ['drive', 'wrecked', 'gone', 'tank']) console.log('    ' + lesson[k]);
 
@@ -1219,27 +1219,27 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     const cor = CC.ship('corvette'), cru = CC.ship('cruiser');
     cor.name = 'JCS Kestrel'; cru.name = 'ISV Resolve';
     const sim = CC.sim([cor, cru]);
-    const ours = OD.Crew.casualties(cor, null, 0.5 * Math.min(1, 260 / 24), 'in the boarding');
-    const hers = OD.Crew.casualties(cru, null, 0.5 * Math.min(1, 24 / 260), 'in the boarding');
+    const ours = OD.Crew.casualties(cor, null, 0.5 * Math.min(1, 260 / 24), '（登舰战斗中）');
+    const hers = OD.Crew.casualties(cru, null, 0.5 * Math.min(1, 24 / 260), '（登舰战斗中）');
     CC.run(sim, 60);
     const even = CC.ship('frigate');
-    const r = OD.Crew.casualties(even, null, 0.5, 'in the boarding');
+    const r = OD.Crew.casualties(even, null, 0.5, '（登舰战斗中）');
     // and an old caller that names neither a part nor a place still says something plain
     const odd = CC.ship('frigate'), oddSim = CC.sim([odd]);
     OD.Crew.casualties(odd, null, 1);
     CC.run(oddSim, 60);
     return { ours, hers, lines: sim.texts(), even: r.wounded + r.lost, evenSum: even.crew.fit + even.crew.wounded + even.crew.lost,
-      stray: oddSim.texts().filter((l) => /wounded|lost/.test(l))[0] || '' };
+      stray: oddSim.texts().filter((l) => /人受伤|人阵亡/.test(l))[0] || '' };
   });
   check('a boarding costs people on both decks, whatever the size of the hulls',
     boarded.ours.wounded + boarded.ours.lost >= 2 && boarded.hers.wounded + boarded.hers.lost >= 2,
     JSON.stringify(boarded.ours) + ' / ' + JSON.stringify(boarded.hers));
   check('at equal strength it is about a tenth of the fit crew', boarded.even === 6 && boarded.evenSum === 60, boarded.even + ' of 60');
-  check('the log names the boarding, never the part', boarded.lines.some((l) => / wounded in the boarding\.$/.test(l))
-    && !boarded.lines.some((l) => /on the part/.test(l)), boarded.lines.filter((l) => /wounded|lost/.test(l)).join(' | '));
+  check('the log names the boarding, never the part', boarded.lines.some((l) => /（登舰战斗中）。$/.test(l))
+    && !boarded.lines.some((l) => /在.+上。$/.test(l)), boarded.lines.filter((l) => /人受伤|人阵亡/.test(l)).join(' | '));
   check('a hit with no part and no phrase is taken aboard, never on the part',
-    / wounded aboard\.$/.test(boarded.stray || '') && !/on the part/.test(boarded.stray || ''), boarded.stray || '');
-  console.log('    ' + boarded.lines.filter((l) => /wounded|lost/.test(l)).join(' | '));
+    /在船上。$/.test(boarded.stray || '') && !/在.+上。$/.test((boarded.stray || '').replace(/在船上。$/, '')), boarded.stray || '');
+  console.log('    ' + boarded.lines.filter((l) => /人受伤|人阵亡/.test(l)).join(' | '));
 
   // ------------------------------------------------------------------ the sick-bay line (CR 8)
   const sick = await page.evaluate(() => {
@@ -1251,8 +1251,8 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
     return { busy, empty: OD.Crew.board(sh).parties[0].words };
   });
   check('the sick-bay line reads as a party and a count, not a party of wounded',
-    sick.busy === 'Party 1 in the sick bay · 16 wounded aboard.', sick.busy);
-  check('and says so when the sick bay is empty', sick.empty === 'Party 1 in the sick bay · no wounded left.', sick.empty);
+    sick.busy === '班组 1 在医务室 · 船上有 16 名伤员。', sick.busy);
+  check('and says so when the sick bay is empty', sick.empty === '班组 1 在医务室 · 没有伤员了。', sick.empty);
 
   // ------------------------------------------------------------------ a record that is only experience
   const partial = await page.evaluate(() => {
@@ -1278,11 +1278,11 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-6 : tol);
   // ------------------------------------------------------------------ the teach strings
   const teach = await page.evaluate(() => OD.Crew.TEACH);
   for (const k of Object.keys(teach)) console.log('    TEACH.' + k + ': ' + teach[k]);
-  check('every teach string is a plain sentence with a number or a key', Object.values(teach).every((s) => typeof s === 'string' && s.length > 20 && /\.$/.test(s)));
+  check('every teach string is a plain sentence with a number or a key', Object.values(teach).every((s) => typeof s === 'string' && s.length > 20 && /[。.]$/.test(s)));
   check('the one teach string for the jury-rig carries the drive number', /30 %/.test(teach.juryRig || ''), teach.juryRig || '');
   check('a teach string for a part that is running, and what a panel repair costs',
-    /throttle at 0/.test(teach.inUse || '') && /radiators pulled in for the whole shift/.test(teach.inUse || '')
-    && /no cooling/.test(teach.inUse || ''), teach.inUse || '');
+    /推力归零/.test(teach.inUse || '') && /整班都要收着/.test(teach.inUse || '')
+    && /一点散热都没有/.test(teach.inUse || ''), teach.inUse || '');
 
   const realErrors = consoleErrors.filter((e) => !/fonts.googleapis|ERR_INTERNET|net::ERR|Failed to load resource/.test(e) && !(/^file:/.test(url) && /Access to font/.test(e)));
   check('no console errors', realErrors.length === 0, realErrors.join(' | '));

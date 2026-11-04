@@ -67,7 +67,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
   check('a hostile track reads q, a word and an error box', story.finite && story.q >= 1 && story.q <= 3 && ['contact', 'track', 'solution'].includes(story.word), JSON.stringify({ q: story.q, word: story.word, posErr: Math.round(story.posErr / 1e3) + ' km' }));
   check('velErr is posErr over 120 s', Math.abs(story.velErr - story.posErr / 120) < 1e-6);
   check('a friendly hull is a solution by transponder', story.friendly.q === 3 && story.friendly.source === 'friendly', JSON.stringify(story.friendly));
-  check('report() gives panel rows', story.labels.includes('Signature') && story.labels.includes('Seen from') && story.labels.includes('Our sensor') && story.labels.includes('Track') && story.labels.includes('Solution in'), story.labels.join(','));
+  check('report() gives panel rows', story.labels.includes('信号特征') && story.labels.includes('被谁看到') && story.labels.includes('我方传感器') && story.labels.includes('跟踪') && story.labels.includes('解算还需'), story.labels.join(','));
   check('contacts() lists the hostiles', story.contacts.length >= 2 && story.contacts.join(' ').includes('ISV'), story.contacts.join(' · '));
   check('seenFrom() answers with finite ranges and a name', isFinite(story.seen.solution) && isFinite(story.seen.track) && story.seen.solution > 0 && story.seen.track > story.seen.solution && !!story.seen.by, JSON.stringify({ solution: Math.round(story.seen.solution / 1e3) + ' km', track: Math.round(story.seen.track / 1e3) + ' km', by: story.seen.by, word: story.seen.word }));
   check('solutionEta() is a finite number of seconds or null', story.eta === null || (isFinite(story.eta) && story.eta >= 0), String(story.eta));
@@ -80,9 +80,9 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     const lines = sim.log.filter((l) => l.speaker === 'Sensors').map((l) => l.text);
     return {
       lines,
-      contact: lines.filter((t) => /(?:^Contact| has a contact) bearing /.test(t)).length,
-      track: lines.filter((t) => /^Track: /.test(t)).length,
-      solution: lines.filter((t) => /^Solution on /.test(t)).length,
+      contact: lines.filter((t) => /有一个接触，方位 /.test(t)).length,
+      track: lines.filter((t) => /^跟踪：/.test(t)).length,
+      solution: lines.filter((t) => /^解算：/.test(t)).length,
       lost: lines.filter((t) => /lost/i.test(t)).length,
       errors: OD.errors.slice(), finite: sim.ships.every((s) => [s.pos.x, s.vel.x, s.heat].every(isFinite)),
     };
@@ -230,8 +230,8 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     const all = sim.log.filter((l) => l.speaker === 'Sensors');
     return { seq, closing, all: all.map((l) => l.text), kinds: all.map((l) => l.kind) };
   });
-  check('closing turns a contact into a track and then a solution', /(?:^Contact| has a contact) bearing /.test(words.closing[0] || '') && words.closing.some((t) => /^Track: /.test(t)) && words.closing.some((t) => /^Solution on /.test(t)), words.closing.join(' / '));
-  check('opening the range loses the solution, the track and the contact', words.all.some((t) => /Solution lost/.test(t)) && words.all.some((t) => /Track lost/.test(t)) && /Contact lost/.test(words.all[words.all.length - 1] || ''), words.all.slice(-3).join(' / '));
+  check('closing turns a contact into a track and then a solution', /有一个接触，方位 /.test(words.closing[0] || '') && words.closing.some((t) => /^跟踪：/.test(t)) && words.closing.some((t) => /^解算：/.test(t)), words.closing.join(' / '));
+  check('opening the range loses the solution, the track and the contact', words.all.some((t) => /失去解算/.test(t)) && words.all.some((t) => /失去跟踪/.test(t)) && /失去接触/.test(words.all[words.all.length - 1] || ''), words.all.slice(-3).join(' / '));
   check('every sensor line is an info line', words.kinds.length >= 6 && words.kinds.every((k) => k === 'info'), words.kinds.join(','));
   console.log('    ' + words.seq.join(' · '));
 
@@ -254,7 +254,7 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
   });
   const two = (v) => { const m = Math.pow(10, Math.floor(Math.log10(Math.abs(v))) - 1); return Math.round(v / m) * m; };
   const km = (t) => parseFloat(String(t).replace(/\u2009/g, '')) * 1e3;
-  const bareM = /(?:^Contact| has a contact) bearing (\d+)°, range ([\d\u2009.]+) km ±([\d\u2009.]+) km\. Class unknown\.$/.exec(bare.line);
+  const bareM = /有一个接触，方位 (\d+)°，距离 ([\d\u2009.]+) km ±([\d\u2009.]+) km。舰级未知。$/.exec(bare.line);
   check('a bare contact is logged with its error box, not to the metre', !!bareM && bare.q < 1.8 && Math.abs(km(bareM[3]) - two(bare.err)) < 1 && bare.err > 10e3, bare.line);
   check('and the range it quotes is the ghost to two figures, never the truth', !!bareM && Math.abs(km(bareM[2]) - two(bare.ghost)) < 1 && Math.abs(km(bareM[2]) - bare.truth) > 1, 'says ' + (bareM ? bareM[2] : '—') + ' km, ghost ' + Math.round(bare.ghost / 1e3) + ' km, truth ' + (bare.truth / 1e3).toFixed(1) + ' km');
   check('and the bearing is rounded to five degrees', !!bareM && Number(bareM[1]) % 5 === 0 && Math.abs(Number(bareM[1]) - (bare.los * 180) / Math.PI) <= 5, bareM ? bareM[1] + '° for ' + ((bare.los * 180) / Math.PI).toFixed(1) + '°' : '—');
@@ -414,18 +414,18 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     foe.pos.x = 1000e3; foe.pos.y = 0;   // cold at 1 000 km she is a bare contact (q about 1.3); at 1 400 km she is nothing
     fresh(); OD.Sensors.init(sim);       // init logs the contact the ladder starts on, so the log is cleared before it
     OD.harness.step(5);
-    const bare = sim.log.filter((l) => l.speaker === 'Sensors' && /(has a contact bearing|^Track: |^Solution on )/.test(l.text)).map((l) => l.text);
+    const bare = sim.log.filter((l) => l.speaker === 'Sensors' && /(有一个接触|^跟踪：|^解算：)/.test(l.text)).map((l) => l.text);
     foe.pos.x = 200e3; foe.pos.y = 0;
     fresh(); OD.harness.step(65);        // the ladder waits logGap (60 s) between lines about one track
-    const named = sim.log.filter((l) => l.speaker === 'Sensors' && /(has a contact bearing|^Track: |^Solution on )/.test(l.text)).map((l) => l.text);
+    const named = sim.log.filter((l) => l.speaker === 'Sensors' && /(有一个接触|^跟踪：|^解算：)/.test(l.text)).map((l) => l.text);
     return { bare, named, name: foe.name, role: OD.Ships.CLASSES[foe.cls].role };
   });
-  check('the warning keeps her class while she is a bare contact', warn.bare.length === 1 && /(?:^Contact| has a contact) bearing /.test(warn.bare[0]) && warn.bare[0].indexOf(warn.name) < 0 && warn.bare[0].indexOf(warn.role) < 0, warn.bare.join(' / '));
-  check('and names her once the track resolves', warn.named.length >= 1 && warn.named[0].indexOf(warn.name) >= 0 && (/^Solution on /.test(warn.named[0]) || warn.named[0].indexOf(warn.role) >= 0), warn.named.join(' / '));
+  check('the warning keeps her class while she is a bare contact', warn.bare.length === 1 && /有一个接触，方位 /.test(warn.bare[0]) && warn.bare[0].indexOf(warn.name) < 0 && warn.bare[0].indexOf(warn.role) < 0, warn.bare.join(' / '));
+  check('and names her once the track resolves', warn.named.length >= 1 && warn.named[0].indexOf(warn.name) >= 0 && (/^解算：/.test(warn.named[0]) || warn.named[0].indexOf(warn.role) >= 0), warn.named.join(' / '));
   // A bare contact is a bearing and a rough range with the error on it: no metres, no closing speed, no name.
-  check('the bare-contact line gives a bearing to five degrees and a range to two figures', /bearing \d+°/.test(warn.bare[0] || '') && /±/.test(warn.bare[0] || '') && Number((/bearing (\d+)°/.exec(warn.bare[0] || '') || [0, 1])[1]) % 5 === 0, warn.bare[0]);
+  check('the bare-contact line gives a bearing to five degrees and a range to two figures', /方位 \d+°/.test(warn.bare[0] || '') && /±/.test(warn.bare[0] || '') && Number((/方位 (\d+)°/.exec(warn.bare[0] || '') || [0, 1])[1]) % 5 === 0, warn.bare[0]);
   // v12: no closing rate under solution quality either: a track's velocity error is hundreds of m/s
-  check('and no exact metres and no closing speed on it, nor on the track line', !/\d\s*m(?![a-z\/])/.test(warn.bare[0] || '') && !/closing/.test(warn.bare[0] || '') && !/closing/.test(warn.named[0] || ''), warn.bare[0] + ' | ' + warn.named[0]);
+  check('and no exact metres and no closing speed on it, nor on the track line', !/\d\s*m(?![a-z\/])/.test(warn.bare[0] || '') && !/接近/.test(warn.bare[0] || '') && !/接近/.test(warn.named[0] || ''), warn.bare[0] + ' | ' + warn.named[0]);
 
   console.log('scenario: a track carried by dead reckoning');
   await page.evaluate(() => OD.harness.start(OD.Skirmish.build({ player: 'JC', env: 'deep', range: 1500, playerShips: { frigate: 1 }, enemyShips: { corvette: 1 }, seed: 17 })));
@@ -653,9 +653,9 @@ function check(name, ok, detail) { console.log((ok ? '  ok   ' : '  FAIL ') + na
     const again = sim.log.filter((l) => l.speaker === 'Damage control').map((l) => l.text);
     return { first, again, name: me.name, foe: foe.name };
   });
-  check('the first hull loss on one of ours is called by damage control', firstHit.first.length === 1 && firstHit.first[0].indexOf(firstHit.name) === 0 && /first hit/.test(firstHit.first[0]) && /83 %/.test(firstHit.first[0]), firstHit.first.join(' / '));
-  check('only once, and never for a hostile', firstHit.again.filter((t) => /first hit/.test(t)).length === 1 && firstHit.again.join(' ').indexOf(firstHit.foe) < 0, firstHit.again.join(' / '));
-  check('and every tenth of hull after that is called too', firstHit.again.some((t) => /hull integrity 40 %/.test(t) && t.indexOf(firstHit.name) === 0), firstHit.again.join(' / '));
+  check('the first hull loss on one of ours is called by damage control', firstHit.first.length === 1 && firstHit.first[0].indexOf(firstHit.name) === 0 && /挨了第一发/.test(firstHit.first[0]) && /83 %/.test(firstHit.first[0]), firstHit.first.join(' / '));
+  check('only once, and never for a hostile', firstHit.again.filter((t) => /挨了第一发/.test(t)).length === 1 && firstHit.again.join(' ').indexOf(firstHit.foe) < 0, firstHit.again.join(' / '));
+  check('and every tenth of hull after that is called too', firstHit.again.some((t) => /舰体完整度 40 %/.test(t) && t.indexOf(firstHit.name) === 0), firstHit.again.join(' / '));
 
   // The error wanders. It used to be one draw per (faction, target) — fixed phases, fixed rates, a fixed size —
   // so on a mirrored pair one side's plot was permanently the tighter one: it firmed up first, landed first, and

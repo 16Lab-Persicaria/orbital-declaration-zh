@@ -1,89 +1,89 @@
 # Orbital Declaration
 
-A hard science fiction space combat game that runs in the browser. Ships move under Newtonian motion and the rocket equation, so every burn costs delta-v that does not come back. The drive and the mounts heat a sink that only the radiators empty. A full sink holds the drive to a quarter and stops every mount until it drains. Every hull radiates and every sensor can see it, so there is no stealth in space. In 2211 the moons of Jupiter sign the Declaration and leave the Inner Systems Authority. You fight for the Jovian Compact through eight story chapters, a campaign across eleven places around Jupiter, skirmishes you set up yourself, and a yard where you design your own ships.
+一款跑在浏览器里的硬科幻太空战斗游戏。舰船按牛顿运动定律和火箭方程运动，所以每次点火都要花掉再也回不来的速度增量。主推进器和炮位把热灌进热沉，只有散热板能把它排空。热沉一满，推进器就只剩四分之一，所有炮位停火，直到它排空。每艘舰都在辐射，每个传感器都看得见，所以太空里没有隐身。2211 年，木星的卫星签署《宣言》，脱离内星系管理局。你为木星盟约而战：八个剧情章节、一场横跨木星周围十一处地点的战役、自己搭建的遭遇战，还有一个让你设计自己舰船的船坞。
 
-Play it at https://orbital-declaration.netlify.app.
+在 https://orbital-declaration.netlify.app 游玩英文原版。
 
-The physics follows Atomic Rockets (Project Rho): https://projectrho.com/public_html/rocket/. Where the game and that site disagree, the game has a bug.
+物理设定遵循 Atomic Rockets (Project Rho)：https://projectrho.com/public_html/rocket/。游戏和那个网站不一致的地方，就是游戏的 bug。
 
-## Play it locally
+## 本地游玩
 
-The game is plain JavaScript and Canvas 2D. There is nothing to build or install before you play it.
+游戏是纯 JavaScript 和 Canvas 2D。玩之前不需要构建或安装任何东西。
 
-- Open `index.html` in a browser. Everything loads from the tree. Chromium logs two blocked font preloads on a `file://` page. The fonts still load through `@font-face`, so ignore them.
-- Or serve it the way the live site is served: run `node tools/serve.js` and open http://127.0.0.1:8787/. The server applies the headers from `netlify.toml`, including the Content-Security-Policy, so a change that would break on the live site breaks here first. The script takes a directory and a port, so `node tools/serve.js . 8790` serves the tree on 8790 when 8787 is taken. Needs Node 18 or newer.
+- 在浏览器里打开 `index.html`。所有东西都从目录里加载。在 `file://` 页面上，Chromium 会记录两条被拦截的字体预加载。字体仍会通过 `@font-face` 加载，忽略即可。
+- 或者按线上站点的方式起个服务：运行 `node tools/serve.js`，打开 http://127.0.0.1:8787/。这个服务会套用 `netlify.toml` 里的响应头，包括 Content-Security-Policy，所以在会在线上坏掉的改动会先在这里坏掉。这个脚本接受一个目录和一个端口，8787 被占用时，`node tools/serve.js . 8790` 就用 8790 起这个目录。需要 Node 18 或更新版本。
 
-## Run the checks
+## 运行自检
 
-The checks drive the game headlessly in Chromium through Playwright. Install Playwright once:
+这些自检用 Playwright 在 Chromium 里无头驱动游戏。先安装一次 Playwright：
 
 ```
 npm install -g playwright
 npx playwright install chromium
 ```
 
-Run the playtests from the repository root. `NODE_PATH` points Node at the global modules directory where Playwright is installed:
+在仓库根目录运行这些游玩测试。`NODE_PATH` 让 Node 指向装着 Playwright 的全局模块目录：
 
 ```
 NODE_PATH=$(npm root -g) node tools/harness.js
 ```
 
-`tools/harness.js` runs thirteen scenarios: page load, chapter 1 to its end, clicks and orders on the map and the panel, the physics panel, a skirmish at Ganymede, the chapter 5 chase, a campaign battle, every chapter for 120 s, a corvette beam duel at 250 km, a destroyer against a lancer and a corvette at 400 km, fire control and point defence through to the damage report, sensors and decisions, and damage control and crew. It runs 86 checks along the way, prints `ok` or `FAIL` for each, and exits with code 1 when any fail. Set `OD_URL=http://127.0.0.1:8787/` to run it against a served copy instead of the file tree.
+`tools/harness.js` 跑十三个场景：页面加载、第一章打到结束、地图和面板上的点击与下单、物理面板、木卫三 (Ganymede) 的一场遭遇战、第五章的追击、一场战役战斗、每个章节跑 120 秒、250 公里处护卫艇的光束对决、400 公里处驱逐舰对一艘枪骑兵级和一艘护卫艇、火控和点防御一路打到损伤报告、传感器与决策、损管与船员。沿途跑 86 项检查，每项打印 `ok` 或 `FAIL`，有任何失败就以退出码 1 退出。设 `OD_URL=http://127.0.0.1:8787/` 可以让它对着起好的服务跑，而不是对着文件目录。
 
-Each check script covers one part of the game. A module the table does not name has no script of its own. Each runs the same way as the harness, and all but `sound-check.js` take `OD_URL` too. That one loads its own page, `tools/sound-preview.html`, from the tree.
+每个检查脚本覆盖游戏的一部分。表里没点名的模块没有自己的脚本。每个的跑法都和 harness 一样，除 `sound-check.js` 外也都接受 `OD_URL`。那一个从目录里加载自己的页面 `tools/sound-preview.html`。
 
-| Script | What it checks |
+| 脚本 | 检查什么 |
 | --- | --- |
-| `tools/autopilot-check.js` | an order becomes a heading and a burn, and the AI picks orders (OD.Autopilot, OD.AI) |
-| `tools/engagement-check.js` | mount readouts and reach with no target, no bay, no beam and no point defence |
-| `tools/damage-check.js` | component damage and jury-rig repairs (OD.Damage) |
-| `tools/crew-check.js` | crew parties, where they are sent, and what g does to them (OD.Crew) |
-| `tools/sensors-check.js` | sensors, signature and track quality (OD.Sensors) |
-| `tools/decisions-check.js` | the decision cards appear at the right moment and say the right thing (OD.Decisions) |
-| `tools/objectives-check.js` | a hostile that breaks off and runs counts as driven off (OD.Sim) |
-| `tools/bridge-check.js` | the console flow: situation screen, brief, hangar, refit, keyboard |
-| `tools/main-check.js` | the game shell: debrief, pause, skirmish board, refit ledger |
-| `tools/sound-check.js` | the cues and their throttling, and that every call is a no-op without WebAudio (OD.Sound) |
-| `tools/art-check.js` | at close zoom the ship art shows mounts firing, interceptors away, point defence up, a holed tank venting and a repair party at work (OD.ShipArt) |
-| `tools/bridge-shots.js` | screenshots into `tools/bridge-shots/`: every console screen but the situation screen at 1440×900, and the menu, a briefing, the skirmish board and the hangar at 390×844. Fails when a click does not navigate |
+| `tools/autopilot-check.js` | 一条指令变成航向和点火，以及 AI 挑选指令（OD.Autopilot、OD.AI） |
+| `tools/engagement-check.js` | 没有目标、没有发射舱、没有光束、没有点防御时的炮位读数与射程 |
+| `tools/damage-check.js` | 部件损伤与应急抢修（OD.Damage） |
+| `tools/crew-check.js` | 船员班组、派往哪里、加速度对人做什么（OD.Crew） |
+| `tools/sensors-check.js` | 传感器、信号特征与解算质量（OD.Sensors） |
+| `tools/decisions-check.js` | 决策卡在对的时刻出现、说该说的话（OD.Decisions） |
+| `tools/objectives-check.js` | 脱离并跑掉的敌舰计为已驱离（OD.Sim） |
+| `tools/bridge-check.js` | 控制台流程：战况屏、简报、机库、改装、键盘 |
+| `tools/main-check.js` | 游戏外壳：战后简报、暂停、遭遇战面板、改装账目 |
+| `tools/sound-check.js` | 音效与其节流，以及没有 WebAudio 时每次调用都是空操作（OD.Sound） |
+| `tools/art-check.js` | 近距离缩放时，舰船立绘显示开火的炮位、离架的拦截弹、开着的点防御、泄漏的破口推进剂箱和作业中的修理班组（OD.ShipArt） |
+| `tools/bridge-shots.js` | 截图到 `tools/bridge-shots/`：除战况屏外的每个控制台屏，1440×900；菜单、简报、遭遇战面板、机库，390×844。点击没有完成跳转就失败 |
 
-## Deploy
+## 部署
 
-`node tools/build-site.js dist` copies the files the site needs into `dist/` and stamps every script URL with a content hash. A script that changes gets a new URL, so the one-year cache lifetime for `/js/*` in `netlify.toml` can never serve a stale script. `node tools/serve.js dist` serves the copy for a last look. The live site is the Netlify site `orbital-declaration`. It is deployed from that copy with the Netlify deploy tools, not built by Netlify from this repository: `netlify.toml` has no build command, so a site linked straight to the repository would publish the source tree with unstamped script URLs under that one-year cache.
+`node tools/build-site.js dist` 把站点需要的文件复制进 `dist/`，并给每个脚本 URL 盖上内容哈希。改过的脚本拿到新 URL，所以 `netlify.toml` 里 `/js/*` 的一年缓存期永远不会吐出旧脚本。`node tools/serve.js dist` 把这份复制起个服务，供最后过目。线上站点就是 Netlify 站点 `orbital-declaration`。它用 Netlify 部署工具从那份复制部署，而不是由 Netlify 从这个仓库构建：`netlify.toml` 没有构建命令，直接连到仓库的站点会把带着未盖哈希脚本 URL 的源码目录按一年缓存发出去。
 
-## Files
+## 文件
 
-- `index.html`: the page, its styles and the script list. Everything hangs off `window.OD`.
-- `SPEC.md`: the module contract and the design record. For each version it says what was added, what the reviewers found and what changed.
-- `js/`: 22 scripts, loaded in this order.
-  - `util.js`: helpers. SI units everywhere, formatting only at the display edge.
-  - `physics.js`: the rocket equation, gravity, beam spot size, slug flight time, and the heat balance behind every radiator number.
-  - `ships.js`: the hull classes and their numbers.
-  - `autopilot.js`: turns an order into a heading and a throttle. Ships thrust only along the nose.
-  - `ai.js`: computer-controlled ships choose orders. The autopilot flies them.
-  - `guide.js`: the planner and the navigator. Runs an order ahead with the real autopilot and says what will happen in plain words.
-  - `damage.js`: component damage. A hit opens hull integrity and then lands on one part: the drive, the reactor, the sensors, a radiator panel, a tank or a mount.
-  - `crew.js`: the crew as parties you deploy, and what acceleration does to people.
-  - `sensors.js`: sensors and signature. Every hull radiates, and its power over range squared decides how good a track is.
-  - `sim.js`: the simulation core. Motion under one gravitating body, heat, boarding, objectives, triggers.
-  - `shipart.js`: procedural ship art. Built, never edited by hand (see below).
-  - `render.js`: the Canvas 2D renderer.
-  - `ui.js`: the HUD, tooltips, the physics panel and the DOM screens.
-  - `sound.js`: sound, all of it synthesised with WebAudio.
-  - `bridge.js`: the bridge console. The menus are drawn on the tactical canvas.
-  - `story.js`: the eight chapters.
-  - `campaign.js`: the Jovian campaign. Eleven places, a fleet that persists, turns.
-  - `skirmish.js`: skirmish setup.
-  - `engagement.js`: what the mounts do to a hull. Beams, coilgun slugs, interceptors and point defence.
-  - `decisions.js`: the decision cards. The trade-offs in the sim, put to the player as a choice.
-  - `configurator.js`: the yard. Every choice moves the numbers and the picture.
-  - `main.js`: the game shell. The loop, input and the modes.
-- `assets/ships/src/`: the ship art source. `core.js` is the renderer, every other script is one hull family, and its `README.md` says how a family is written. `sh assets/ships/build.sh` (from the repository root) concatenates them, core first, into `js/shipart.js` and loads the result in Node before replacing the file. `assets/ships/renders/` holds rendered views of every hull.
-- `assets/site/`: icons, the social card and the self-hosted fonts.
-- `assets/configurator/shots/`: screenshots of the yard.
-- `tools/`: the harness, the check scripts, the local server, the site build, the renderer for the icons and the social card (`site-render.html` with `site-render.js`, run headlessly), and three preview pages you open in a browser while working on a module: `shipart-preview.html` for the ship art, `configurator-preview.html` for the yard, `sound-preview.html` for the sound.
-- `404.html`, `manifest.webmanifest`, `robots.txt`, `favicon.ico`, `netlify.toml`: hosting.
+- `index.html`：页面、样式和脚本清单。所有东西都挂在 `window.OD` 上。
+- `SPEC.md`：模块契约与设计记录。每个版本都写了加了什么、评审发现了什么、改了什么。
+- `js/`：22 个脚本，按此顺序加载。
+  - `util.js`：辅助函数。处处都是 SI 单位，只在显示边缘做格式化。
+  - `physics.js`：火箭方程、引力、光束光斑尺寸、弹丸飞行时间，以及每个散热板数字背后的热平衡。
+  - `ships.js`：舰级及其数值。
+  - `autopilot.js`：把一条指令变成航向和油门。舰船只沿舰首方向推进。
+  - `ai.js`：电脑控制的舰船挑选指令。自动驾驶负责飞。
+  - `guide.js`：规划器与领航员。用真实自动驾驶把一条指令预先跑一遍，用大白话说出会发生什么。
+  - `damage.js`：部件损伤。一次命中先破舰体完整度，然后落在某个部件上：主推进器、反应堆、传感器、一块散热板、一个推进剂箱或一个炮位。
+  - `crew.js`：以班组部署的船员，以及加速度对人做什么。
+  - `sensors.js`：传感器与信号特征。每艘舰都在辐射，其功率除以距离平方决定解算质量。
+  - `sim.js`：模拟核心。单个引力天体下的运动、热量、登舰、目标、触发器。
+  - `shipart.js`：程序化舰船立绘。构建生成，从不手改（见下）。
+  - `render.js`：Canvas 2D 渲染器。
+  - `ui.js`：HUD、提示框、物理面板和 DOM 界面。
+  - `sound.js`：音效，全部用 WebAudio 合成。
+  - `bridge.js`：舰桥控制台。菜单画在战术画布上。
+  - `story.js`：八个章节。
+  - `campaign.js`：木星战役。十一处地点、一支延续的舰队、回合。
+  - `skirmish.js`：遭遇战设置。
+  - `engagement.js`：炮位对舰体做什么。光束、线圈炮弹丸、拦截弹和点防御。
+  - `decisions.js`：决策卡。模拟里的取舍，作为选择摆到玩家面前。
+  - `configurator.js`：船坞设计台。每个选择都同时改动数值和图形。
+  - `main.js`：游戏外壳。主循环、输入与各模式。
+- `assets/ships/src/`：舰船立绘源码。`core.js` 是渲染器，其余每个脚本是一个舰体族，各自的 `README.md` 说明一个族怎么写。`sh assets/ships/build.sh`（在仓库根目录下）把它们按 core 在前的顺序拼接成 `js/shipart.js`，并在替换文件前先在 Node 里加载一遍。`assets/ships/renders/` 收着每个舰体的渲染视图。
+- `assets/site/`：图标、社交分享卡和自托管字体。
+- `assets/configurator/shots/`：船坞的截图。
+- `tools/`：harness、各检查脚本、本地服务、站点构建、图标与社交卡的渲染器（`site-render.html` 配 `site-render.js`，无头运行），以及三个改模块时在浏览器里打开的预览页：看舰船立绘的 `shipart-preview.html`、看船坞的 `configurator-preview.html`、听音效的 `sound-preview.html`。
+- `404.html`、`manifest.webmanifest`、`robots.txt`、`favicon.ico`、`netlify.toml`：托管用。
 
-## License
+## 许可证
 
-MIT, see `LICENSE`. The fonts in `assets/site/fonts/` (Rajdhani, IBM Plex Mono, IBM Plex Sans) are under the SIL Open Font License 1.1, see https://openfontlicense.org. The tree carries the subsetted font files only, not the licence text.
+MIT，见 `LICENSE`。`assets/site/fonts/` 里的字体（Rajdhani、IBM Plex Mono、IBM Plex Sans）按 SIL Open Font License 1.1 授权，见 https://openfontlicense.org。目录里只带子集化后的字体文件，不带许可证文本。

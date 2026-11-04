@@ -7,11 +7,11 @@
   const km = (v) => v * 1000;
 
   const ENVS = {
-    deep: { label: 'Deep space', body: null },
-    ganymede: { label: 'Ganymede orbit', body: 'ganymede', altitude: km(3000) },
-    europa: { label: 'Europa orbit', body: 'europa', altitude: km(2400) },
-    io: { label: 'Io orbit', body: 'io', altitude: km(2600) },
-    jupiter: { label: 'Jupiter high orbit', body: 'jupiter', altitude: km(300000) },
+    deep: { label: '深空', body: null },
+    ganymede: { label: 'Ganymede (木卫三) 轨道', body: 'ganymede', altitude: km(3000) },
+    europa: { label: 'Europa (木卫二) 轨道', body: 'europa', altitude: km(2400) },
+    io: { label: 'Io (木卫一) 轨道', body: 'io', altitude: km(2600) },
+    jupiter: { label: 'Jupiter (木星) 高轨道', body: 'jupiter', altitude: km(300000) },
   };
   const NAMES = {
     // skirmish hulls have names of their own; the story's ships (Larkspur, Anselm, Bastion, Harkness, Sabre,
@@ -64,10 +64,10 @@
     place(player, o.playerShips, -1, true);
     place(enemy, o.enemyShips, 1, false);
     return {
-      name: 'Skirmish · ' + env.label, body, sunAngle: rngA() * U.TAU, playerFaction: player,
+      name: '遭遇战 · ' + env.label, body, sunAngle: rngA() * U.TAU, playerFaction: player,
       ships,
-      objectives: [{ id: 'n', text: 'Neutralise all hostile ships', type: 'neutralize', targets: 'hostiles' }],
-      intro: [{ speaker: 'Tactical', text: 'Contacts at ' + U.fmt.dist(range) + '. Weapons free.', kind: 'info' }],
+      objectives: [{ id: 'n', text: '使所有敌舰失能', type: 'neutralize', targets: 'hostiles' }],
+      intro: [{ speaker: '战术', text: '接触，距离 ' + U.fmt.dist(range) + '。自由开火。', kind: 'info' }],
       triggers: [],
     };
   }
@@ -93,17 +93,17 @@
     if (!game.demo || game.demo.kind !== 'menu') game.demo = game.makeDemo();
     const state = loadOpts();
     const launch = () => {
-      if (!count(state.playerShips)) { UI.toast('Give yourself at least one ship.'); return; }
-      if (!count(state.enemyShips)) { UI.toast('Give the enemy at least one ship.'); return; }
+      if (!count(state.playerShips)) { UI.toast('给自己至少留一艘舰。'); return; }
+      if (!count(state.enemyShips)) { UI.toast('给敌人至少留一艘舰。'); return; }
       const opts = { player: state.player, env: state.env, range: state.range, playerShips: { ...state.playerShips }, enemyShips: { ...state.enemyShips }, seed: Date.now() & 0xffff };
       try { localStorage.setItem('od.skirmish', JSON.stringify(opts)); } catch (e) { /* per-viewer convenience only */ }
       game.startScenario(build(opts), { mode: 'Skirmish', onEnd: () => screen(game), onBack: () => screen(game) });
     };
     game.bridge('skirmish', {
-      title: 'Set the board',
-      sub: 'Pick both sides, the place and the opening range. The enemy flies to doctrine. Corvettes and frigates jink and hold their preferred range. Destroyers and cruisers stand off and stay nose-on.',
+      title: '布置战场',
+      sub: '选双方编成、交战地点和开局距离。敌方按条令飞行：护卫艇和护卫舰会规避，守住它们偏好的距离；驱逐舰和巡洋舰会保持距离，舰首对敌。',
       state,
-      sides: [{ id: 'JC', label: 'Jovian Compact' }, { id: 'ISA', label: 'Inner Systems Authority' }],
+      sides: [{ id: 'JC', label: '木星盟约' }, { id: 'ISA', label: '内星系管理局' }],
       envs: Object.keys(ENVS).map((k) => ({ id: k, label: ENVS[k].label })),
       ranges: RANGES,
       classes: order().map((c) => ({ id: c, name: OD.Ships.CLASSES[c].name, custom: !!OD.Ships.CLASSES[c].custom })),
@@ -128,8 +128,8 @@
     const read = (prefix) => { const o = {}; for (const c of order()) o[c] = Math.max(0, Math.min(6, +el.querySelector('#' + prefix + '_' + c).value || 0)); return o; };
     el.querySelector('#skGo').addEventListener('click', () => {
       const playerShips = read('skA'), enemyShips = read('skB');
-      if (!Object.values(playerShips).some((v) => v > 0)) { UI.toast('Give yourself at least one ship.'); return; }
-      if (!Object.values(enemyShips).some((v) => v > 0)) { UI.toast('Give the enemy at least one ship.'); return; }
+      if (!Object.values(playerShips).some((v) => v > 0)) { UI.toast('给自己至少留一艘舰。'); return; }
+      if (!Object.values(enemyShips).some((v) => v > 0)) { UI.toast('给敌人至少留一艘舰。'); return; }
       const opts = { player: el.querySelector('#skSide').value, env: el.querySelector('#skEnv').value, range: +el.querySelector('#skRange').value || 1500, playerShips, enemyShips, seed: Date.now() & 0xffff };
       try { localStorage.setItem('od.skirmish', JSON.stringify(opts)); } catch (e) { /* per-viewer convenience only */ }
       game.startScenario(build(opts), { mode: 'Skirmish', onEnd: () => screen(game) });

@@ -27,7 +27,7 @@ function note(text) { console.log('    ' + text); }
     present: !!(window.OD && OD.Decisions),
     api: ['init', 'update', 'current', 'refresh', 'choose', 'dismiss'].filter((k) => !OD.Decisions || typeof OD.Decisions[k] !== 'function'),
     kinds: (OD.Decisions && OD.Decisions.kinds ? OD.Decisions.kinds : []).map((k) => k.kind),
-    teachless: (OD.Decisions && OD.Decisions.kinds ? OD.Decisions.kinds : []).filter((k) => !k.teach || k.teach.length < 120).map((k) => k.kind),
+    teachless: (OD.Decisions && OD.Decisions.kinds ? OD.Decisions.kinds : []).filter((k) => !k.teach || k.teach.length < 60).map((k) => k.kind),
     cooldown: OD.Decisions && OD.Decisions.T ? OD.Decisions.T.cooldown : null,
     caps: OD.Decisions && typeof OD.Decisions.capabilities === 'function' ? OD.Decisions.capabilities(OD.Game && OD.Game.sim) : null,
   }));
@@ -104,8 +104,8 @@ function note(text) { console.log('    ' + text); }
     const seen = new Set(), closedAt = Object.create(null), live = new Map();
     const want = {
       approach: (d) => d.options.find((o) => o.recommended),
-      radiators: (d) => d.options.find((o) => /^Stow/.test(o.label)),
-      salvo: (d) => d.options.find((o) => /^Hold the bays/.test(o.label)), // an answer that changes nothing
+      radiators: (d) => d.options.find((o) => /^收起散热板/.test(o.label)),
+      salvo: (d) => d.options.find((o) => /^压住发射舱/.test(o.label)), // an answer that changes nothing
     };
     let seq = sim.decisionSeq;
     try {
@@ -184,7 +184,7 @@ function note(text) { console.log('    ' + text); }
             if (cur.kind === 'approach') out.acts.approach = (me.order.type === 'keeprange' || me.order.type === 'approach') && me.order.target === cur.targetId;
             if (cur.kind === 'radiators') out.acts.radiators = me.radiators.deployed === false && was.rads === true;
             // an answer that changes nothing writes no line in the log
-            if (cur.kind === 'salvo') out.quietLogged = sim.log.slice(was.logs).some((l) => /^Decision: /.test(l.text));
+            if (cur.kind === 'salvo') out.quietLogged = sim.log.slice(was.logs).some((l) => /^决策：/.test(l.text));
             delete want[cur.kind];
           }
         }
@@ -193,7 +193,7 @@ function note(text) { console.log('    ' + text); }
       out.kinds = Array.from(seen);
       out.time = sim.time;
       out.outcome = sim.outcome;
-      out.logged = sim.log.filter((l) => /^Decision: /.test(l.text) && l.speaker === 'Bridge').map((l) => l.text);
+      out.logged = sim.log.filter((l) => /^决策：/.test(l.text) && l.speaker === 'Bridge').map((l) => l.text);
     } catch (e) { out.err.push(String(e.stack || e)); }
     out.errors = OD.errors.slice();
     return out;
@@ -331,7 +331,7 @@ function note(text) { console.log('    ' + text); }
   });
   check('no errors while a card speaks for several hulls', many.err.length === 0 && many.errors.length === 0, many.err.concat(many.errors).join(' | '));
   check('the same question across hulls collapses into one card', many.cards === 1 && many.ships >= 2, 'cards ' + many.cards + ', ships ' + many.ships);
-  check('the card names the count', typeof many.title === 'string' && /\d+ ships/.test(many.title), String(many.title));
+  check('the card names the count', typeof many.title === 'string' && /\d+ 艘/.test(many.title), String(many.title));
   check('one answer acts for every hull on the card', many.acted === true, (many.orders || []).join(', '));
   check('naming a new hull after a dismissal raises the approach card again', many.reraised === true, String(many.reraiseDetail));
 
@@ -396,7 +396,7 @@ function note(text) { console.log('    ' + text); }
             mine: d.shipId === me.id, onHer: d.targetId === foe.id, keys: d.options.map((o) => o.key).join(''),
             recs: d.options.filter((o) => o.recommended).length, numbers: d.options.every((o) => /\d/.test(o.detail)),
           };
-          const go = d.options.find((o) => /^Go active/.test(o.label));
+          const go = d.options.find((o) => /^开启主动/.test(o.label));
           if (go) {
             const was = !!me.activeSensor;
             D.choose(sim, d.id, go.key);
@@ -408,7 +408,7 @@ function note(text) { console.log('    ' + text); }
       {
         const { sim, me, foe } = board(false);
         const d = raise(sim, me);
-        const o = d && d.options.find((x) => /^Close to/.test(x.label));
+        const o = d && d.options.find((x) => /^接近/.test(x.label));
         if (o) {
           const R = U.dist(me.pos, foe.pos);
           D.choose(sim, d.id, o.key);
@@ -432,20 +432,20 @@ function note(text) { console.log('    ' + text); }
         sim.setOrder(me.id, { type: 'manual', heading: me.heading, throttle: 1 });
         const d = raise(sim, me);
         out.ourPlume = !!d;
-        out.plumeLine = d ? ((d.options.find((o) => /^Go active/.test(o.label)) || {}).detail || '') : '';
+        out.plumeLine = d ? ((d.options.find((o) => /^开启主动/.test(o.label)) || {}).detail || '') : '';
       }
     } catch (e) { out.err.push(String(e.stack || e)); }
     out.errors = OD.errors.slice();
     return out;
   });
   check('no errors while the sensors question is raised', quiet.err.length === 0 && quiet.errors.length === 0, quiet.err.concat(quiet.errors).join(' | '));
-  check('a cold hull coasting inside our beams is a track the mounts hold on', !!quiet.cold && quiet.cold.word === 'track' && quiet.cold.q < 2.7 && quiet.cold.readout === 'no solution', JSON.stringify(quiet.cold && { R: quiet.cold.R, q: quiet.cold.q, word: quiet.cold.word, bite: quiet.cold.bite, readout: quiet.cold.readout }));
+  check('a cold hull coasting inside our beams is a track the mounts hold on', !!quiet.cold && quiet.cold.word === 'track' && quiet.cold.q < 2.7 && quiet.cold.readout === '无解算', JSON.stringify(quiet.cold && { R: quiet.cold.R, q: quiet.cold.q, word: quiet.cold.word, bite: quiet.cold.bite, readout: quiet.cold.readout }));
   check('the sensors question is raised for the player hull with no solution', !!(quiet.shape && quiet.shape.mine && quiet.shape.onHer), quiet.cold && quiet.cold.title ? quiet.cold.title : 'never raised');
   check('its options are keyed 1..n with one recommended and numbers in every line', !!quiet.shape && /^12(3)?$/.test(quiet.shape.keys) && quiet.shape.recs === 1 && quiet.shape.numbers, JSON.stringify(quiet.shape));
   check('choosing Go active lights the sensor and closes the question', quiet.act === true && quiet.closed === true, quiet.act + '/' + quiet.closed);
   check('a "close to" option never orders the range open', quiet.worst == null || quiet.worst < 1, JSON.stringify(quiet.opened));
   check('nothing is asked once her drive is lit', !!quiet.burning && quiet.burning.raised === false && quiet.burning.q >= 2.7, JSON.stringify(quiet.burning));
-  check('our own plume no longer silences the question, and the option prices it', quiet.ourPlume === true && /plume/.test(quiet.plumeLine || ''), String(quiet.plumeLine));
+  check('our own plume no longer silences the question, and the option prices it', quiet.ourPlume === true && /尾焰/.test(quiet.plumeLine || ''), String(quiet.plumeLine));
   if (quiet.cold && quiet.cold.options) note('at ' + quiet.cold.R + ' km, q ' + quiet.cold.q + ': ' + quiet.cold.title + '\n      ' + quiet.cold.options.join('\n      '));
 
   // ---------------------------------------------------------------- the kinds a quiet fight never reaches
@@ -506,8 +506,8 @@ function note(text) { console.log('    ' + text); }
           if (got) {
             // the card never prints a bite of zero, and 'Hold at X' only exists when our beams do bite
             const ours = bigNow().ours;
-            const holdOpt = got.options.find((o) => /^Hold at/.test(o.label));
-            out.rangeHonest = !/out to 0 m|burn through her armour at 0 m/.test(got.text) && (ours > 0 || !holdOpt);
+            const holdOpt = got.options.find((o) => /^保持在/.test(o.label));
+            out.rangeHonest = !/0 米|在 0 上能烧穿/.test(got.text) && (ours > 0 || !holdOpt);
             record('range', sim, got);
             break;
           }
@@ -523,7 +523,7 @@ function note(text) { console.log('    ' + text); }
         OD.harness.step(6);
         const d = openOn(sim, 'cripple', me.id);
         if (d) {
-          const leave = d.options.find((o) => /^Leave her/.test(o.label));
+          const leave = d.options.find((o) => /^放弃她/.test(o.label));
           record('cripple', sim, d);
           if (leave && (sim.decisions || []).indexOf(d) >= 0) { D.choose(sim, d.id, leave.key); out.leaveOrder = me.order.type; }
         }
@@ -545,7 +545,7 @@ function note(text) { console.log('    ' + text); }
           const rec = d.options.find((o) => o.recommended);
           out.heatShare = Math.round(share * 100);
           out.heatRec = rec ? rec.label : null;
-          out.heatSustainedLit = !!(rec && /^Sustained/.test(rec.label) && share < 0.15);
+          out.heatSustainedLit = !!(rec && /^持续/.test(rec.label) && share < 0.15);
           out.heatTitle = d.title;
           record('heat', sim, d);
         }
@@ -563,7 +563,7 @@ function note(text) { console.log('    ' + text); }
         }
         if (d) {
           const me = sim.byId(d.shipId);
-          const jink = d.options.find((o) => /^Jink/.test(o.label));
+          const jink = d.options.find((o) => /^规避/.test(o.label));
           out.slugDv = jink ? /Δv/.test(jink.detail) : null;
           record('slugs', sim, d);
           if (jink && (sim.decisions || []).indexOf(d) >= 0) { D.choose(sim, d.id, jink.key); out.jinked = me.jink === true; }
@@ -642,12 +642,12 @@ function note(text) { console.log('    ' + text); }
   // 'hers fall short by 192 km' is true of her beams and of nothing else, and a newcomer reads it
   // as 'she cannot hurt us from here' while her coilguns and her bays work.
   check('a reach that falls short is named as her beams, not as everything she has',
-    !!forced.got.range && forced.got.range.options.every((o) => !/\bhers fall short\b/.test(o)),
+    !!forced.got.range && forced.got.range.options.every((o) => !/差 \d+ 才够得到/.test(o)),
     forced.got.range ? forced.got.range.options.join(' | ').slice(0, 160) : 'no range card');
   check('"Leave her" breaks off with the retreat order, which knows where the ground is', forced.leaveOrder === 'retreat', String(forced.leaveOrder));
   check('the heat card never recommends Sustained at nothing', forced.heatSustainedLit === false, 'share ' + forced.heatShare + ' %, lit: ' + forced.heatRec);
-  check('the heat title says what the sink is doing', typeof forced.heatTitle === 'string' && !/^Sink at /.test(forced.heatTitle), String(forced.heatTitle));
-  check('with the panels in the heat card points at Extend or Break off', /^(Extend|Break off)/.test(forced.heatRec || ''), String(forced.heatRec));
+  check('the heat title says what the sink is doing', typeof forced.heatTitle === 'string' && /^热沉/.test(forced.heatTitle), String(forced.heatTitle));
+  check('with the panels in the heat card points at Extend or Break off', /^(展开散热板|脱离)/.test(forced.heatRec || ''), String(forced.heatRec));
   check('the jink cost reads as a labelled delta-v, not a speed', forced.slugDv === true, String(forced.slugDv));
   check('choosing Jink sets the hull jinking', forced.jinked !== false, String(forced.jinked));
   check('the defend options are close, screen and hold', forced.defendIds === 'closeon,screen,hold', String(forced.defendIds));
@@ -673,11 +673,11 @@ function note(text) { console.log('    ' + text); }
       let d = null;
       for (let i = 0; i < 20 && !d; i++) { OD.harness.step(5); d = (sim.decisions || []).find((x) => x.kind === 'approach' && (x.ships || [x.shipId]).includes(me.id)); }
       if (d) {
-        const burn = d.options.find((o) => /^Burn hard/.test(o.label));
-        const easy = d.options.find((o) => /^Coast in/.test(o.label));
+        const burn = d.options.find((o) => /^全力点火/.test(o.label));
+        const easy = d.options.find((o) => /^滑行接近/.test(o.label));
         out.labels = d.options.map((o) => o.label + ' · ' + o.detail);
         // the delta-v difference between the two is real, and both are labelled in km/s
-        const num = (s) => { const m = /Δv (?:about )?([\d.]+) km\/s/.exec(s); return m ? +m[1] : null; };
+        const num = (s) => { const m = /Δv (?:约 )?([\d.]+) km\/s/.exec(s); return m ? +m[1] : null; };
         const a = num(burn ? burn.detail : ''), b = num(easy ? easy.detail : '');
         out.dvGap = a != null && b != null ? +(a - b).toFixed(2) : null;
         out.bare = /· \d+ m\/s ·/.test((burn ? burn.detail : '') + (easy ? easy.detail : ''));
@@ -740,8 +740,8 @@ function note(text) { console.log('    ' + text); }
       const answer = (d, rec) => {
         const ships = (d.ships || [d.shipId]).slice();
         const was = ships.map((id) => { const s2 = sim.byId(id); return s2 ? { id, type: s2.order.type } : null; });
-        if (/^Stow/.test(rec.label)) panelSaid.push({ t: sim.time, id: d.shipId, dir: 'in', kind: d.kind, label: rec.label });
-        if (/^Extend/.test(rec.label)) panelSaid.push({ t: sim.time, id: d.shipId, dir: 'out', kind: d.kind, label: rec.label });
+        if (/^收起散热板/.test(rec.label)) panelSaid.push({ t: sim.time, id: d.shipId, dir: 'in', kind: d.kind, label: rec.label });
+        if (/^展开散热板/.test(rec.label)) panelSaid.push({ t: sim.time, id: d.shipId, dir: 'out', kind: d.kind, label: rec.label });
         D.choose(sim, d.id, rec.key);
         for (const w of was) {
           if (!w) continue;
@@ -780,10 +780,10 @@ function note(text) { console.log('    ' + text); }
           if (!rec) continue;
           // the two rules: never 'open the range' while the board says to neutralise her, and
           // never a passive answer while the card itself says we are pressing
-          if (neutraliseOpen() && /^Open to/.test(rec.label)) out.badOpen.push(Math.round(sim.time) + ' ' + d.kind + ': ' + rec.label);
+          if (neutraliseOpen() && /^拉开到/.test(rec.label)) out.badOpen.push(Math.round(sim.time) + ' ' + d.kind + ': ' + rec.label);
           // The withdraw card is the exception: breaking off at half a hull is the right answer
           // precisely when the fight is pressing, which is the whole reason the kind exists.
-          if (d.pressing && d.kind !== 'withdraw' && d.kind !== 'sink' && /^(Open to|Hold and watch|Hold (our )?station|Break off|Leave her)/.test(rec.label)) out.badPressing.push(Math.round(sim.time) + ' ' + d.kind + ': ' + rec.label);
+          if (d.pressing && d.kind !== 'withdraw' && d.kind !== 'sink' && /^(拉开到|按兵不动|守住|脱离|放弃她)/.test(rec.label)) out.badPressing.push(Math.round(sim.time) + ' ' + d.kind + ': ' + rec.label);
           out.answers.push(Math.round(sim.time) + ' ' + d.kind + ' → ' + rec.label);
           answer(d, rec);
         }
@@ -989,8 +989,8 @@ function note(text) { console.log('    ' + text); }
       const answer = (d, rec) => {
         const ships = (d.ships || [d.shipId]).slice();
         const was = ships.map((id) => { const s2 = sim.byId(id); return s2 ? { id, type: s2.order.type } : null; });
-        if (/^Stow/.test(rec.label)) panelSaid.push({ t: sim.time, id: d.shipId, dir: 'in', kind: d.kind, label: rec.label });
-        if (/^Extend/.test(rec.label)) panelSaid.push({ t: sim.time, id: d.shipId, dir: 'out', kind: d.kind, label: rec.label });
+        if (/^收起散热板/.test(rec.label)) panelSaid.push({ t: sim.time, id: d.shipId, dir: 'in', kind: d.kind, label: rec.label });
+        if (/^展开散热板/.test(rec.label)) panelSaid.push({ t: sim.time, id: d.shipId, dir: 'out', kind: d.kind, label: rec.label });
         D.choose(sim, d.id, rec.key);
         for (const w of was) {
           if (!w) continue;
@@ -1028,7 +1028,7 @@ function note(text) { console.log('    ' + text); }
           const tr = OD.Sensors.track(sim, sh.faction, t);
           const R = tr && tr.q < 2.7 ? U.dist(sh.pos, tr.est.pos) : U.dist(sh.pos, t.pos);
           for (const o of d.options || []) {
-            const m = /brake at ([\d\u2009]+) km/i.exec(String(o.detail || '') + ' · ' + String(d.teach || ''));
+            const m = /在 ([\d\u2009]+) 反推/.exec(String(o.detail || '') + ' · ' + String(d.teach || ''));
             if (m && +bare(m[1]) * 1000 >= R) out.brakeFar.push(Math.round(sim.time) + ' ' + d.kind + ': ' + m[0] + ' at a range of ' + Math.round(R / 1000) + ' km');
           }
         }
@@ -1046,13 +1046,13 @@ function note(text) { console.log('    ' + text); }
         for (const d of (sim.decisions || []).slice()) {
           const rec = (d.options || []).find((o) => o.recommended);
           if (!rec) continue;
-          if (/^Open to/.test(rec.label) && sim.objectives.some((o) => o.type === 'neutralize' && !o.done && !o.failed)) out.badOpen.push(Math.round(sim.time) + ' ' + rec.label);
+          if (/^拉开到/.test(rec.label) && sim.objectives.some((o) => o.type === 'neutralize' && !o.done && !o.failed)) out.badOpen.push(Math.round(sim.time) + ' ' + rec.label);
           // a card about a hull the bridge is not flying has to read as a question about her
           if (!(d.ships || [d.shipId]).includes('larkspur')) {
             const who = sim.byId(d.shipId);
             const words = [d.title, d.text].concat((d.options || []).map((o) => o.label + ' ' + o.detail)).join(' ');
             out.third.push(Math.round(sim.time) + ' ' + d.shipId + ': ' + d.title);
-            if (/\b(we|us|our|ours)\b/i.test(words) || (who && d.title.indexOf(who.name) < 0)) out.firstPerson.push(d.kind + ' — ' + d.title + ' — ' + words.slice(0, 160));
+            if (/(我们|我方|我们的)/.test(words) || (who && d.title.indexOf(who.name) < 0)) out.firstPerson.push(d.kind + ' — ' + d.title + ' — ' + words.slice(0, 160));
           }
           out.answers.push(Math.round(sim.time) + ' ' + d.kind + ' → ' + rec.label);
           answer(d, rec);
@@ -1081,7 +1081,7 @@ function note(text) { console.log('    ' + text); }
   check('and is never told to open the range with the objective still open', picket.badOpen.length === 0, picket.badOpen.slice(0, 4).join(' | '));
   check('no card ever prints a brake farther out than the hull it is closing on', picket.brakeFar.length === 0, picket.brakeFar.slice(0, 3).join(' | '));
   // The bays never reload, so what a salvo costs is the magazine, and the card has to say it.
-  check('the launch option prices the magazine against the arrivals', picket.salvo == null || /\d+ of \d+ aboard for /.test(picket.salvo), String(picket.salvo));
+  check('the launch option prices the magazine against the arrivals', picket.salvo == null || /舰上 \d+ 枚里出 \d+ 枚/.test(picket.salvo), String(picket.salvo));
   note('answers: ' + (picket.answers || []).slice(0, 10).join(' | '));
 
   // ---------------------------------------------------------------- recommended-only, three a side
@@ -1101,7 +1101,7 @@ function note(text) { console.log('    ' + text); }
         for (const d of (sim.decisions || []).slice()) {
           const rec = (d.options || []).find((o) => o.recommended);
           if (!rec) continue;
-          if (d.pressing && d.kind !== 'withdraw' && d.kind !== 'sink' && /^(Open to|Hold and watch|Hold (our )?station|Break off)/.test(rec.label)) out.badOpen.push(d.kind + ': ' + rec.label);
+          if (d.pressing && d.kind !== 'withdraw' && d.kind !== 'sink' && /^(拉开到|按兵不动|守住|脱离)/.test(rec.label)) out.badOpen.push(d.kind + ': ' + rec.label);
           out.answers.push(Math.round(sim.time) + ' ' + d.kind + ' → ' + rec.label);
           D.choose(sim, d.id, rec.key);
         }
@@ -1275,7 +1275,7 @@ function note(text) { console.log('    ' + text); }
         out.kind = d.kind;
         out.title = d.title;
         out.words = d.title + ' — ' + d.text;
-        out.firstPerson = /\b(we|us|our|ours)\b/i.test(words);
+        out.firstPerson = /(我们|我方|我们的)/.test(words);
         out.named = d.title.indexOf(hauler.name) >= 0;
       }
     } catch (e) { out.err.push(String(e.stack || e)); }
@@ -1395,7 +1395,7 @@ function note(text) { console.log('    ' + text); }
       out.raised = { at: Math.round(sim.time), q: +tr.q.toFixed(2), word: tr.word, estKm: Math.round(estR / 1000),
         trueKm: Math.round(trueR / 1000), errKm: Math.round((tr.rangeErr || 0) / 1000), words };
       // the plot's own two figures, with the box on them, exactly as the sensor log speaks
-      out.want = 'about ' + U.fmt.dist(sig2(estR)) + ', ±' + U.fmt.dist(sig2(tr.rangeErr || 0));
+      out.want = '约 ' + U.fmt.dist(sig2(estR)) + '，±' + U.fmt.dist(sig2(tr.rangeErr || 0));
       out.quotesPlot = words.indexOf(out.want) >= 0;
       // and never the truth to the kilometre
       const truth = U.fmt.dist(trueR);
@@ -1403,12 +1403,12 @@ function note(text) { console.log('    ' + text); }
       // nothing it says about her range is finer than the error box allows
       const nums = [];
       let m;
-      const re = /about ([\d ]+) km/g;
+      const re = /约 ([\d  ]+) km/g;
       while ((m = re.exec(words))) nums.push(+bare(m[1]) * 1000);
       out.rounded = nums.length > 0 && nums.every((v) => sig2(v) === v);
       // and the brake never begins farther out than the plot says she is
       const brakes = [];
-      const rb = /brake at ([\d ]+) km/gi;
+      const rb = /在 ([\d  ]+) km 反推/g;
       while ((m = rb.exec(words))) brakes.push(+bare(m[1]) * 1000);
       out.brakeKm = brakes.map((v) => Math.round(v / 1000));
       out.brakeInside = brakes.every((v) => v < estR);
@@ -1461,11 +1461,11 @@ function note(text) { console.log('    ' + text); }
         if (!d) { out.cases.push({ at: Math.round(at / 1000), bite: Math.round(bite0 / 1000), raised: false, inside: true, agrees: true }); continue; }
         const tr = OD.Sensors.track(sim, me.faction, foe);
         const R = tr && tr.q < 2.7 ? U.dist(me.pos, tr.est.pos) : U.dist(me.pos, foe.pos);
-        const coast = d.options.find((o) => /^Coast in/.test(o.label));
+        const coast = d.options.find((o) => /^滑行接近/.test(o.label));
         // Three clauses on the key, the rest behind Why?: the brake the order flies may be printed
         // in either place, and both are the card's own words. Behind Why? it opens a sentence of
         // its own, so the clause is read without regard to case.
-        const m = coast ? /brake at ([\d ]+) km/i.exec(String(coast.detail || '') + ' · ' + String(d.teach || '')) : null;
+        const m = coast ? /在 ([\d  ]+) km 反推/i.exec(String(coast.detail || '') + ' · ' + String(d.teach || '')) : null;
         const b = m ? +bare(m[1]) * 1000 : null;
         let order = null;
         if (coast) { D.choose(sim, d.id, coast.key); order = me.order; }
@@ -1531,16 +1531,16 @@ function note(text) { console.log('    ' + text); }
       const det = (o ? o.detail : '') + ' \u00b7 ' + String(d.teach || '');
       const tr = OD.Sensors.track(sim, me.faction, foe);
       const R = tr && tr.q < 2.7 ? U.dist(me.pos, tr.est.pos) : U.dist(me.pos, foe.pos);
-      const bm = /^([^·]*?) of burn/.exec(det);
+      const bm = /^([^·]*)/.exec(det);
       const burn = bm ? secsOf(bm[1]) : null;
       // The card prints the speed the way the panel does: 820 m/s under a kilometre a second,
       // 1.24 km/s over it, with a thin space inside the digits.
-      const sp = /(?:coasting at|opening at) ([\d\u2009 .]+) (m|km)\/s/.exec(det);
+      const sp = /(?:以|拉开距离) ([\d\u2009 .]+) (m|km)\/s/.exec(det);
       const speed = sp ? +sp[1].replace(/[^\d.]/g, '') * (sp[2] === 'km' ? 1000 : 1) : null;
-      const bt = /beams reach ([\d ]+) km/.exec(det) || /outside \S+ ([\d ]+) km burn-through/.exec(det);
+      const bt = /(?:的烧穿距离是 |的光束够得到 )([\d  ]+) km/.exec(det);
       const bite = bt ? +bare(bt[1]) * 1000 : null;
-      const cover = /burn-through in ([^·]+)/.exec(det);
-      const dist = /clearing that takes ([^·]+)/.exec(det);
+      const cover = /要 ([^·]+) 才出得去/.exec(det);
+      const dist = /要 ([^·]+) 才出得去/.exec(det);
       const printed = cover ? secsOf(cover[1]) : dist ? secsOf(dist[1]) : null;
       // the same sum, from the card's own printed numbers: a burn of t seconds at a constant
       // acceleration opens half its final speed times its length, and the rest of her bite is
@@ -1587,9 +1587,8 @@ function note(text) { console.log('    ' + text); }
           if (third) {
             out.seen++;
             if (out.sample.length < 4) out.sample.push(d.kind + ': ' + d.title + ' — ' + d.text);
-            const twoHers = words.split(/[·,.;:]/).some((c) => (c.match(/\bhers\b/g) || []).length > 1);
-            const broken = /\bdo she\b/i.test(words) || new RegExp('\\bdoes she (' + VERBS + ')\\b').test(words) ||
-              twoHers || /\b(we|us|our|ours)\b/i.test(words);
+            const twoHers = words.split(/[·，。；：]/).some((c) => (c.match(/她的/g) || []).length > 1);
+            const broken = twoHers || /(我们|我方|我们的)/.test(words);
             if (broken && out.bad.length < 6) out.bad.push(d.kind + ' — ' + words.slice(0, 220));
           }
           const rec = (d.options || []).find((o) => o.recommended);
@@ -1642,14 +1641,14 @@ function note(text) { console.log('    ' + text); }
         }
       }
       if (!d) { out.errors = OD.errors.slice(); return out; }
-      const hold = d.options.find((o) => /^Hold at/.test(o.label));
+      const hold = d.options.find((o) => /^保持在/.test(o.label));
       const words = d.options.map((o) => o.label + ' · ' + o.detail).join(' | ') + ' | ' + String(d.teach || '');
-      const m = hold ? /Hold at ([\d ]+) km/.exec(hold.label) : null;
+      const m = hold ? /保持在 ([\d  ]+) km/.exec(hold.label) : null;
       out.raised = { oursKm: Math.round(ours / 1000), theirsKm: Math.round(theirs / 1000),
         hold: m ? +bare(m[1]) : null, words };
       // either the option is gone, or it is priced at the range she allows and says why
-      out.honest = !hold || (/closing at \d+ m\/s under thrust/.test((String(hold.detail || '') + ' · ' + String(d.teach || ''))) && m != null && +bare(m[1]) * 1000 >= Math.min(theirs * 0.8, ours) * 0.95);
-      out.said = /closing at \d+ m\/s under thrust/.test(words);
+      out.honest = !hold || (/正以 \d+ ?米\/秒点火接近/.test((String(hold.detail || '') + ' · ' + String(d.teach || ''))) && m != null && +bare(m[1]) * 1000 >= Math.min(theirs * 0.8, ours) * 0.95);
+      out.said = /正以 \d+ ?米\/秒点火接近/.test(words);
     } catch (e) { out.err.push(String(e.stack || e)); }
     out.errors = OD.errors.slice();
     return out;
@@ -1703,7 +1702,7 @@ function note(text) { console.log('    ' + text); }
       const lit = d.options.find((o) => o.recommended) || {};
       const bo = d.options.find((o) => o.id === 'breakoff') || {};
       return { raised: true, biteKm: Math.round(theirs / 1000), atKm: Math.round(at / 1000), lit: lit.id || null,
-        label: lit.label || null, cover: /burn-through in /.test(bo.detail || ''), detail: bo.detail || '' };
+        label: lit.label || null, cover: /烧穿距离是/.test(bo.detail || ''), detail: bo.detail || '' };
     };
     try {
       // her bite is short and we are most of the way out of it: the burn finishes the job
@@ -1740,7 +1739,7 @@ function note(text) { console.log('    ' + text); }
       const find = () => (sim.decisions || []).find((x) => x.kind === 'approach' && (x.ships || [x.shipId]).includes('larkspur')) || null;
       let d = null;
       for (let i = 0; i < 40 && !d && !sim.outcome; i++) { OD.harness.step(5); d = find(); }
-      const hold = d ? d.options.find((o) => /^Hold and watch/.test(o.label)) : null;
+      const hold = d ? d.options.find((o) => /^按兵不动/.test(o.label)) : null;
       if (!hold) { out.errors = OD.errors.slice(); return out; }
       out.label = hold.label;
       D.choose(sim, d.id, hold.key);
@@ -2169,16 +2168,16 @@ function note(text) { console.log('    ' + text); }
   // question is the radiators, not the party. The card used to price a clean repair time for it,
   // take the watch for it, and never say the ship would refuse to start the work.
   check('a hit radiator with the radiators out is a question, and it is the trade',
-    !!repair.rad && repair.radQuiet.raised === true && repair.rad.rec === 'Keep them out',
+    !!repair.rad && repair.radQuiet.raised === true && repair.rad.rec === '保持展开',
     JSON.stringify(repair.radQuiet) + ' · ' + (repair.rad ? repair.rad.rec : 'never raised'));
   if (repair.rad) note(repair.rad.title + ' — ' + repair.rad.text + '\n    ' + repair.rad.options.join('\n    '));
   check('the card prices the mend in the board row’s own words, with the time printed once',
     !!repair.rad && !!repair.radBuys &&
-    repair.rad.options.some((o) => o.indexOf(String(repair.radBuys).replace(/^A party\b[^:]*:\s*/, '').split(/\.(?:\s|$)/)[0]) >= 0) &&
-    repair.rad.options.join(' ').split(/\bmin\b/).length === 2,
+    repair.rad.options.some((o) => o.indexOf(String(repair.radBuys).replace(/^班组[^：]*：\s*/, '').split(/。/)[0]) >= 0) &&
+    repair.rad.options.join(' ').split(/ 分钟/).length === 2,
     (repair.radBuys || '') + ' → ' + (repair.rad ? repair.rad.options[0] : ''));
   check('and the keep key says what the part is left at',
-    !!repair.rad && /stays at \d+ %/.test(repair.rad.options.join(' ')),
+    !!repair.rad && /保持在 \d+ %/.test(repair.rad.options.join(' ')),
     repair.rad ? repair.rad.options.join(' | ') : '');
   check('the 60 s clock is on the card as a deadline the band can count down',
     repair.radDeadline > 50 && repair.radDeadline <= 60, String(repair.radDeadline));
@@ -2187,9 +2186,9 @@ function note(text) { console.log('    ' + text); }
   // The gain is the board row's own clause for that part, and the cost is named as a rate: two
   // unrelated 70 %s on one line — the drive's and the watch's — read as one number said twice.
   check('it names the part, the time and what the watch gives up',
-    !!repair.drive && /the drive/.test(repair.drive.options.join(' ')) &&
-    /(acceleration (and turn rate )?at|thrust back to) 70 %/.test(repair.drive.options.join(' ')) &&
-    /(the sensor watch|fire control) drops to 70 % of its rate while she is away/.test(repair.drive.options.join(' ')),
+    !!repair.drive && /主推进器/.test(repair.drive.options.join(' ')) &&
+    /(加速度|推力回到)[^·]*70 %/.test(repair.drive.options.join(' ')) &&
+    /(传感器值班|火控)在她离开时降到 70 % 的速率/.test(repair.drive.options.join(' ')),
     repair.drive ? repair.drive.options.join(' | ') : '');
   {
     // the card prints the board's own estimate, which is OD.Damage.repairTime over the party's rate
@@ -2199,18 +2198,18 @@ function note(text) { console.log('    ' + text); }
     const want = repair.times.driveBoard;
     const shown = repair.times.driveWords;
     check('and the time on the key is the board\u2019s estimate, in the board\u2019s own format',
-      !!repair.drive && !!shown && repair.drive.options.some((o) => o.indexOf(' in ' + shown) >= 0),
+      !!repair.drive && !!shown && repair.drive.options.some((o) => o.indexOf('，' + shown) >= 0),
       'repairTime ' + repair.times.drive + ' s, board ' + want + ' s (' + shown + ') · ' +
       (repair.drive ? repair.drive.options.join(' | ') : ''));
   }
   check('for the drive the lit key pulls the watch, as the routine would',
-    !!repair.drive && /^Send party \d to the drive$/.test(repair.driveRec || ''), String(repair.driveRec));
+    !!repair.drive && /^派 班组 \d 去修主推进器$/.test(repair.driveRec || ''), String(repair.driveRec));
   // The lit key is the value call, not a fixed preference: what the mend puts back, weighed by
   // how much of the fight that part carries, against the 30 % the watch loses while the party is
   // away. The drive is worth it and a radiator panel on a cold hull is not.
   check('the lit key is the value call: the drive is worth a watch, a radiator is not',
     !!repair.drive && !!repair.rad &&
-    !/^Keep/.test(repair.driveRec || '') && /^Keep/.test(repair.rad.rec || ''),
+    !/^保持/.test(repair.driveRec || '') && /^保持/.test(repair.rad.rec || ''),
     String(repair.driveRec) + ' | ' + String(repair.rad && repair.rad.rec));
   check('and the open card holds the ship\u2019s routine off while it is up',
     repair.holdApi === true || repair.driveHeld === false,
@@ -2222,19 +2221,19 @@ function note(text) { console.log('    ' + text); }
   // is what stops the work, and a spare party does not answer that.
   check('and a part the ship is using is a question even with a party spare',
     !!repair.spareBlocked && repair.spareBlocked.raised === true &&
-    /radiators are out/.test(repair.spareBlocked.title || ''), JSON.stringify(repair.spareBlocked));
+    /散热板还展开着/.test(repair.spareBlocked.title || ''), JSON.stringify(repair.spareBlocked));
   if (repair.spareBlockedCard) note(repair.spareBlockedCard.title + ' \u2014 ' + repair.spareBlockedCard.text +
     '\n    ' + repair.spareBlockedCard.options.join('\n    '));
   check('two hurt parts and one free party is', !!repair.two, repair.two ? repair.two.title : 'never raised');
   if (repair.two) note(repair.two.title + ' — ' + repair.two.text + '\n    ' + repair.two.options.join('\n    '));
   check('the lit key is the drive, and it sends the party there',
-    !!repair.two && /to the drive$/.test(repair.twoRec || '') && repair.sent === 'drive',
+    !!repair.two && /去修主推进器$/.test(repair.twoRec || '') && repair.sent === 'drive',
     (repair.twoRec || '') + ' → ' + repair.sent);
   check('the routine is held while the card is open and running again after it',
     repair.holdApi === true || (repair.heldWhileOpen === false && repair.heldAfter === true),
     'OD.Crew.hold ' + repair.holdApi + ', crew.auto ' + repair.heldWhileOpen + ' → ' + repair.heldAfter);
   check('the next card about the same hull names the part it is about',
-    !!repair.nextTitle && /reactor/.test(repair.nextTitle), String(repair.nextTitle));
+    !!repair.nextTitle && /反应堆/.test(repair.nextTitle), String(repair.nextTitle));
   check('a driven-off hull is never asked about her parties', repair.driven === false, String(repair.driven));
 
   console.log('scenario: the burn card, against the working limit and the couch limit');
@@ -2294,7 +2293,7 @@ function note(text) { console.log('    ' + text); }
           // and the same card's third key holds the range and lets the parties work
           sim.setOrder(me.id, { type: 'intercept', target: foe.id });
           const d2 = raise(sim, 'burn', me.id);
-          const hold = d2 ? d2.options.find((o) => /^Hold and fight/.test(o.label)) : null;
+          const hold = d2 ? d2.options.find((o) => /^保持距离打一场/.test(o.label)) : null;
           if (hold) {
             D.choose(sim, d2.id, hold.key);
             out.acts.holdOrder = me.order.type;
@@ -2350,26 +2349,26 @@ function note(text) { console.log('    ' + text); }
     burn.work ? burn.work.title : 'never raised');
   if (burn.work) note(burn.work.title + ' — ' + burn.work.text + '\n    ' + burn.work.options.join('\n    '));
   check('its rungs are the working limit and what the drive wants, with a hold under them',
-    !!burn.work && /^Burn at 1\.2 g$/.test(burn.work.labels[0]) && /^Burn at \d/.test(burn.work.labels[1] || '') &&
-    burn.work.labels[2] === 'Hold and fight at this range', burn.work ? burn.work.labels.join(' | ') : '');
+    !!burn.work && /^点火，距离 1\.2 g$/.test(burn.work.labels[0]) && /^点火，距离 \d/.test(burn.work.labels[1] || '') &&
+    burn.work.labels[2] === '保持距离打一场', burn.work ? burn.work.labels.join(' | ') : '');
   // D 28: every rung prints what it spends of the tanks, between the two.
   check('key 1 says the repairs go on, what it spends and when we are alongside',
-    !!burn.work && /^repairs go on · /.test(burn.work.details[0] || '') &&
-    /[\d.]+ of [\d.]+ km\/s/.test(burn.work.details[0] || '') && / · alongside in /.test(burn.work.details[0] || ''),
+    !!burn.work && /^修理照常进行 · /.test(burn.work.details[0] || '') &&
+    /[\d.]+，总共 [\d.]+ km\/s/.test(burn.work.details[0] || '') && / · 并排靠上要 /.test(burn.work.details[0] || ''),
     burn.work ? burn.work.details[0] : '');
   // The hard rung names the job it puts down and how long is left of it, not 'repairs pause'.
   check('key 2 names the repair it holds, and how long for',
-    !!burn.work && /the repair on .+ holds where it is for \d/.test(burn.work.details[1] || '') &&
-    /alongside in /.test(burn.work.details[1] || ''), burn.work ? burn.work.details[1] : '');
+    !!burn.work && /上的修理会停在原地，还有 \d/.test(burn.work.details[1] || '') &&
+    /并排靠上要 /.test(burn.work.details[1] || ''), burn.work ? burn.work.details[1] : '');
   // Two rungs priced in two frames — a delta on one key against an arrival on the other — made
   // the slow rung read as the fast one. Both keys now print the whole arrival.
   check('both rungs print the arrival whole, and the slow one is the later of the two',
-    !!burn.work && burn.work.details.slice(0, 2).every((t) => / · alongside in /.test(t)) &&
+    !!burn.work && burn.work.details.slice(0, 2).every((t) => / · 并排靠上要 /.test(t)) &&
     !burn.work.details.join(' ').match(/alongside \d[^·]*later/),
     burn.work ? burn.work.details.slice(0, 2).join(' | ') : '');
   {
-    const slow = burn.work ? secsOf(String(burn.work.details[0]).split('alongside in ')[1] || '') : null;
-    const there = burn.work ? secsOf(String(burn.work.details[1]).split('alongside in ')[1] || '') : null;
+    const slow = burn.work ? secsOf(String(burn.work.details[0]).split('并排靠上要 ')[1] || '') : null;
+    const there = burn.work ? secsOf(String(burn.work.details[1]).split('并排靠上要 ')[1] || '') : null;
     // the two rungs are priced over one gap, so the slow one's arrival is the fast one's stretched
     // by the square root of the ratio of the accelerations: a brachistochrone's time goes as one
     // over the square root of the acceleration
@@ -2390,8 +2389,8 @@ function note(text) { console.log('    ' + text); }
   // wipe-out: '4 wounded a minute at 5.1 g · alongside in 13m 06s' is fifty-two of a crew of
   // twenty-four. The rate is kept only while the whole burn stays under the crew.
   check('and the hard rung prices the wounded over the whole burn, capped at the crew',
-    !!burn.couch && /^Burn at 3 g$/.test(burn.couch.labels[0] || '') &&
-    /(wounded a minute at |all \d+ aboard wounded on the way|\d+ of the \d+ aboard wounded on the way)/.test(burn.couch.details[1] || ''),
+    !!burn.couch && /^点火，距离 3 g$/.test(burn.couch.labels[0] || '') &&
+    /(每分钟有 \d+ 人受伤|船上 \d+ 个人在途中全部受伤|船上 \d+ 个人里有 \d+ 人在途中受伤)/.test(burn.couch.details[1] || ''),
     burn.couch ? burn.couch.labels.join(' | ') + ' · ' + burn.couch.details[1] : '');
   check('"Hold and fight at this range" sets the range order and lets the parties work',
     burn.acts.holdOrder === 'keeprange' && burn.acts.holdMode === 'work' && burn.acts.holdRange > 0,
@@ -2487,16 +2486,16 @@ function note(text) { console.log('    ' + text); }
     medical.spare ? medical.spare.title : 'never raised');
   if (medical.spare) note(medical.spare.title + ' — ' + medical.spare.text + '\n    ' + medical.spare.options.join('\n    '));
   check('it prices the wounded coming back and lights the free party',
-    !!medical.spare && /back to fit every 45 s/.test(medical.spare.details.join(' ')) &&
-    /^Send party \d to the sick bay$/.test(medical.spare.rec || ''), medical.spare ? medical.spare.rec : '');
+    !!medical.spare && /每 45 s 让一名伤员恢复执勤/.test(medical.spare.details.join(' ')) &&
+    /^派 班组 \d 去医务室$/.test(medical.spare.rec || ''), medical.spare ? medical.spare.rec : '');
   check('and the key puts a party on medical', medical.acted === 1, String(medical.acted));
   check('with no free hands the keys cost a watch, and above the fit floor the lit key leaves it',
-    !!medical.watch && /from (the sensor watch|fire control) to the sick bay/.test(medical.watch.labels.join(' ')) &&
-    medical.watch.rec === 'Leave the wounded until the fight is over',
+    !!medical.watch && /从(传感器值班|火控)去医务室/.test(medical.watch.labels.join(' ')) &&
+    medical.watch.rec === '把伤员留到战斗结束',
     medical.watch ? medical.watch.labels.join(' | ') + ' → ' + medical.watch.rec : 'never raised');
   if (medical.watch) note(medical.watch.title + ' — ' + medical.watch.text + '\n    ' + medical.watch.options.join('\n    '));
   check('under a third of the crew fit, the lit key gives the watch up',
-    !!medical.heavy && /to the sick bay$/.test(medical.heavy.rec || ''),
+    !!medical.heavy && /去医务室$/.test(medical.heavy.rec || ''),
     medical.heavy ? medical.heavy.rec : 'never raised');
   check('two wounded of twenty-four is not a question', medical.quiet === false, String(medical.quiet));
   check('and a party already on medical is not asked about again', medical.onMedical === false, String(medical.onMedical));
@@ -2542,7 +2541,7 @@ function note(text) { console.log('    ' + text); }
           out.repairGone = !(sim.decisions || []).some((x) => x.id === d.id);
           out.repairAfter = Math.round(sim.time - t0);
           const log = (sim.log || []).map((l) => l.text || l.message || String(l));
-          out.repairLog = log.filter((t) => /routine\./.test(t)).slice(-3);
+          out.repairLog = log.filter((t) => /例行程序/.test(t)).slice(-3);
           out.repairDeadline = d.deadline != null ? Math.round(d.deadline - t0) : null;
           const p = OD.Crew.board(me).parties.find((x) => x.task === 'repair');
           out.sent = p ? p.part : null;
@@ -2565,7 +2564,7 @@ function note(text) { console.log('    ' + text); }
           const lit = (d.options || []).find((x) => x.recommended) || {};
           out.burnLabel = lit.label || null;
           out.burnRec = lit.id === 'low' ? (/1\.2 g/.test(lit.label || '') ? 'work' : 'couches')
-            : lit.id === 'high' ? (/^Burn at [4-9]/.test(lit.label || '') ? 'max' : 'couches') : 'work';
+            : lit.id === 'high' ? (/^点火，距离 [4-9]/.test(lit.label || '') ? 'max' : 'couches') : 'work';
           out.burnLived = 0;
           for (let i = 0; i < 16; i++) { OD.harness.step(5); out.burnLived += 5; if (!(sim.decisions || []).some((x) => x.id === d.id)) break; }
           out.burnGone = !(sim.decisions || []).some((x) => x.id === d.id);
@@ -2586,8 +2585,8 @@ function note(text) { console.log('    ' + text); }
   // player the opposite of the option with the mark against it — and no 'Decision:' line either.
   check('the routine runs the card’s own lit key, and logs it as a decision',
     routine.sent === 'drive' && (routine.repairLog || []).length === 1 &&
-    /^Decision: .* → .* · the ship’s routine\./.test((routine.repairLog || [])[0] || '') &&
-    /to the drive/.test((routine.repairLog || [])[0] || ''),
+    /^决策：.* → .* · 舰上的例行程序。/.test((routine.repairLog || [])[0] || '') &&
+    /去修主推进器/.test((routine.repairLog || [])[0] || ''),
     routine.sent + ' · ' + (routine.repairLog || []).join(' | '));
   check('an unanswered burn card settles into the rung it recommended',
     routine.burnGone === true && routine.burnMode === routine.burnRec,
@@ -2625,7 +2624,7 @@ function note(text) { console.log('    ' + text); }
     const logs = (sim) => (sim.log || []).map((l) => l.text || l.message || String(l));
     // 'Keep the parties where they are' on the ordinary card, 'Keep them out' or 'Keep the burn'
     // on the trade card a running part raises.
-    const keep = (d) => (d.options || []).find((o) => /^Keep /.test(o.label)) || null;
+    const keep = (d) => (d.options || []).find((o) => /^保持/.test(o.label)) || null;
     try {
       // --- a drive at 60 % is under the jury-rig's reach, so the report calls it 'damaged' and a
       // party can move it: the card is raised on what a party can do, not on the state word (the
@@ -2642,7 +2641,7 @@ function note(text) { console.log('    ' + text); }
         const row = OD.Damage.report(me).find((r) => r.id === 'drive') || {};
         const d = raise(sim, 'repair', me.id);
         out.okState = { state: row.state, repairable: row.repairable, raised: !!d,
-          offered: !!d && d.options.some((o) => /to the drive$/.test(o.label)), title: d ? d.title : null };
+          offered: !!d && d.options.some((o) => /去修主推进器$/.test(o.label)), title: d ? d.title : null };
         if (d) out.names.push(d.title, d.options.map((o) => o.label + ' ' + o.detail).join(' '));
       }
       // --- and not raised for a part a jury-rig can barely move: a panel at 65 % of a 70 % cap
@@ -2693,7 +2692,7 @@ function note(text) { console.log('    ' + text); }
           out.yield = {
             crip: !!crip,
             repairGone: !(sim.decisions || []).some((x) => x.id === d.id),
-            log: logs(sim).slice(before).filter((t) => /^Decision:/.test(t)).slice(-1)[0] || null,
+            log: logs(sim).slice(before).filter((t) => /^决策：/.test(t)).slice(-1)[0] || null,
             secs: Math.round(sim.time),
           };
           // and a card about the prize is not put again inside a minute, whoever is pointing at her
@@ -2780,7 +2779,7 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'medical', me.id);
         if (d) {
           for (let i = 0; i < 30 && (sim.decisions || []).some((x) => x.id === d.id); i++) OD.harness.step(3);
-          out.medLog = logs(sim).filter((t) => /^Decision:/.test(t)).slice(-1)[0] || null;
+          out.medLog = logs(sim).filter((t) => /^决策：/.test(t)).slice(-1)[0] || null;
         }
       }
       // --- the burn card is raised on the repair it would put down, not only on the clock
@@ -2798,10 +2797,10 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'burn', me.id);
         const s2 = shot(d);
         const secsOf2 = (t) => { let m = /(\d+)m (\d+)s/.exec(t); if (m) return +m[1] * 60 + +m[2]; m = /(\d+) s/.exec(t); return m ? +m[1] : null; };
-        const lo = s2 ? secsOf2(String(s2.details[0]).split('alongside in ')[1] || '') : null;
-        const hi = s2 ? secsOf2(String(s2.details[1]).split('alongside in ')[1] || '') : null;
+        const lo = s2 ? secsOf2(String(s2.details[0]).split('并排靠上要 ')[1] || '') : null;
+        const hi = s2 ? secsOf2(String(s2.details[1]).split('并排靠上要 ')[1] || '') : null;
         out.tight = { g, raised: !!d, gap: lo != null && hi != null ? lo - hi : null,
-          names: s2 ? /the repair on .+ holds where it is for \d/.test(s2.details[1] || '') : false,
+          names: s2 ? /上的修理会停在原地，还有 \d/.test(s2.details[1] || '') : false,
           detail: s2 ? s2.details[1] : null };
         if (s2) out.names.push(s2.options.join(' '));
       }
@@ -2819,8 +2818,8 @@ function note(text) { console.log('    ' + text); }
         sim.setOrder(me.id, { type: 'intercept', target: foe.id });
         const d = raise(sim, 'burn', me.id);
         const s3 = shot(d);
-        const priced = (t) => /[\d.]+ of [\d.]+ km\/s/.test(String(t)) &&
-          /( · alongside in |the tanks run dry )/.test(String(t));
+        const priced = (t) => /[\d.]+，总共 [\d.]+ km\/s/.test(String(t)) &&
+          /( · 并排靠上要 |推进剂会烧干)/.test(String(t));
         out.heldLow = { raised: !!d, details: s3 ? s3.details : null,
           consequence: s3 ? s3.details.slice(0, 2).every(priced) : false };
       }
@@ -2840,7 +2839,7 @@ function note(text) { console.log('    ' + text); }
         const s4 = shot(d);
         out.heldLowHurt = { raised: !!d, details: s4 ? s4.details : null,
           crew: s4 ? s4.details.slice(0, 2).every((t) =>
-            /(the parties can work|no party can work|the crew (straps into the couches|can work through)|repairs (go on|pause)|the repair on )/.test(String(t))) : false };
+            /(班组能修|点火期间没有班组能修|船员绑进抗荷座椅|船员能挺过这次点火|修理照常进行|修理要等点火结束|上的修理会停在原地)/.test(String(t))) : false };
       }
       // --- a mend the fight will not wait for says so, and the lit key is to keep the watches
       {
@@ -2866,8 +2865,8 @@ function note(text) { console.log('    ' + text); }
         const s4 = shot(d);
         out.doomed = { hull: Math.round(me.hull * 100) / 100, raised: !!d, rec: s4 ? s4.rec : null,
           // the clock is the card's, not the key's: it used to be bolted on to every option
-          says: s4 ? /Under this fire (we|.*) ha(ve|s) about /.test(s4.text || '') : false,
-          twice: s4 ? (String(s4.text || '') + ' ' + s4.details.join(' ')).split('Under this fire').length - 1 : 0,
+          says: s4 ? /这种火力下/.test(s4.text || '') : false,
+          twice: s4 ? (String(s4.text || '') + ' ' + s4.details.join(' ')).split('这种火力下').length - 1 : 0,
           text: s4 ? s4.text : null, details: s4 ? s4.details : null };
       }
     } catch (e) { out.err.push(String(e.stack || e)); }
@@ -2893,7 +2892,7 @@ function note(text) { console.log('    ' + text); }
     JSON.stringify(fixes.held));
   check('a keep card gives the band up to a more urgent kind, settled with its own pick',
     !!fixes.yield && fixes.yield.crip === true && fixes.yield.repairGone === true &&
-    /^Decision: .* → Keep [^·]* · the ship’s routine\./.test(fixes.yield.log || ''),
+    /^决策：.* → 保持[^·]* · 舰上的例行程序。/.test(fixes.yield.log || ''),
     JSON.stringify(fixes.yield));
   check('one card about one prize a minute, whoever is pointing at her',
     !!fixes.crip && fixes.crip.again === false, JSON.stringify(fixes.crip));
@@ -2909,7 +2908,7 @@ function note(text) { console.log('    ' + text); }
   check('the wounded are asked about before the hull is asked where to point',
     typeof fixes.rank === 'string' && fixes.rank.split(',')[0] === 'medical', String(fixes.rank));
   check('the settle line names what it cost',
-    /Nobody is in the sick bay: \d+ stay wounded\./.test(fixes.medLog || ''), String(fixes.medLog));
+    /医务室没人：\d+ 一直带伤。/.test(fixes.medLog || ''), String(fixes.medLog));
   check('a burn that would put a repair down is a question whatever the clock says',
     !!fixes.tight && fixes.tight.raised === true && fixes.tight.names === true,
     JSON.stringify(fixes.tight));
@@ -2921,10 +2920,10 @@ function note(text) { console.log('    ' + text); }
     JSON.stringify(fixes.heldLowHurt));
   check('a mend the fight will not wait for says so, once, and the lit key keeps the watches',
     !!fixes.doomed && fixes.doomed.raised === true && fixes.doomed.says === true &&
-    fixes.doomed.twice === 1 && fixes.doomed.rec === 'Keep the parties where they are',
+    fixes.doomed.twice === 1 && fixes.doomed.rec === '班组原地不动',
     JSON.stringify(fixes.doomed));
   check('no card renames a part the board has already named',
-    !/\bradiator \d/.test(fixes.names.join(' ')), fixes.names.join(' ').slice(0, 160));
+    !/the /.test(fixes.names.join(' ')), fixes.names.join(' ').slice(0, 160));
 
   // ---------------------------------------------------------------- the v13 round-2 fixes
   // The second pass over the three crew cards: a part that is running is a trade and not a repair
@@ -2958,7 +2957,7 @@ function note(text) { console.log('    ' + text); }
       rec: (d.options.find((o) => o.recommended) || {}).label || null,
       options: d.options.map((o) => o.key + ' ' + o.label + ' · ' + o.detail + (o.recommended ? ' [rec]' : '')) });
     const logs = (sim) => (sim.log || []).map((l) => l.text || l.message || String(l));
-    const TIME = /\b\d+\s*(min|s)\b/;
+    const TIME = /\d+\s*(?:分钟|秒)|\d+m \d+s|\d+ s/;
     try {
       // --- D 1: the drive under throttle. No party can touch it, so the card is the throttle, and
       // no key prints a clean repair time for work the ship will not start.
@@ -2974,12 +2973,12 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'repair', me.id);
         const s1 = shot(d);
         out.trade = { blocked: row.blocked || null, raised: !!d, card: s1,
-          cut: s1 ? /^Cut the drive for /.test(s1.labels[0] || '') : false,
-          keep: s1 ? /^Keep the burn$/.test(s1.labels[1] || '') : false,
+          cut: s1 ? /^关闭推进器 /.test(s1.labels[0] || '') : false,
+          keep: s1 ? /^继续点火$/.test(s1.labels[1] || '') : false,
           timeless: s1 ? !s1.details.some((t) => TIME.test(String(t))) : false,
           throttleBefore: me.cmdThrottle };
         if (d) {
-          const o = d.options.find((x) => /^Cut the drive/.test(x.label));
+          const o = d.options.find((x) => /^关闭推进器/.test(x.label));
           const before = logs(sim).length;
           if (o) D.choose(sim, d.id, o.key);
           out.trade.after = { throttle: me.cmdThrottle, order: me.order.type,
@@ -2998,11 +2997,11 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'repair', me.id);
         const s1 = shot(d);
         out.panel = { raised: !!d, card: s1,
-          stow: s1 ? /^Stow the panels for /.test(s1.labels[0] || '') : false,
-          sink: s1 ? /the sink fills from \d+ % to about \d+ %/.test(s1.details[0] || '') : false,
+          stow: s1 ? /^收起散热板 /.test(s1.labels[0] || '') : false,
+          sink: s1 ? /热沉会从 \d+ % 涨到约 \d+ %/.test(s1.details[0] || '') : false,
           timeless: s1 ? !s1.details.some((t) => TIME.test(String(t))) : false };
         if (d) {
-          const o = d.options.find((x) => /^Stow the panels/.test(x.label));
+          const o = d.options.find((x) => /^收起散热板/.test(x.label));
           if (o) D.choose(sim, d.id, o.key);
           out.panel.after = { deployed: me.radiators ? !!me.radiators.deployed : null,
             party: OD.Crew.board(me).parties.filter((p) => p.task === 'repair' && p.part === 'rad1').length };
@@ -3042,7 +3041,7 @@ function note(text) { console.log('    ' + text); }
         const s1 = shot(d);
         out.third = { raised: !!d, title: s1 ? s1.title : null, text: s1 ? s1.text : null,
           clean: s1 ? !/’s the /.test(String(s1.title) + ' ' + String(s1.text)) : false,
-          owns: s1 ? /’s sensor suite is hit/.test(String(s1.text)) : false };
+          owns: s1 ? /的传感器组 被打中/.test(String(s1.text)) : false };
       }
       // --- D 4: a burn far over the couch limit prices the whole crew, not a rate
       {
@@ -3058,8 +3057,8 @@ function note(text) { console.log('    ' + text); }
         const s1 = shot(d);
         out.whole = { g: Math.round((me.thrust * me.systems.drive / me.mass() / OD.P.g0) * 100) / 100,
           fit: OD.Crew.board(me).crew.fit, raised: !!d, card: s1,
-          whole: s1 ? /(all \d+ aboard wounded on the way|\d+ of the \d+ aboard wounded on the way)/.test(s1.details[1] || '') : false,
-          overCrew: s1 ? (/(\d+) of the (\d+) aboard wounded on the way/.exec(s1.details[1] || '') || [0, 0, 1]).slice(1).map(Number) : null };
+          whole: s1 ? /(船上 \d+ 个人在途中全部受伤|船上 \d+ 个人里有 \d+ 人在途中受伤)/.test(s1.details[1] || '') : false,
+          overCrew: s1 ? (function () { const m = /船上 (\d+) 个人里有 (\d+) 人在途中受伤/.exec(s1.details[1] || ''); if (m) return [m[1], m[2]].map(Number); const m2 = /船上 (\d+) 个人在途中全部受伤/.exec(s1.details[1] || ''); return m2 ? [m2[1], m2[1]].map(Number) : [0, 1]; })() : null };
       }
       // --- D 5: the reactor's sentence has a hyphen in its head, and the key prints the clause
       // after the colon and nothing before it
@@ -3071,7 +3070,7 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'repair', me.id);
         const s1 = shot(d);
         out.reactor = { raised: !!d, buys: (OD.Crew.board(me).parts.find((p) => p.id === 'reactor') || {}).buys,
-          card: s1, clean: s1 ? !/A party|cross-connect/.test(s1.details.join(' ')) : false,
+          card: s1, clean: s1 ? !/班组[^：]*：/.test(s1.details.join(' ')) : false,
           colons: s1 ? s1.details.join(' ').split(':').length - 1 : 0 };
       }
       // --- D 6, D 7, D 17: a mount keeps its article, the time takes a clause of its own where the
@@ -3087,13 +3086,12 @@ function note(text) { console.log('    ' + text); }
         const words = OD.Damage && typeof OD.Damage.timeWords === 'function'
           ? OD.Damage.timeWords(row.eta) : Math.max(1, Math.round((row.eta || 0) / 60)) + ' min';
         out.mount = { raised: !!d, card: s1,
-          article: s1 ? /to the coilgun$/.test(s1.labels[0] || '') && /^The coilgun is hit\./.test(s1.text || '') : false,
+          article: s1 ? /去修线圈炮$/.test(s1.labels[0] || '') && /^线圈炮 被打中/.test(s1.text || '') : false,
           ownClause: s1 ? new RegExp('^' + words.replace(/\s/g, '\\s') + ' · ').test(s1.details[0] || '') : false,
           words, eta: Math.round(row.eta || 0) };
         // --- D 8: the lesson is the part in hand, not the whole jury-rig paragraph
         out.teach = { text: s1 ? s1.teach : null,
-          case: s1 ? /jury-rig: the coilgun comes back to \d+ %/.test(String(s1.teach)) ||
-            /coilgun/.test(String(s1.teach)) : false };
+          case: s1 ? /线圈炮/.test(String(s1.teach)) : false };
       }
       // --- D 10, eng 2: every free party is placed and each key names a different part waiting
       {
@@ -3103,7 +3101,7 @@ function note(text) { console.log('    ' + text); }
         hurt(me, 'drive', 0.4); hurt(me, 'sensors', 0.3); hurt(me, 'coil1', 0.3);
         const d = raise(sim, 'repair', me.id);
         const s1 = shot(d);
-        const waits = s1 ? s1.details.map((t) => (String(t).split(' · ').filter((c) => /waits?$/.test(c))[0] || '')) : [];
+        const waits = s1 ? s1.details.map((t) => (String(t).split(' · ').filter((c) => /在等着$/.test(c))[0] || '')) : [];
         out.waits = { raised: !!d, card: s1, waits,
           distinct: waits.length > 1 && new Set(waits).size === waits.length && waits.every((w) => w) };
       }
@@ -3128,7 +3126,7 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'repair', me.id);
         const s1 = shot(d);
         out.quietLife = { raised: !!d, text: s1 ? s1.text : null,
-          silent: s1 ? !/Under this fire/.test(String(s1.text) + ' ' + s1.details.join(' ')) : false };
+          silent: s1 ? !/这种火力下/.test(String(s1.text) + ' ' + s1.details.join(' ')) : false };
       }
       // --- D 15: an order that stops a running repair is the burn card's question too
       {
@@ -3144,8 +3142,8 @@ function note(text) { console.log('    ' + text); }
         const s1 = shot(d);
         out.stopped = { raised: !!d, card: s1, pressing: d ? d.pressing === true : null,
           rec: s1 ? s1.rec : null,
-          cut: s1 ? /^Throttle to 0 for /.test(s1.labels[0] || '') : false,
-          press: s1 ? /^Press on$/.test(s1.labels[1] || '') : false };
+          cut: s1 ? /^推力归零 /.test(s1.labels[0] || '') : false,
+          press: s1 ? /^继续进攻$/.test(s1.labels[1] || '') : false };
         // --- D 9: the burn card is a crew card, so Esc leaves it for the crew instead of closing it
         if (d) {
           out.crewKinds = { flagged: d.crew === true, listed: !!(D.CREW_KINDS && D.CREW_KINDS.burn) };
@@ -3153,7 +3151,7 @@ function note(text) { console.log('    ' + text); }
           out.escBurn = { stillOpen: (sim.decisions || []).some((x) => x.id === d.id),
             offBand: D.current(sim) == null || D.current(sim).id !== d.id,
             deadline: d.deadline != null };
-          const o = d.options.find((x) => /^Throttle to 0/.test(x.label));
+          const o = d.options.find((x) => /^推力归零/.test(x.label));
           if (o) { D.choose(sim, d.id, o.key); out.stopped.after = { throttle: me.cmdThrottle, order: me.order.type }; }
         }
       }
@@ -3175,10 +3173,10 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'burn', me.id);
         const s1 = shot(d);
         const secs = (t) => { let m = /(\d+)m (\d+)s/.exec(String(t)); if (m) return +m[1] * 60 + +m[2]; m = /(\d+) s/.exec(String(t)); return m ? +m[1] : null; };
-        const lo = s1 ? secs(String(s1.details[0]).split('alongside in ')[1] || '') : null;
-        const hi = s1 ? secs(String(s1.details[1]).split('alongside in ')[1] || '') : null;
+        const lo = s1 ? secs(String(s1.details[0]).split('并排靠上要 ')[1] || '') : null;
+        const hi = s1 ? secs(String(s1.details[1]).split('并排靠上要 ')[1] || '') : null;
         out[job.key] = { raised: !!d, gap: lo != null && hi != null ? lo - hi : null, rec: s1 ? s1.rec : null,
-          card: s1, held: s1 ? /holds where it is for /.test(s1.details[1] || '') : false };
+          card: s1, held: s1 ? /上的修理会停在原地，还有 /.test(s1.details[1] || '') : false };
       }
     } catch (e) { out.err.push(String(e.stack || e)); }
     out.errors = OD.errors.slice();
@@ -3208,11 +3206,11 @@ function note(text) { console.log('    ' + text); }
   // party works.' — so the sentence the assign returns is no longer the line right under the
   // Decision. It is still there, and it still carries the time and the cost.
   check('the answer logs the Decision line and then what it bought',
-    Array.isArray(r2.log) && r2.log.length >= 2 && /^Decision: /.test(r2.log[0] || '') &&
-    r2.log.slice(1).some((t) => /^Party \d/.test(String(t)) && /\d/.test(String(t))),
+    Array.isArray(r2.log) && r2.log.length >= 2 && /^决策：/.test(r2.log[0] || '') &&
+    r2.log.slice(1).some((t) => /^班组 \d/.test(String(t)) && /\d/.test(String(t))),
     (r2.log || []).join(' | '));
   check('and the order the trade changed is logged with it',
-    Array.isArray(r2.log) && r2.log.some((t) => /^Throttle to 0\. /.test(String(t))),
+    Array.isArray(r2.log) && r2.log.some((t) => /^推力归零。/.test(String(t))),
     (r2.log || []).join(' | '));
   // D 2: chapter 4 put a repair card and a medical card on a corvette with 36 s of armour left.
   check('a mend the hull will not live to see raises no card at all',
@@ -3224,7 +3222,7 @@ function note(text) { console.log('    ' + text); }
   // D 4 / writing N2: four wounded a minute for thirteen minutes in a crew of twenty-four.
   check('a burn far over the couch limit prices the whole crew, not a rate',
     !!r2.whole && r2.whole.raised === true && r2.whole.whole === true &&
-    (!r2.whole.overCrew || r2.whole.overCrew[0] <= r2.whole.overCrew[1]),
+    (!r2.whole.overCrew || r2.whole.overCrew[1] <= r2.whole.overCrew[0]),
     JSON.stringify({ g: r2.whole && r2.whole.g, fit: r2.whole && r2.whole.fit }) + ' · ' +
     (r2.whole && r2.whole.card ? r2.whole.card.details[1] : 'never raised'));
   // D 5 / writing N3: the hyphen in 'cross-connects' defeated the old head pattern, so the
@@ -3269,7 +3267,7 @@ function note(text) { console.log('    ' + text); }
   // 1 s and a 10 s reading delay lit 'Throttle to 0 for 6 min' on a corvette at 31 % of her armour
   // with thirty rounds in the air, and lost the run at 923 s.
   check('the card does not stop the ship while there is a fight to press',
-    !!r2.stopped && r2.stopped.pressing === true && r2.stopped.rec === 'Press on',
+    !!r2.stopped && r2.stopped.pressing === true && r2.stopped.rec === '继续进攻',
     JSON.stringify({ pressing: r2.stopped && r2.stopped.pressing, rec: r2.stopped && r2.stopped.rec }));
   check('and its key cuts the throttle',
     !!r2.stopped && !!r2.stopped.after && r2.stopped.after.throttle === 0 && r2.stopped.after.order === 'hold',
@@ -3283,7 +3281,7 @@ function note(text) { console.log('    ' + text); }
   // alongside in 1m 40s' was the lit key, against 1m 48s at the working limit.
   check('seconds saved never outrank a repair the burn would put down',
     !!r2.lit && r2.lit.raised === true && r2.lit.held === true && r2.lit.gap != null &&
-    r2.lit.gap < 45 && /^Burn at 1\.2 g$/.test(r2.lit.rec || ''),
+    r2.lit.gap < 45 && /^点火，距离 1\.2 g$/.test(r2.lit.rec || ''),
     JSON.stringify({ gap: r2.lit && r2.lit.gap, rec: r2.lit && r2.lit.rec }) + ' · ' +
     (r2.lit && r2.lit.card ? r2.lit.card.options.join(' | ') : 'never raised'));
   if (r2.lit && r2.lit.card) note(r2.lit.card.title + ' — ' + r2.lit.card.text + '\n    ' + r2.lit.card.options.join('\n    '));
@@ -3291,7 +3289,7 @@ function note(text) { console.log('    ' + text); }
   // key, or D 12 would read as 'never burn while a party is out'.
   check('and a rung that buys more than three quarters of a minute still lights',
     !!r2.litWide && r2.litWide.raised === true && r2.litWide.gap != null && r2.litWide.gap >= 45 &&
-    !/^Burn at 1\.2 g$/.test(r2.litWide.rec || ''),
+    !/^点火，距离 1\.2 g$/.test(r2.litWide.rec || ''),
     JSON.stringify({ gap: r2.litWide && r2.litWide.gap, rec: r2.litWide && r2.litWide.rec }));
 
   // ---------------------------------------------------------------- round 3
@@ -3337,9 +3335,9 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'burn', me.id);
         const s1 = shot(d);
         out.press = { raised: !!d, card: s1, before: parties(me),
-          says: s1 ? /party \d comes off /.test(s1.details[1] || '') : false };
+          says: s1 ? /班组 \d撤下/.test(s1.details[1] || '') : false };
         if (d) {
-          const o = d.options.find((x) => /^Press on$/.test(x.label));
+          const o = d.options.find((x) => /^继续进攻$/.test(x.label));
           const n = logs(sim).length;
           D.choose(sim, d.id, o.key);
           out.press.logs = logs(sim).slice(n);
@@ -3364,7 +3362,7 @@ function note(text) { console.log('    ' + text); }
         sim.setOrder(me.id, { type: 'intercept', target: foe.id });
         const d = raise(sim, 'burn', me.id);
         out.longRung = { first: !!d, text: d ? d.text : null, second: false, lines: [],
-          long: d ? /(It runs .* above 1\.2 g|It holds above 1\.2 g)/.test(String(d.text)) : false };
+          long: d ? /(它会在超过 1\.2 g 的状态下持续|全程都在 1\.2 g 以上)/.test(String(d.text)) : false };
         if (d) {
           const o = d.options.find((x) => x.recommended) || d.options[0];
           D.choose(sim, d.id, o.key);
@@ -3383,7 +3381,7 @@ function note(text) { console.log('    ' + text); }
             if (find(sim, 'burn', me.id)) { out.longRung.second = true; break; }
             for (const x of (sim.decisions || []).slice()) if (x.kind !== 'burn') D.dismiss(sim, x.id);
           }
-          out.longRung.lines = logs(sim).slice(n).filter((t) => / runs .* above /.test(t));
+          out.longRung.lines = logs(sim).slice(n).filter((t) => /超过 1\.2 g/.test(t));
         }
       }
       // --- D 18c: the armour clause is measured over a minute, against our own reading of it
@@ -3412,7 +3410,7 @@ function note(text) { console.log('    ' + text); }
         const d = hunt(sim, me, 8, 0.0005); // 40 s of it at most: no reading yet
         out.armourQuiet = { raised: !!d, at: Math.round(sim.time), text: d ? d.text : null,
           hull: Math.round(me.hull * 100) / 100,
-          quiet: d ? !/Under this fire/.test(String(d.text)) : null };
+          quiet: d ? !/这种火力下/.test(String(d.text)) : null };
       }
       {
         const sim = build({ range: 4000, playerShips: { corvette: 1 }, enemyShips: { corvette: 1 } });
@@ -3424,11 +3422,11 @@ function note(text) { console.log('    ' + text); }
         bleed(sim, me, 26, rate); // two minutes of it before anything is hit
         hurt(me, 'sensors', 0.3);
         const d = hunt(sim, me, 6, rate);
-        const secs = (t) => { let m = /(\d+)h (\d+)m/.exec(String(t)); if (m) return +m[1] * 3600 + +m[2] * 60; m = /(\d+)m (\d+)s/.exec(String(t)); if (m) return +m[1] * 60 + +m[2]; m = /about (\d+) s/.exec(String(t)); return m ? +m[1] : null; };
+        const secs = (t) => { let m = /(\d+)h (\d+)m/.exec(String(t)); if (m) return +m[1] * 3600 + +m[2] * 60; m = /(\d+)m (\d+)s/.exec(String(t)); if (m) return +m[1] * 60 + +m[2]; m = /(\d+) s/.exec(String(t)); return m ? +m[1] : null; };
         out.armour = { raised: !!d, text: d ? d.text : null, want: Math.round(me.hull / rate),
           hull: Math.round(me.hull * 100) / 100,
-          said: d ? /Under this fire/.test(String(d.text)) : null,
-          read: d ? secs(String(d.text).split('Under this fire')[1] || '') : null };
+          said: d ? /这种火力下/.test(String(d.text)) : null,
+          read: d ? secs(String(d.text).split('这种火力下')[1] || '') : null };
       }
       // --- D 19: the card's shape is fixed when it is raised
       {
@@ -3449,7 +3447,7 @@ function note(text) { console.log('    ' + text); }
         const s2 = shot(d);
         out.shape = { raised: !!d, trade: s1, later: s2,
           held: !!(s1 && s2) && s1.labels.join('|') === s2.labels.join('|'),
-          cut: s1 ? /^Cut the drive for /.test(s1.labels[0] || '') : false,
+          cut: s1 ? /^关闭推进器 /.test(s1.labels[0] || '') : false,
           blocked: (OD.Crew.board(me).parts.find((p) => p.id === 'drive') || {}).blocked || null };
       }
       // --- D 19, the other way: a card raised as a send stays a send
@@ -3468,7 +3466,7 @@ function note(text) { console.log('    ' + text); }
         const s2 = shot(d);
         out.sendShape = { send: s1, later: s2,
           held: !!(s1 && s2) && s1.labels.join('|') === s2.labels.join('|'),
-          sends: s1 ? /^Send party \d to the drive$/.test(s1.labels[0] || '') : false,
+          sends: s1 ? /^派 班组 \d 去修主推进器$/.test(s1.labels[0] || '') : false,
           blocked: (OD.Crew.board(me).parts.find((p) => p.id === 'drive') || {}).blocked || null };
       }
       // --- D 20: nothing on the band puts a cleared repair down without saying so
@@ -3492,11 +3490,11 @@ function note(text) { console.log('    ' + text); }
           if (card) break;
           for (const x of (sim.decisions || []).slice()) D.dismiss(sim, x.id);
         }
-        const outs = card ? card.options.filter((o) => /extend/i.test(o.label)) : [];
+        const outs = card ? card.options.filter((o) => /展开散热板/.test(o.label)) : [];
         out.relight = { did, raised: !!card, kind: card ? card.kind : null, card: shot(card),
           party: OD.Crew.board(me).parties.filter((p) => p.part === 'rad1').length,
           keys: outs.length,
-          warned: outs.length > 0 && outs.every((o) => /puts party \d\u2019s repair down/.test(o.detail || '')),
+          warned: outs.length > 0 && outs.every((o) => /会让班组 \d的修理停下来/.test(o.detail || '')),
           unlit: outs.every((o) => !o.recommended) };
       }
       // --- D 21: the bar is the bar for every part, the drive included
@@ -3526,7 +3524,7 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'repair', me.id);
         out.restore = { raised: !!d };
         if (d) {
-          const o = d.options.find((x) => /^Cut the drive/.test(x.label));
+          const o = d.options.find((x) => /^关闭推进器/.test(x.label));
           const n = logs(sim).length;
           D.choose(sim, d.id, o.key);
           out.restore.said = logs(sim).slice(n);
@@ -3536,7 +3534,7 @@ function note(text) { console.log('    ' + text); }
           if (party) OD.Crew.release(me, party.id);
           OD.harness.step(3);
           out.restore.back = { order: me.order.type, range: me.order.range,
-            logs: logs(sim).slice(n2).filter((t) => /Back on /.test(t)) };
+            logs: logs(sim).slice(n2).filter((t) => /回到/.test(t)) };
         }
       }
       // --- D 22, the other way: a new order from the bridge is not overruled
@@ -3550,7 +3548,7 @@ function note(text) { console.log('    ' + text); }
         hurt(me, 'drive', 0.4);
         const d = raise(sim, 'repair', me.id);
         if (d) {
-          const o = d.options.find((x) => /^Cut the drive/.test(x.label));
+          const o = d.options.find((x) => /^关闭推进器/.test(x.label));
           D.choose(sim, d.id, o.key);
           sim.setOrder(me.id, { type: 'intercept', target: foe.id });
           const party = OD.Crew.board(me).parties.find((p) => p.task === 'repair' && p.part === 'drive');
@@ -3569,10 +3567,10 @@ function note(text) { console.log('    ' + text); }
         for (let i = 0; i < 2; i++) OD.harness.step(3);
         const d = raise(sim, 'repair', me.id);
         const s1 = shot(d);
-        const keep = s1 ? s1.details[s1.labels.findIndex((l) => /^Keep/.test(l))] : null;
+        const keep = s1 ? s1.details[s1.labels.findIndex((l) => /^班组原地不动/.test(l))] : null;
         out.vent = { raised: !!d, card: s1, keep,
-          rate: keep ? /keeps venting, about [\d.]+ km\/s a minute/.test(keep) : false,
-          level: keep ? /stays at \d+ %/.test(keep) : true };
+          rate: keep ? /还在泄漏，每分钟大约 [\d.]+ km\/s/.test(keep) : false,
+          level: keep ? /保持在 \d+ %/.test(keep) : true };
       }
       // --- D 24: the hard rung says 'alongside' once
       {
@@ -3588,8 +3586,8 @@ function note(text) { console.log('    ' + text); }
         const s1 = shot(d);
         out.hurtWords = { raised: !!d, card: s1, fit: OD.Crew.board(me).crew.fit,
           hard: s1 ? s1.details[1] || '' : '',
-          once: s1 ? (String(s1.details[1] || '').match(/alongside/g) || []).length <= 1 : false,
-          wounded: s1 ? /(all \d+ aboard wounded on the way|\d+ of the \d+ aboard wounded on the way|\d+ wounded a minute at )/.test(s1.details[1] || '') : false };
+          once: s1 ? (String(s1.details[1] || '').match(/并排/g) || []).length <= 1 : false,
+          wounded: s1 ? /(船上 \d+ 个人在途中全部受伤|船上 \d+ 个人里有 \d+ 人在途中受伤|每分钟有 \d+ 人受伤)/.test(s1.details[1] || '') : false };
       }
       // --- D 25: the board's held row runs the card's own trade
       {
@@ -3624,8 +3622,8 @@ function note(text) { console.log('    ' + text); }
         out.longText = { raised: !!d, card: s1, at: Math.round(sim.time),
           hurt: bd.parts.filter((p) => p.repairable && p.cap - p.hp >= (D.T ? D.T.mendWorth : 0.3)).length,
           wounded: bd.crew.wounded,
-          fiction: s1 ? /Nothing can be repaired|no party can work|repairs pause|the crew can work through the burn|the parties can work/.test(String(s1.text) + ' ' + s1.details.join(' ')) : true,
-          spends: s1 ? s1.details.slice(0, 2).every((t) => /[\d.]+ of [\d.]+ km\/s/.test(String(t))) : false };
+          fiction: s1 ? /没有东西能修|没有班组能干活|修理停在原地|班组能在点火期间继续干活|班组能干活/.test(String(s1.text) + ' ' + s1.details.join(' ')) : true,
+          spends: s1 ? s1.details.slice(0, 2).every((t) => /[\d.]+，总共 [\d.]+ km\/s/.test(String(t))) : false };
       }
       // --- D 28: a rung the tanks cannot pay for says so and is never lit
       {
@@ -3639,11 +3637,11 @@ function note(text) { console.log('    ' + text); }
         sim.setOrder(me.id, { type: 'intercept', target: foe.id });
         const d = raise(sim, 'burn', me.id);
         const s1 = shot(d);
-        const dryKeys = s1 ? s1.details.filter((t) => /the tanks run dry .* short/.test(String(t))) : [];
+        const dryKeys = s1 ? s1.details.filter((t) => /推进剂会烧干，还差 /.test(String(t))) : [];
         const litIdx = s1 ? s1.labels.findIndex((l) => l === s1.rec) : -1;
         out.dry = { raised: !!d, card: s1, budget: Math.round(me.deltaV()),
           says: dryKeys.length > 0,
-          unlit: litIdx < 0 || !/the tanks run dry /.test(String(s1.details[litIdx] || '')) };
+          unlit: litIdx < 0 || !/推进剂会烧干/.test(String(s1.details[litIdx] || '')) };
       }
       // --- D 27: the cut key says what it stops, and the card closes when the board answers it
       {
@@ -3657,12 +3655,12 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'repair', me.id);
         const s1 = shot(d);
         out.stops = { raised: !!d, card: s1,
-          says: s1 ? /we stop the intercept and coast/.test(s1.details[0] || '') : false };
+          says: s1 ? /停下拦截，转入滑行/.test(s1.details[0] || '') : false };
         if (d) {
           const n = logs(sim).length;
-          const o = d.options.find((x) => /^Cut the drive/.test(x.label));
+          const o = d.options.find((x) => /^关闭推进器/.test(x.label));
           D.choose(sim, d.id, o.key);
-          out.stops.logs = logs(sim).slice(n).filter((t) => /Throttle to 0/.test(t));
+          out.stops.logs = logs(sim).slice(n).filter((t) => /^推力归零/.test(t));
         }
       }
       {
@@ -3678,7 +3676,7 @@ function note(text) { console.log('    ' + text); }
           OD.Crew.assign(me, 'p1', 'repair', 'sensors');
           for (let i = 0; i < 12; i++) OD.harness.step(3);
           out.stale.closed = !(sim.decisions || []).some((x) => x.id === d.id);
-          out.stale.logs = logs(sim).slice(n).filter((t) => /Decision: .*sensor suite/.test(t)).length;
+          out.stale.logs = logs(sim).slice(n).filter((t) => /决策：.*传感器组/.test(t)).length;
         }
       }
       // --- D 29: a boarding the decks would throw back is never the pick
@@ -3691,11 +3689,11 @@ function note(text) { console.log('    ' + text); }
         const d = raise(sim, 'cripple', me.id);
         const s1 = shot(d);
         const B = OD.Sim && OD.Sim.BOARD ? OD.Sim.BOARD : null;
-        const i = s1 ? s1.labels.findIndex((l) => /^Board her$/.test(l)) : -1;
+        const i = s1 ? s1.labels.findIndex((l) => /^登舰$/.test(l)) : -1;
         out.decks = { raised: !!d, card: s1, odds: B ? B.odds : null,
           theirs: foe.crew ? Math.round(foe.crew.fit) : null, ours: me.crew ? Math.round(me.crew.fit) : null,
-          says: i >= 0 ? /her \d+ fit crew against (our|.+’s) \d+ throw the party back/.test(s1.details[i] || '') : false,
-          unlit: i >= 0 ? s1.rec !== 'Board her' : false };
+          says: i >= 0 ? /会把登舰班组打回来/.test(s1.details[i] || '') : false,
+          unlit: i >= 0 ? s1.rec !== '登舰' : false };
       }
     } catch (e) { out.err.push(String(e.stack || e)); }
     out.errors = OD.errors.slice();
@@ -3707,8 +3705,8 @@ function note(text) { console.log('    ' + text); }
   // stood the party down: 295 s of the sensor watch at 70 % for a party standing by a lit drive.
   check('“Press on” stands the waiting party down and logs what she did',
     !!r3.press && r3.press.raised === true && r3.press.says === true &&
-    Array.isArray(r3.press.logs) && /^Decision: /.test(r3.press.logs[0] || '') &&
-    /^Party \d back to /.test(r3.press.logs[1] || '') &&
+    Array.isArray(r3.press.logs) && /^决策：/.test(r3.press.logs[0] || '') &&
+    /^班组 \d 回到/.test(r3.press.logs[1] || '') &&
     String(r3.press.after).indexOf('repair:drive') < 0,
     JSON.stringify({ before: r3.press && r3.press.before, after: r3.press && r3.press.after, logs: r3.press && r3.press.logs }));
   if (r3.press && r3.press.card) note(r3.press.card.title + ' — ' + r3.press.card.text + '\n    ' + r3.press.card.options.join('\n    '));
@@ -3721,7 +3719,7 @@ function note(text) { console.log('    ' + text); }
   check('the long-burn rung is one question a hull an engagement, and the repeat is one log line',
     !!r3.longRung && r3.longRung.first === true && r3.longRung.long === true && r3.longRung.second === false &&
     (r3.longRung.lines || []).length >= 1 &&
-    / runs .* above 1\.2 g\./.test((r3.longRung.lines || [])[0] || ''),
+    /超过 1\.2 g。/.test((r3.longRung.lines || [])[0] || ''),
     JSON.stringify({ first: r3.longRung && r3.longRung.text, second: r3.longRung && r3.longRung.second,
       lines: r3.longRung && r3.longRung.lines }));
   if (r3.longRung && (r3.longRung.lines || []).length) note('the repeat: ' + r3.longRung.lines[0]);
@@ -3778,7 +3776,7 @@ function note(text) { console.log('    ' + text); }
     r3.hurtWords.wounded === true, String(r3.hurtWords && r3.hurtWords.hard));
   // D 25: the board's held row and the card run one act.
   check('the board’s held row runs the card’s own trade',
-    !!r3.button && r3.button.words === 'Cut the drive' && r3.button.sound === null &&
+    !!r3.button && r3.button.words === '关闭推进器' && r3.button.sound === null &&
     r3.button.did === true && r3.button.nothing === false && !!r3.button.after &&
     r3.button.after.throttle === 0 && r3.button.after.order === 'hold' && r3.button.after.party === 1 &&
     (r3.button.logs || []).length >= 2,
@@ -3800,7 +3798,7 @@ function note(text) { console.log('    ' + text); }
   // D 27 / eng r3: 'Cut the drive for 7 min' turned an intercept into a hold and said nothing.
   check('the cut key names the order it stops, and the log records it',
     !!r3.stops && r3.stops.raised === true && r3.stops.says === true &&
-    (r3.stops.logs || []).length === 1 && /Throttle to 0\. The intercept stops/.test((r3.stops.logs || [])[0] || ''),
+    (r3.stops.logs || []).length === 1 && /^推力归零。拦截/.test((r3.stops.logs || [])[0] || ''),
     JSON.stringify(r3.stops && r3.stops.logs));
   check('and a card whose part has its party is over, rather than lighting a second send',
     !!r3.stale && r3.stale.raised === true && r3.stale.closed === true && r3.stale.logs === 0,
@@ -3870,13 +3868,13 @@ function note(text) { console.log('    ' + text); }
         const s1 = shot(d);
         out.clock = { raised: !!d, hull: at, card: s1,
           // W4: above the hull line the card is titled on the clock it prints, not on a hull that is not hurt.
-          clockTitle: s1 ? /armour lasts .+ at this fire\.$/.test(s1.title || '') : false,
-          hullTitle: s1 ? /down to \d+ % of (our|.+’s) hull/.test(s1.title || '') : false,
+          clockTitle: s1 ? /装甲还能撑 .+。$/.test(s1.title || '') : false,
+          hullTitle: s1 ? /只剩 \d+ %/.test(s1.title || '') : false,
           // W4: and the armour lesson keeps its half-gone sentence for a hull that has lost half.
-          half: s1 ? /With half of it gone/.test(s1.teach || '') : false,
+          half: s1 ? /装甲去掉一半之后/.test(s1.teach || '') : false,
           // W1: no meta sentences, and every leftover reads as 'Key: sentence.'
-          meta: s1 ? /Each key holds|keys left out|also says/.test(s1.teach || '') : false,
-          behind: s1 && s1.teach ? (/(Break off[^:]*|Press on|Get behind [^:]+): [a-z0-9]/.test(s1.teach)) : false };
+          meta: s1 ? /每个键只能放|这里说明没写|还要说/.test(s1.teach || '') : false,
+          behind: s1 && s1.teach ? (/(脱离[^：]*|继续进攻|绕到背后[^：]*)[：][\u4e00-\u9fff]/.test(s1.teach)) : false };
       }
       // --- E3: at full armour with nothing hit, being outnumbered is not this card's question
       {
@@ -3910,11 +3908,11 @@ function note(text) { console.log('    ' + text); }
           for (const x of (sim.decisions || []).slice()) if (x.kind !== 'withdraw') D.dismiss(sim, x.id);
         }
         const s1 = shot(d);
-        const i = s1 ? s1.labels.findIndex((l) => /^Break off/.test(l)) : -1;
+        const i = s1 ? s1.labels.findIndex((l) => /^脱离/.test(l)) : -1;
         out.matched = { raised: !!d, card: s1,
-          says: i >= 0 ? /^Break off: (she|.+) can match the burn$/.test(s1.labels[i]) : false,
-          keeps: i >= 0 ? /can match this burn, so the range only opens once her drive is hurt/.test(s1.details[i] || '') : false,
-          zero: i >= 0 ? /opening at 0(\.0+)? m\/s/.test(s1.details[i] || '') : false,
+          says: i >= 0 ? /^脱离：(她|.+)能跟上这次点火$/.test(s1.labels[i]) : false,
+          keeps: i >= 0 ? /她能跟上这次点火，所以只有她的推进器被打伤/.test(s1.details[i] || '') : false,
+          zero: i >= 0 ? /以 0(\.0+)? m\/s 拉开距离/.test(s1.details[i] || '') : false,
           unlit: i >= 0 ? s1.rec !== s1.labels[i] : false };
       }
       // --- W2: the crossing is the decks' own, and a boarding they throw back says so
@@ -3927,13 +3925,13 @@ function note(text) { console.log('    ' + text); }
         foe.systems.drive = 0.05; foe.disabled = false;
         const d = raise(sim, 'cripple', me.id);
         const s1 = shot(d);
-        const i = s1 ? s1.labels.findIndex((l) => /^Board her$/.test(l)) : -1;
+        const i = s1 ? s1.labels.findIndex((l) => /^登舰$/.test(l)) : -1;
         const plan = OD.Sim && typeof OD.Sim.boardingPlan === 'function' ? OD.Sim.boardingPlan(me, foe) : null;
         out[job.key] = { raised: !!d, card: s1, plan: plan ? { time: Math.round(plan.time), thrownBack: plan.thrownBack } : null,
           // the key prices the crossing the sim charges, not the constant
-          held: i >= 0 ? (/ hold ([^·]+) inside /.exec(s1.details[i] || '') || [null, null])[1] : null,
-          teach: s1 ? /90 s against a crew the size of ours, longer against a bigger one/.test(s1.teach || '') : false,
-          unlit: i >= 0 ? s1.rec !== 'Board her' : false };
+          held: i >= 0 ? (/在 [\d\u2009.]+ km内保持 ([^·，]+)/.exec(s1.details[i] || '') || [null, null])[1] : null,
+          teach: s1 ? /对方船员和我们差不多时 90 秒，更多就更久/.test(s1.teach || '') : false,
+          unlit: i >= 0 ? s1.rec !== '登舰' : false };
       }
       // --- W3: chapter 1 has nothing hostile in it, so the key offers no fight
       {
@@ -3946,12 +3944,12 @@ function note(text) { console.log('    ' + text); }
         let d = null;
         for (let i = 0; i < 60 && !d; i++) { OD.harness.step(5); d = find(sim, 'burn', 'larkspur'); }
         const s1 = shot(d);
-        const i = s1 ? s1.labels.findIndex((l) => /^Hold/.test(l)) : -1;
+        const i = s1 ? s1.labels.findIndex((l) => /^保持/.test(l)) : -1;
         out.quiet = { raised: !!d, card: s1, hostiles: sim.hostiles(me).length,
           label: i >= 0 ? s1.labels[i] : null,
-          fight: i >= 0 ? /fight/.test(s1.labels[i] + ' ' + (s1.details[i] || '')) : false,
-          parties: i >= 0 ? /the parties keep working/.test(s1.details[i] || '') : false,
-          costs: i >= 0 ? /(comes down in|alongside in)/.test(s1.details[i] || '') : false };
+          fight: i >= 0 ? /打一场/.test(s1.labels[i] + ' ' + (s1.details[i] || '')) : false,
+          parties: i >= 0 ? /班组继续干活/.test(s1.details[i] || '') : false,
+          costs: i >= 0 ? /(落下来|并排靠上要)/.test(s1.details[i] || '') : false };
       }
       // --- R1: the trade gives the panels back, and prices the stow at the order's throttle
       {
@@ -3967,7 +3965,7 @@ function note(text) { console.log('    ' + text); }
         hurt(me, 'rad1', 0.25);
         const d = raise(sim, 'repair', me.id);
         const s1 = shot(d);
-        const i = s1 ? s1.labels.findIndex((l) => /^Stow the panels/.test(l)) : -1;
+        const i = s1 ? s1.labels.findIndex((l) => /^收起散热板/.test(l)) : -1;
         // The forecast is read against the two throttles by hand: the coast the key used to price,
         // and the burn the order will actually hold.
         const cap = me.sinkCapacity;
@@ -3977,7 +3975,7 @@ function note(text) { console.log('    ' + text); }
           const heatIn = Math.max(0, (me.idleHeat || 0) + (thr > 0 ? (me.driveHeat || 0) * thr * sys : 0) + (me.extraHeat || 0));
           return Math.round(((me.heat + heatIn * secs) / cap) * 100);
         };
-        const printed = i >= 0 ? (/to about (\d+) %/.exec(s1.details[i] || '') || [null, null])[1] : null;
+        const printed = i >= 0 ? (/涨到约 (\d+) %/.exec(s1.details[i] || '') || [null, null])[1] : null;
         out.trade = { raised: !!d, card: s1, was, order: me.order.type,
           printed: printed != null ? +printed : null, atBurn: load(1), atCoast: load(0) };
         if (i >= 0) {
@@ -3988,7 +3986,7 @@ function note(text) { console.log('    ' + text); }
           if (pty) OD.Crew.release(me, pty.id);
           OD.harness.step(3);
           out.trade.back = { auto: me.radiators.auto, deployed: me.radiators.deployed,
-            lines: (sim.log || []).slice(n).map((l) => l.text || l.message || String(l)).filter((t) => /radiators/i.test(t)) };
+            lines: (sim.log || []).slice(n).map((l) => l.text || l.message || String(l)).filter((t) => /散热板/.test(t)) };
         }
       }
       // --- R2: an approach rung against a hull outrunning it
@@ -4017,11 +4015,11 @@ function note(text) { console.log('    ' + text); }
           for (const x of (sim.decisions || []).slice()) if (x.kind !== 'approach') D.dismiss(sim, x.id);
         }
         const s1 = shot(d);
-        const i = s1 ? s1.labels.findIndex((l) => /^Burn hard$/.test(l)) : -1;
+        const i = s1 ? s1.labels.findIndex((l) => /^全力点火$/.test(l)) : -1;
         out.outrun = { raised: !!d, card: s1,
           mine: Math.round(me.accel() * 10) / 10, hers: Math.round(foe.accel() * 10) / 10,
-          says: i >= 0 ? /she outruns us, and the range opens at /.test(s1.details[i] || '') : false,
-          promise: i >= 0 ? /alongside in /.test(s1.details[i] || '') : false };
+          says: i >= 0 ? /她跑得比我们快，距离以 /.test(s1.details[i] || '') : false,
+          promise: i >= 0 ? /并排靠上要 /.test(s1.details[i] || '') : false };
       }
       // --- F1: a volley that lands before the question can be read is not a question, and the
       // dodge only clears the window when the hull can actually move that far
@@ -4038,7 +4036,7 @@ function note(text) { console.log('    ' + text); }
           const d = find(sim, 'slugs', me.id);
           if (d && !seenIds[d.id]) {
             seenIds[d.id] = 1;
-            const m = /(\d+) s from/.exec(d.title || '') || /Slugs inbound, (\d+) s/.exec(d.title || '');
+            const m = /弹丸来袭，(\d+) 秒/.exec(d.title || '') || /还有 (\d+) 秒挨打/.exec(d.title || '');
             if (m) raisedAt.push(+m[1]);
           }
           for (const x of (sim.decisions || []).slice()) if (x.kind !== 'slugs') D.dismiss(sim, x.id);
@@ -4065,11 +4063,11 @@ function note(text) { console.log('    ' + text); }
           if (me.destroyed || me.disabled) break;
         }
         const s1 = shot(d);
-        const i = s1 ? s1.labels.indexOf('Jink') : -1;
+        const i = s1 ? s1.labels.indexOf('规避') : -1;
         out.stuck = { raised: !!d, card: s1, accel: Math.round(me.accel() * 10) / 10,
-          empty: i >= 0 ? /they pass through empty space/.test(s1.details[i] || '') : false,
-          says: i >= 0 ? /the dodge moves \d+ m before they arrive, and a miss needs \d+ m/.test(s1.details[i] || '') : false,
-          unlit: i >= 0 ? s1.rec !== 'Jink' : false };
+          empty: i >= 0 ? /它们会打进空处/.test(s1.details[i] || '') : false,
+          says: i >= 0 ? /规避能把她挪开 \d+ 米，而打空需要偏出 \d+ 米/.test(s1.details[i] || '') : false,
+          unlit: i >= 0 ? s1.rec !== '规避' : false };
       }
       // --- F3: a break-off the card itself prices slower than the armour clock
       {
@@ -4090,11 +4088,11 @@ function note(text) { console.log('    ' + text); }
           if (me.destroyed || me.disabled) break;
         }
         const s1 = shot(d);
-        const i = s1 ? s1.labels.findIndex((l) => /^Break off/.test(l)) : -1;
-        const esc = i >= 0 ? (/clearing that takes ([^·]+)/.exec(s1.details[i] || '') || [null, null])[1] : null;
-        const arm = i >= 0 ? (/the armour lasts ([^·]+)/.exec(s1.details[i] || '') || [null, null])[1] : null;
+        const i = s1 ? s1.labels.findIndex((l) => /^脱离/.test(l)) : -1;
+        const esc = i >= 0 ? (/要 ([^·]+) 才出得去/.exec(s1.details[i] || '') || [null, null])[1] : null;
+        const arm = i >= 0 ? (/装甲还能撑 ([^·]+)/.exec(s1.details[i] || '') || [null, null])[1] : null;
         out.slow = { raised: !!d, card: s1, escape: esc ? secsOf(esc) : null, armour: arm ? secsOf(arm) : null,
-          lit: s1 ? s1.rec : null, says: s1 ? /Nothing on this card opens the range before the armour goes\./.test(s1.text || '') : false };
+          lit: s1 ? s1.rec : null, says: s1 ? /这张卡上的任何选项，都没法在装甲被打穿之前拉开距离。/.test(s1.text || '') : false };
       }
       // --- F4: the outnumbered clause on the cripple card, with nothing of ours still shooting
       {
@@ -4106,9 +4104,9 @@ function note(text) { console.log('    ' + text); }
         foes[0].systems.drive = 0.05; foes[0].disabled = false;
         const d = raise(sim, 'cripple', me.id);
         const s1 = shot(d);
-        const i = s1 ? s1.labels.indexOf('Board her') : -1;
+        const i = s1 ? s1.labels.indexOf('登舰') : -1;
         out.agree = { raised: !!d, card: s1,
-          clause: i >= 0 ? (/(\w+ of hers [^·]+)/.exec(s1.details[i] || '') || [null, null])[1] : null };
+          clause: i >= 0 ? (/她那边有 ([^·]+)/.exec(s1.details[i] || '') || [null, null])[1] : null };
       }
     } catch (e) { out.err.push(String(e.stack || e)); }
     out.errors = OD.errors.slice();
@@ -4123,8 +4121,8 @@ function note(text) { console.log('    ' + text); }
     JSON.stringify({ hull: scan.clock && scan.clock.hull, title: scan.clock && scan.clock.card && scan.clock.card.title }));
   check('and the armour lesson keeps its half-gone sentence for a hull that has lost half',
     !!scan.clock && scan.clock.half === false && !!scan.matched && scan.matched.raised === true &&
-    /With half of it gone/.test((scan.matched.card && scan.matched.card.teach) || ''),
-    JSON.stringify({ atFull: scan.clock && scan.clock.half, atThirty: !!scan.matched && /With half of it gone/.test((scan.matched.card && scan.matched.card.teach) || '') }));
+    /装甲去掉一半之后/.test((scan.matched.card && scan.matched.card.teach) || ''),
+    JSON.stringify({ atFull: scan.clock && scan.clock.half, atThirty: !!scan.matched && /装甲去掉一半之后/.test((scan.matched.card && scan.matched.card.teach) || '') }));
   // W1: 'Each key holds three clauses. Here is what the keys left out.' before it said anything.
   check('the Why? paragraph reads the keys' + '’' + ' own words, with no paragraph about paragraphs',
     !!scan.clock && scan.clock.meta === false && scan.clock.behind === true,
@@ -4150,7 +4148,7 @@ function note(text) { console.log('    ' + text); }
   // W3: 'Hold and fight at this range' with nothing hostile in the sim.
   check('with no hostile in the sim the burn card offers no fight',
     !!scan.quiet && scan.quiet.raised === true && scan.quiet.hostiles === 0 &&
-    scan.quiet.label === 'Hold this range' && scan.quiet.fight === false &&
+    scan.quiet.label === '保持这个距离' && scan.quiet.fight === false &&
     scan.quiet.parties === false && scan.quiet.costs === true,
     JSON.stringify({ hostiles: scan.quiet && scan.quiet.hostiles, label: scan.quiet && scan.quiet.label }) + ' · ' +
     (scan.quiet && scan.quiet.card ? scan.quiet.card.options.join(' | ') : 'never raised'));
@@ -4159,7 +4157,7 @@ function note(text) { console.log('    ' + text); }
   check('the panels the trade stowed are out again when the party comes off',
     !!scan.trade && scan.trade.raised === true && !!scan.trade.stowed && scan.trade.stowed.deployed === false &&
     !!scan.trade.back && scan.trade.back.deployed === true && scan.trade.back.auto === true &&
-    (scan.trade.back.lines || []).some((t) => /The radiators are out again, and back on automatic\./.test(t)),
+    (scan.trade.back.lines || []).some((t) => /散热板重新展开，恢复自动。/.test(t)),
     JSON.stringify(scan.trade && scan.trade.back));
   // R1: the forecast priced the coast while the autopilot was burning.
   check('and the stow is forecast at the throttle the order will hold',
@@ -4187,13 +4185,13 @@ function note(text) { console.log('    ' + text); }
   // F3: 'Break off and open' lit beside 'clearing that takes 4h 59m · the armour lasts 51 s'.
   check('an escape the card prices slower than the armour clock is never the lit key',
     !!scan.slow && scan.slow.raised === true && scan.slow.escape != null && scan.slow.armour != null &&
-    scan.slow.escape > scan.slow.armour && !/^Break off/.test(scan.slow.lit || '') && scan.slow.says === true,
+    scan.slow.escape > scan.slow.armour && !/^脱离/.test(scan.slow.lit || '') && scan.slow.says === true,
     JSON.stringify({ escape: scan.slow && scan.slow.escape, armour: scan.slow && scan.slow.armour, lit: scan.slow && scan.slow.lit }));
   if (scan.slow && scan.slow.card) note(scan.slow.card.title + ' — ' + scan.slow.card.text + '\n    ' + scan.slow.card.options.join('\n    '));
   // F4: 'one of hers are still shooting against no of ours'.
   check('the outnumbered clause agrees with the count it prints',
     !!scan.agree && scan.agree.raised === true && !!scan.agree.clause &&
-    /^one of hers is still shooting against nothing of ours/.test(scan.agree.clause),
+    /我方一艘都没有，我们就那么站着挨打/.test(scan.agree.clause),
     String(scan.agree && scan.agree.clause));
 
   // ---------------------------------------------------------------- the chapters the loop is for

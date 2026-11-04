@@ -181,7 +181,7 @@
       // The retreat order clears the body on its own, so this is safe in orbit as well as in the deep.
       ship.target = threat ? threat.id : null; ship.weaponsFree = !!threat;
       if (threat && ship.deltaV() > ship.reserveDv) { if (ship.order.type !== 'retreat') ship.order = { type: 'retreat', target: threat.id }; }
-      else if (ship.order.type !== 'hold') { ship.order = { type: 'hold' }; sim.addLog(ship.name + ' has cut her drive.', 'Sensors', 'info'); }
+      else if (ship.order.type !== 'hold') { ship.order = { type: 'hold' }; sim.addLog(ship.name + ' 关掉了主推进器。', 'Sensors', 'info'); }
       return;
     }
 
@@ -201,7 +201,7 @@
     const hurt = ship.hull < 0.35 || ship.systems.drive < 0.3;
     const dry = dv < 2500;
 
-    if ((hurt || dry) && !s.retreating) { s.retreating = true; sim.addLog(ship.name + ' is breaking off.', 'Sensors', 'info'); }
+    if ((hurt || dry) && !s.retreating) { s.retreating = true; sim.addLog(ship.name + ' 正在脱离战斗。', 'Sensors', 'info'); }
     if (s.retreating) {
       ship.order = dry ? { type: 'hold' } : { type: 'retreat', target: threat.id };
       ship.jink = false;
@@ -242,7 +242,7 @@
       s.commitAt = sim.time;
       if (sim.time - (s.commitLog || -1e9) > 120) {
         s.commitLog = sim.time;
-        sim.addLog(ship.name + ' is closing the range to end the stand-off.', 'Sensors', 'warn');
+        sim.addLog(ship.name + ' 正在拉近距离，要结束这场僵持。', 'Sensors', 'warn');
       }
     }
 
@@ -256,7 +256,7 @@
       if (OD.Sensors && OD.Sensors.setActive) OD.Sensors.setActive(ship, true);
       freeEverything(ship);
       ship.jink = false;
-      sim.addLog(ship.name + ' has gone active and is closing to point-blank range. Every mount is free.', 'Sensors', 'warn');
+      sim.addLog(ship.name + ' 已开启主动传感器，正在压到近距。所有炮位都放开。', 'Sensors', 'warn');
     }
     if (s.escalated) {
       if (OD.Sensors && OD.Sensors.setActive) OD.Sensors.setActive(ship, true);

@@ -98,19 +98,19 @@
     const add = (id, kind, name, facets, area, extra) => {
       list.push(Object.assign({ id, kind, name, hp: 1, facets, area }, extra || {}));
     };
-    add('drive', 'drive', 'Drive', ['tail'], AREA.drive);
-    add('reactor', 'reactor', 'Reactor', ['tail', 'flank'], AREA.reactor);
-    add('sensors', 'sensors', 'Sensor suite', ['nose'], AREA.sensors);
+    add('drive', 'drive', '主推进器', ['tail'], AREA.drive);
+    add('reactor', 'reactor', '反应堆', ['tail', 'flank'], AREA.reactor);
+    add('sensors', 'sensors', '传感器组', ['nose'], AREA.sensors);
     const panels = panelCount(cls);
-    for (let i = 1; i <= panels; i++) add('rad' + i, 'radiator', 'Radiator panel ' + i, ['flank'], AREA.radiator, { panel: i, panels });
+    for (let i = 1; i <= panels; i++) add('rad' + i, 'radiator', '散热板 ' + i, ['flank'], AREA.radiator, { panel: i, panels });
     const prop = ship.fullPropMass != null ? ship.fullPropMass : cls.propMass || 0;
     const tanks = prop > 0 ? tankCount(prop) : 0;
-    for (let i = 1; i <= tanks; i++) add('tank' + i, 'tank', 'Tank ' + i, ['flank', 'tail'], AREA.tank, { tank: i, tanks, share: prop / tanks, vented: 0 });
+    for (let i = 1; i <= tanks; i++) add('tank' + i, 'tank', '推进剂箱 ' + i, ['flank', 'tail'], AREA.tank, { tank: i, tanks, share: prop / tanks, vented: 0 });
     const ord = {};
     (ship.mounts || []).forEach((m, idx) => {
       const key = MOUNT_ID[m.kind] || 'mount';
       ord[key] = (ord[key] || 0) + 1;
-      add(key + ord[key], 'mount', m.name || 'Mount ' + (idx + 1), mountFacets(m), AREA.mount,
+      add(key + ord[key], 'mount', m.name || '炮位 ' + (idx + 1), mountFacets(m), AREA.mount,
         { mountIndex: idx, mountKind: m.kind, weapon: WEAPON_KIND[m.kind] === true });
     });
     ship.components = list;
@@ -286,9 +286,9 @@
         // The figure and the cure, in the words the isolate line uses: what is going out of this
         // hole, and that a party valving the tank out of the feed is what stops it.
         const dv = ventingDv(ship, c);
-        sim.addLog(ship.name + ' — ' + c.name + ' holed and venting: '
-          + (dv > 0 ? U.fmt.dv(dv) + ' of delta-v going' : 'the last of its propellant is going')
-          + ' out through the hole until a party valves it out of the feed.', 'Damage control', 'warn');
+        sim.addLog(ship.name + ' — ' + c.name + ' 破口泄漏：'
+          + (dv > 0 ? '正在漏掉 ' + U.fmt.dv(dv) + ' 速度增量' : '它最后的推进剂正在')
+          + ' 从破口往外流，直到班组把它从管路里关掉。', 'Damage control', 'warn');
       }
       const amount = Math.min((1 - c.hp) * T.ventRate * c.share * dt, left, ship.propMass);
       if (amount > 0) { ship.propMass -= amount; c.vented += amount; lost += amount; }
@@ -338,15 +338,16 @@
   // with it, and what had already gone through the hole.
   function isolatedWords(ship, c) {
     const held = heldIn(ship, c);
-    return c.name + ' valved out of the feed'
-      + (held > 0 ? ' and its ' + U.fmt.mass(held) + ' pumped across' : '')
-      + ': the venting has stopped'
-      + ((c.vented || 0) > 0 ? ', ' + U.fmt.dv(ventedDv(ship, c)) + ' lost' : '');
+    return c.name + ' 已从管路里关掉'
+      + (held > 0 ? '，剩下的 ' + U.fmt.mass(held) + ' 已经泵到别的箱里' : '')
+      + '：泄漏停了'
+      + ((c.vented || 0) > 0 ? '，已经漏掉 ' + U.fmt.dv(ventedDv(ship, c)) : '');
   }
   // How far a jury-rig reaches on this kind: the ceiling a party gets a standing part back to.
   // One number for the state word and for the work, so 'damaged' means a party can still do
   // something and 'worn' means the part is past anything a party can do in vacuum.
   function reachOf(c) { return ((JURY[kindOf(c)] || JURY.mount).damaged); }
+  const STATE_ZH = { ok: '完好', worn: '磨损', damaged: '受损', isolated: '已隔离', venting: '泄漏', wrecked: '报废' };
   function stateOf(ship, c) {
     // A tank a party has isolated reads isolated whatever its plating is down to.
     if (c.isolated && kindOf(c) === 'tank') return 'isolated';
@@ -378,54 +379,54 @@
     const gone = c.hp <= 0;
     switch (kindOf(c)) {
       case 'drive': {
-        // Two numbers, because the model has two: the thrust is gone with the drive, the turn is not.
+        // 两个数字，因为模型里就是两个：推力随推进器一起没了，转向没有。
         const turn = turnWords(U.clamp(c.hp, 0, 1));
         if (gone) {
-          return turn ? 'Drive wrecked: no acceleration, turn rate at ' + turn + ' on the attitude thrusters'
-            : 'Drive wrecked: no acceleration and no attitude control';
+          return turn ? '主推进器报废：无法加速，转向速度只剩 ' + turn + '，靠姿控推进器'
+            : '主推进器报废：无法加速，也没有姿控';
         }
         if (c.hp < 1) {
-          return turn ? 'Drive ' + pct + ': acceleration at ' + pct + ', turn rate at ' + turn
-            : 'Drive ' + pct + ': acceleration and turn rate at ' + pct;
+          return turn ? '主推进器 ' + pct + '：加速度 ' + pct + '，转向速度只剩 ' + turn
+            : '主推进器 ' + pct + '：加速度和转向速度只剩 ' + pct;
         }
-        return 'Drive intact';
+        return '主推进器完好';
       }
       case 'reactor':
-        return gone ? 'Reactor wrecked: beams and point defence at a quarter power'
-          : c.hp < 1 ? 'Reactor ' + pct + ': beams and point defence capped at ' + U.fmt.pct(0.25 + 0.75 * c.hp) : 'Reactor steady';
+        return gone ? '反应堆报废：光束和点防御只剩四分之一功率'
+          : c.hp < 1 ? '反应堆 ' + pct + '：光束和点防御功率上限 ' + U.fmt.pct(0.25 + 0.75 * c.hp) : '反应堆稳定';
       case 'sensors':
-        return gone ? 'Sensor suite wrecked: no passive range left, and the beams wobble twice as wide'
-          : c.hp < 1 ? 'Sensor suite ' + pct + ': passive range at ' + pct + ', and the beams wobble wider' : 'Sensor suite clear';
+        return gone ? '传感器组报废：被动探测距离归零，光束晃动幅度翻倍'
+          : c.hp < 1 ? '传感器组 ' + pct + '：被动探测距离只剩 ' + pct + '，光束抖动更大' : '传感器组正常';
       case 'radiator': {
-        // The level, not the drop: the row and the mend line under it are then the same quantity.
+        // 看的是水平而不是跌落：面板上的读数和下面那行修理说明说的是同一个量。
         const cool = U.fmt.pct(coolingWith(ship, c, U.clamp(c.hp, 0, 1)));
-        if (gone) return c.name + " wrecked: the ship's cooling is at " + cool;
-        if (c.hp < 1) return c.name + ' ' + pct + ": the ship's cooling is at " + cool;
-        return c.name + ' extended';
+        if (gone) return c.name + ' 报废：全舰散热能力只剩 ' + cool;
+        if (c.hp < 1) return c.name + ' ' + pct + '：全舰散热能力只剩 ' + cool;
+        return c.name + ' 已展开';
       }
       case 'tank': {
-        // A tank holed this second has lost nothing yet, and '0 km/s lost so far' is not a
-        // figure. The running total starts once propellant has actually gone.
+        // 刚刚打穿的箱子还没漏掉东西，而「目前已漏 0 公里/秒」不是一个数。
+        // 累计值要等推进剂真的跑掉才开始。
         if (c.isolated) return isolatedWords(ship, c);
         if (stateOf(ship, c) === 'venting') {
           return (c.vented || 0) > 0
-            ? c.name + ' venting: ' + U.fmt.dv(ventedDv(ship, c)) + ' lost so far'
-            : c.name + ' holed and venting';
+            ? c.name + ' 泄漏：已经损失 ' + U.fmt.dv(ventedDv(ship, c))
+            : c.name + ' 破口，正在泄漏';
         }
-        if (c.hp < 0.5) return c.name + ' holed and empty: nothing left to vent';
-        if (c.hp < 1) return c.name + ' ' + pct + ': plating dented, not venting';
-        return c.name + ' sound';
+        if (c.hp < 0.5) return c.name + ' 破口漏空：已经没有东西可漏';
+        if (c.hp < 1) return c.name + ' ' + pct + '：外壳凹陷，没有泄漏';
+        return c.name + ' 完好';
       }
       default: {
-        // The state word comes from stateOf, never from a second threshold: a mount at 55 % reads
-        // 'damaged' on the row and 'damaged, still firing' under it, one at 92 % reads 'worn' twice.
-        // A bay launches where a gun fires, the word the help screen and the salvo tip both use.
-        const verb = isBay(c) ? 'launching' : 'firing';
-        return gone ? c.name + (isBay(c) ? ' wrecked: nothing launches from it' : ' wrecked: this mount does not fire')
-          : c.hp < 1 ? c.name + ' ' + pct + ': ' + stateOf(ship, c) + ', still ' + verb : c.name + ' ready';
+        // 状态词只从 stateOf 来，不再另设阈值：炮位 55 % 在面板上写「受损」，
+        // 下面写「受损，仍在开火」；发射舱和枪炮一样用「发射」。
+        const verb = isBay(c) ? '发射' : '开火';
+        return gone ? c.name + (isBay(c) ? ' 报废：里面打不出任何东西' : ' 报废：这个炮位不能开火')
+          : c.hp < 1 ? c.name + ' ' + pct + '：' + (STATE_ZH[stateOf(ship, c)] || stateOf(ship, c)) + '，仍在' + verb : c.name + ' 正常';
       }
     }
   }
+
 
   // ------------------------------------------------------------------ jury-rig
   // What a party can get back out of a part, and never below where the part already is.
@@ -465,8 +466,8 @@
   // repair never shows two numbers (OD.Damage.timeWords).
   function timeWords(seconds) {
     const s = Math.max(0, Math.round(+seconds || 0));
-    if (s < 60) return Math.max(1, s) + ' s';
-    return Math.max(1, Math.round(s / 60)) + ' min';
+    if (s < 60) return Math.max(1, s) + ' 秒';
+    return Math.max(1, Math.round(s / 60)) + ' 分钟';
   }
   // The part named the way a sentence wants it. 'PD laser 1' keeps its capitals; 'Coilgun' does not.
   function lowerFirst(name) {
@@ -485,12 +486,13 @@
   function plainName(c) {
     if (!c || typeof c !== 'object') return '';
     switch (kindOf(c)) {
-      case 'drive': return 'the drive';
-      case 'reactor': return 'the reactor';
-      case 'sensors': return 'the sensor suite';
+      case 'drive': return '主推进器';
+      case 'reactor': return '反应堆';
+      case 'sensors': return '传感器组';
       case 'radiator': case 'tank': return lowerFirst(c.name || c.id);
       default: {
         const name = lowerFirst(c.name || c.id);
+        if (/[\u4e00-\u9fff]/.test(name)) return name;
         return DESIGNATOR.test(name) ? name : 'the ' + name;
       }
     }
@@ -513,65 +515,65 @@
         // 'some thrust, slow turns' claimed the turn with the thrust: a drive jury-rigged to 30 %
         // turns at 65 %, which is not slow. One shape at every integrity, both numbers named.
         const turn = turnWords(hp);
-        if (turn) return 'acceleration at ' + pct + ', turn rate at ' + turn;
-        return hp <= 0.35 ? 'some thrust, slow turns' : 'acceleration and turn rate at ' + pct;
+        if (turn) return '加速度 ' + pct + '，转向速度 ' + turn;
+        return hp <= 0.35 ? '还有部分推力，转向很慢' : '加速度和转向速度都是 ' + pct;
       }
-      case 'reactor': return 'beams and point defence capped at ' + U.fmt.pct(0.25 + 0.75 * hp);
-      case 'sensors': return 'passive range at ' + pct + ', and the beams wobble less';
-      case 'radiator': return 'cooling back to ' + U.fmt.pct(coolingWith(ship, c, hp));
-      case 'tank': return 'the plating is sound again';
+      case 'reactor': return '光束和点防御功率上限 ' + U.fmt.pct(0.25 + 0.75 * hp);
+      case 'sensors': return '被动探测距离 ' + pct + '，光束晃动更小';
+      case 'radiator': return '散热恢复到 ' + U.fmt.pct(coolingWith(ship, c, hp));
+      case 'tank': return '装甲板已经恢复完好';
       default: {
         const was = Math.max(U.clamp(from != null ? from : c.hp, 0, 1), 0.01);
-        return 'it keeps ' + (isBay(c) ? 'launching' : 'firing') + ', and '
-          + U.fmt.num(hp / was, 2) + ' times the damage to wreck it';
+        return '它还能继续' + (isBay(c) ? '发射' : '开火') + '，但要打坏它需要 '
+          + U.fmt.num(hp / was, 2) + ' 倍的伤害';
       }
     }
   }
   function noWork(ship, c) {
     const kind = kindOf(c), hp = U.clamp(c.hp, 0, 1);
     if (kind === 'tank') {
-      if (c.isolated) return 'it is isolated already';
-      if (hp >= 1) return 'it is sound';
-      return 'it is holed and empty';
+      if (c.isolated) return '它已经被隔离了';
+      if (hp >= 1) return '它完好无损';
+      return '它被打穿，里面已经空了';
     }
-    if (hp <= 0) return kind === 'radiator' ? 'the panel is gone' : 'the mount is gone';
-    if (hp >= 1) return 'it is undamaged';
+    if (hp <= 0) return kind === 'radiator' ? '这块板已经没了' : '这座炮位已经没了';
+    if (hp >= 1) return '它没有受损';
     const cap = U.fmt.pct((JURY[kind] || JURY.mount).damaged);
-    if (hp <= (JURY[kind] || JURY.mount).damaged + 1e-6) return 'a jury-rig gets no further than ' + cap;
-    return 'it is at ' + U.fmt.pct(hp) + ', past the ' + cap + ' a jury-rig reaches';
+    if (hp <= (JURY[kind] || JURY.mount).damaged + 1e-6) return '应急抢修最多只能到 ' + cap;
+    return '它现在在 ' + U.fmt.pct(hp) + '，已经超过应急抢修能到的 ' + cap;
   }
   // One sentence of what sending a party buys, with the time it takes. The big parts name the job
   // as well, so eight minutes on a wrecked drive reads as a module swap and not as a rebuild.
   const WORK = {
-    drive: 'swaps the burnt driver modules',
-    reactor: 'cross-connects the spare feed line',
-    sensors: 'swaps the burnt receiver boards',
+    drive: '更换烧毁的驱动模块',
+    reactor: '把备用供给管路跨接过去',
+    sensors: '更换烧毁的接收板',
   };
   function buys(ship, partId) {
     const c = partOf(ship, partId);
     if (!c) return '';
     const name = plainName(c);
-    if (!repairable(ship, c)) return 'Nothing a party can do for ' + name + ': ' + noWork(ship, c) + '.';
+    if (!repairable(ship, c)) return '这个部件班组无能为力：' + noWork(ship, c) + '。';
     // A panel repair means the radiators stowed for the whole shift, so the time clause says so:
     // the ship sheds nothing while the party works (crew.js holds the work until they are in).
-    const t = ' ' + timeWords(repairTime(ship, c.id)) + (kindOf(c) === 'radiator' ? ', with the radiators in.' : '.');
+    const t = timeWords(repairTime(ship, c.id)) + (kindOf(c) === 'radiator' ? '，期间散热板要一直收起。' : '。');
     if (kindOf(c) === 'tank' && isVenting(ship, c)) {
       const held = heldIn(ship, c);
-      return 'A party valves ' + name + ' out of the feed'
-        + (held > 0 ? ' and pumps its ' + U.fmt.mass(held) + ' across' : '') + ': the venting stops.' + t;
+      return '班组把' + name + '从管路里关掉'
+        + (held > 0 ? '，把剩下的 ' + U.fmt.mass(held) + ' 泵到别的箱里' : '') + '，泄漏就此停止。' + t;
     }
     const cap = capOf(ship, c);
     const work = WORK[kindOf(c)];
-    return 'A party ' + (work ? work + ' and brings ' : 'brings ') + name + ' to ' + U.fmt.pct(cap)
-      + ': ' + consequence(ship, c, cap) + '.' + t;
+    return '班组' + (work ? work + '，把' : '把') + name + '修到 ' + U.fmt.pct(cap)
+      + '：' + consequence(ship, c, cap) + '。' + t;
   }
   // What a party has done, for the log. `from` is where the part was before the mend, which the
   // mount's clause needs to say how much more damage it now takes to wreck it.
   function mendWords(ship, c, isolated, from) {
     if (isolated) return isolatedWords(ship, c);
     const hp = U.clamp(c.hp, 0, 1);
-    if (kindOf(c) === 'tank') return c.name + ' patched to ' + U.fmt.pct(hp) + ': the plating is sound again';
-    return c.name + ' jury-rigged to ' + U.fmt.pct(hp) + ': ' + consequence(ship, c, hp, from);
+    if (kindOf(c) === 'tank') return c.name + '已经补到 ' + U.fmt.pct(hp) + '：外壳重新完好';
+    return c.name + '抢修到 ' + U.fmt.pct(hp) + '：' + consequence(ship, c, hp, from);
   }
   // A party finishes on a part. Partial capacity back, never full, and never worse than it was.
   // With no sim to log through, the sentence goes back to the caller.

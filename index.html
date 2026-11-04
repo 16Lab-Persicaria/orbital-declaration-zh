@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Orbital Declaration</title>
-<meta name="description" content="A hard science fiction space combat game. Newtonian motion, the rocket equation, heat that has to go somewhere, and no stealth at all. Eight story chapters, a campaign around Jupiter, skirmishes and a ship configurator.">
+<title>轨道宣言</title>
+<meta name="description" content="硬科幻太空战斗游戏。牛顿力学、火箭方程、必须排掉的热量，没有隐身可言。八个剧情章节、木星战役、遭遇战和舰船设计台。">
 <meta name="theme-color" content="#04070c">
 <meta name="color-scheme" content="dark">
-<meta name="application-name" content="Orbital Declaration">
+<meta name="application-name" content="轨道宣言">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Orbital Declaration">
+<meta name="apple-mobile-web-app-title" content="轨道宣言">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="canonical" href="https://orbital-declaration.netlify.app/">
 <link rel="icon" href="assets/site/icon.svg" type="image/svg+xml">
@@ -18,17 +18,17 @@
 <link rel="apple-touch-icon" href="assets/site/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Orbital Declaration">
-<meta property="og:title" content="Orbital Declaration">
-<meta property="og:description" content="A hard science fiction space combat game. Newtonian motion, the rocket equation, heat that has to go somewhere, and no stealth at all. Eight story chapters, a campaign around Jupiter, skirmishes and a ship configurator.">
+<meta property="og:site_name" content="轨道宣言">
+<meta property="og:title" content="轨道宣言">
+<meta property="og:description" content="硬科幻太空战斗游戏。牛顿力学、火箭方程、必须排掉的热量，没有隐身可言。八个剧情章节、木星战役、遭遇战和舰船设计台。">
 <meta property="og:url" content="https://orbital-declaration.netlify.app/">
 <meta property="og:image" content="https://orbital-declaration.netlify.app/assets/site/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="A cruiser under thrust in the Jovian system, with the title Orbital Declaration">
+<meta property="og:image:alt" content="一艘巡洋舰在木星系统内点火航行，标题为“轨道宣言”">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Orbital Declaration">
-<meta name="twitter:description" content="A hard science fiction space combat game. Newtonian motion, the rocket equation, heat that has to go somewhere, and no stealth at all. Eight story chapters, a campaign around Jupiter, skirmishes and a ship configurator.">
+<meta name="twitter:title" content="轨道宣言">
+<meta name="twitter:description" content="硬科幻太空战斗游戏。牛顿力学、火箭方程、必须排掉的热量，没有隐身可言。八个剧情章节、木星战役、遭遇战和舰船设计台。">
 <meta name="twitter:image" content="https://orbital-declaration.netlify.app/assets/site/og.png">
 <link rel="preload" href="assets/site/fonts/rajdhani-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/site/fonts/plexsans-400-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -49,9 +49,9 @@
     --line: rgba(120, 150, 180, 0.22); --line-2: rgba(120, 150, 180, 0.42);
     --ink: #e0e8f0; --ink-2: #b1bfce; --dim: #7f91a7; --accent: #4fd1c5; --accent-ink: #04141a; --accent-2: #f0a04b; --civ: #b9c3d1;
     --good: #7ad97a; --warn: #ffb454; --crit: #ff6b6b; --blue: #7fb8ff; --brake: #8fa6bf;
-    --display: 'Rajdhani', 'Bahnschrift', 'DIN Alternate', 'Segoe UI', sans-serif;
-    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-    --sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --display: 'Rajdhani', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Bahnschrift', 'DIN Alternate', 'Segoe UI', sans-serif;
+    --mono: 'IBM Plex Mono', 'Sarasa Mono SC', 'Microsoft YaHei Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Segoe UI', system-ui, sans-serif;
     --tick: linear-gradient(var(--accent), var(--accent));
     --tickd: linear-gradient(var(--line-2), var(--line-2));
     color-scheme: dark;
@@ -204,7 +204,7 @@
   .nav-line { font-size: 14.5px; font-weight: 500; line-height: 1.35; }
   .nav-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; line-height: 1.4; }
   .tipline { margin-top: 7px; padding: 4px 8px; border-left: 2px solid var(--accent); font-size: 12.5px; color: var(--ink-2); }
-  .tipline::before { content: 'Tip · '; color: var(--accent); font-family: var(--display); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 11px; }
+  .tipline::before { content: '提示 · '; color: var(--accent); font-family: var(--display); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 11px; }
 
   /* gauges: instrument bars with tick marks */
   .gauge-row, .gauge-foot { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; gap: 8px; }
@@ -492,47 +492,47 @@
 <body>
 
 <div id="app">
-  <canvas id="view" aria-label="Tactical map"></canvas>
+  <canvas id="view" aria-label="战术地图"></canvas>
   <div id="hud" hidden>
     <header id="topbar">
-      <div class="tb-left"><span class="mode" id="modeLabel">Story</span><span class="mission" id="missionName">—</span></div>
-      <div class="tb-mid"><span id="clock" data-tip="clock">00:00:00</span><span id="warpLabel" class="pill">paused</span><span id="next" class="next" data-tip="next"></span><button id="btnSkip" class="sm" hidden data-tip="skip">Skip ahead</button></div>
+      <div class="tb-left"><span class="mode" id="modeLabel">剧情</span><span class="mission" id="missionName">—</span></div>
+      <div class="tb-mid"><span id="clock" data-tip="clock">00:00:00</span><span id="warpLabel" class="pill">暂停</span><span id="next" class="next" data-tip="next"></span><button id="btnSkip" class="sm" hidden data-tip="skip">快进</button></div>
       <div class="tb-right">
-        <div class="seg" id="warp" data-tip="warp" role="group" aria-label="Time warp">
-          <button data-warp="0" id="warp0" title="Pause (space)" aria-label="Pause">⏸</button>
-          <button data-warp="1" id="warp1" aria-label="Real time">1×</button>
-          <button data-warp="4" id="warp4" aria-label="4 times">4×</button>
-          <button data-warp="16" id="warp16" aria-label="16 times">16×</button>
-          <button data-warp="64" id="warp64" aria-label="64 times">64×</button>
+        <div class="seg" id="warp" data-tip="warp" role="group" aria-label="时间加速">
+          <button data-warp="0" id="warp0" title="暂停（空格）" aria-label="暂停">⏸</button>
+          <button data-warp="1" id="warp1" aria-label="实时">1×</button>
+          <button data-warp="4" id="warp4" aria-label="4 倍速">4×</button>
+          <button data-warp="16" id="warp16" aria-label="16 倍速">16×</button>
+          <button data-warp="64" id="warp64" aria-label="64 倍速">64×</button>
         </div>
-        <button id="btnFit" class="sm" data-tip="fit" title="Show all ships (Home)">Show all</button>
-        <button id="btnHull" class="sm" data-tip="hullview" title="Hull view (V)">Hull<kbd>V</kbd></button>
-        <button id="btnPhysics" class="sm" data-tip="physics" title="Physics (P)">Physics</button>
-        <button id="btnHelp" class="sm">Help</button>
-        <button id="btnMenu" class="sm">Menu</button>
+        <button id="btnFit" class="sm" data-tip="fit" title="显示全部舰船（Home）">全景</button>
+        <button id="btnHull" class="sm" data-tip="hullview" title="舰体视图（V）">舰体<kbd>V</kbd></button>
+        <button id="btnPhysics" class="sm" data-tip="physics" title="物理面板（P）">物理</button>
+        <button id="btnHelp" class="sm">帮助</button>
+        <button id="btnMenu" class="sm">菜单</button>
       </div>
     </header>
-    <aside id="fleet" class="glass" aria-label="Ships and contacts"><h3>Ships</h3><div id="fleetList"></div></aside>
-    <div id="legend" aria-label="Map key"><div class="lg-head"><span>Map key</span><button id="legendFold" class="sm ghost" aria-expanded="true" aria-controls="legend">Hide</button></div>
-      <div class="lg-row"><i class="sw drift"></i>drift if nothing burns</div>
-      <div class="lg-row"><i class="sw burn"></i>burning</div>
-      <div class="lg-row"><i class="sw brake"></i>braking tail-first</div>
-      <div class="lg-row"><i class="sw ring"></i>flip · arrival</div>
-      <div class="lg-row"><i class="sw sel"></i>selected</div>
-      <div class="lg-row"><i class="sw tgt"></i>target</div>
+    <aside id="fleet" class="glass" aria-label="舰船与接触"><h3>舰船</h3><div id="fleetList"></div></aside>
+    <div id="legend" aria-label="图例"><div class="lg-head"><span>图例</span><button id="legendFold" class="sm ghost" aria-expanded="true" aria-controls="legend">隐藏</button></div>
+      <div class="lg-row"><i class="sw drift"></i>不点火时的漂移</div>
+      <div class="lg-row"><i class="sw burn"></i>点火</div>
+      <div class="lg-row"><i class="sw brake"></i>掉头反推</div>
+      <div class="lg-row"><i class="sw ring"></i>掉头 · 到达</div>
+      <div class="lg-row"><i class="sw sel"></i>选中</div>
+      <div class="lg-row"><i class="sw tgt"></i>目标</div>
     </div>
-    <aside id="shipPanel" class="glass" aria-label="Ship panel" data-detail="essentials"><div class="empty">Click one of your ships to take command, or pick it from the list.</div></aside>
+    <aside id="shipPanel" class="glass" aria-label="舰船面板" data-detail="essentials"><div class="empty">点一艘我方舰船接管指挥，或从列表里选。</div></aside>
     <section id="bottom">
-      <div id="log" class="glass" aria-live="polite" aria-label="Log"></div>
-      <div id="objectives" class="glass"><h3>Objectives</h3><div id="objList"></div></div>
+      <div id="log" class="glass" aria-live="polite" aria-label="日志"></div>
+      <div id="objectives" class="glass"><h3>目标</h3><div id="objList"></div></div>
     </section>
-    <div id="hint" hidden role="status"><div class="hint-body"><div class="eyebrow" id="hintStep">Hint</div><span class="hint-fold">Folded while the card is open.</span><p id="hintText"></p></div><div class="hint-actions"><button id="hintOk" class="sm primary">Got it<kbd>⏎</kbd></button><button id="hintSkip" class="sm ghost" hidden>Skip tour</button></div></div>
+    <div id="hint" hidden role="status"><div class="hint-body"><div class="eyebrow" id="hintStep">提示</div><span class="hint-fold">卡片打开时折叠。</span><p id="hintText"></p></div><div class="hint-actions"><button id="hintOk" class="sm primary">知道了<kbd>⏎</kbd></button><button id="hintSkip" class="sm ghost" hidden>跳过引导</button></div></div>
     <div id="toast" hidden role="status"></div>
   </div>
   <div id="tooltip" hidden role="tooltip"></div>
   <div id="screens"></div>
   <div id="bridgeA11y"></div>
-  <div id="boot"><div class="card"><div class="eyebrow">Jovian system · 2211</div><h1 class="title">Orbital<br>Declaration</h1><p class="sub">A hard science fiction space combat game. Newtonian motion, the rocket equation, heat that has to go somewhere, and no stealth at all.</p><p class="load">Loading the bridge</p><noscript><p class="sub">The bridge needs JavaScript. Please enable it, or open the page in a current browser.</p></noscript></div></div>
+  <div id="boot"><div class="card"><div class="eyebrow">木星系统 · 2211</div><h1 class="title">轨道<br>宣言</h1><p class="sub">硬科幻太空战斗游戏。牛顿力学、火箭方程、必须排掉的热量，没有隐身可言。</p><p class="load">正在载入舰桥</p><noscript><p class="sub">舰桥需要 JavaScript。请启用它，或用较新的浏览器打开本页。</p></noscript></div></div>
 </div>
 
 <script src="js/util.js"></script>

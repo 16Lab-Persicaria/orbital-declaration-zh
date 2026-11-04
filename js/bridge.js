@@ -12,9 +12,9 @@
 
   // palette and fonts: the same tokens as index.html
   const C = { accent: '#4fd1c5', accent2: '#f0a04b', ink: '#e0e8f0', ink2: '#b1bfce', dim: '#7f91a7', ground: '#04070c', line: 'rgba(120,150,180,0.22)', line2: 'rgba(120,150,180,0.42)', crit: '#ff6b6b', good: '#7ad97a', warn: '#ffb454', danger: '#ffb0b0', civ: '#b9c3d1', accentA: (a) => 'rgba(79,209,197,' + a + ')' };
-  const DISPLAY = 'Rajdhani, Bahnschrift, "DIN Alternate", "Segoe UI", sans-serif';
-  const MONO = '"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace';
-  const SANS = '"IBM Plex Sans", "Segoe UI", system-ui, sans-serif';
+  const DISPLAY = 'Rajdhani, "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", Bahnschrift, "DIN Alternate", "Segoe UI", sans-serif';
+  const MONO = '"IBM Plex Mono", "Sarasa Mono SC", "Microsoft YaHei Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+  const SANS = '"IBM Plex Sans", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", system-ui, sans-serif';
   const F = { d: (px, w) => (w || 600) + ' ' + px + 'px ' + DISPLAY, m: (px, w) => (w || 400) + ' ' + px + 'px ' + MONO, s: (px, w) => (w || 400) + ' ' + px + 'px ' + SANS, si: (px) => 'italic 400 ' + px + 'px ' + SANS };
   const LS = typeof CanvasRenderingContext2D !== 'undefined' && 'letterSpacing' in CanvasRenderingContext2D.prototype;
   let reduced = false;
@@ -40,15 +40,28 @@
 
   // ---------------------------------------------------------------- text
   const wrapCache = new Map();
+  // 中文没有空格：汉字逐字断行，拉丁词整体不拆；标点不留在行首。
+  const CJK = /[\u2E80-\u9FFF\uF900-\uFAFF\u3000-\u303F\uFF00-\uFFEF]/;
+  const TOKEN = /[\u2E80-\u9FFF\uF900-\uFAFF\u3000-\u303F\uFF00-\uFFEF]|[^\s\u2E80-\u9FFF\uF900-\uFAFF\u3000-\u303F\uFF00-\uFFEF]+|[^\S\u00A0]+|\u00A0/g;
+  const NO_LEAD = /^[，。、；：？！）》」』】〕…—～·%]$/;
   function wrap(str, f, maxW) {
     const k = f + '|' + Math.round(maxW) + '|' + str;
     const c = wrapCache.get(k); if (c) return c;
     ctx.font = f; if (LS) ctx.letterSpacing = '0px';
     const lines = [];
     for (const para of String(str).split('\n')) {
-      let line = '';
-      // ordinary spaces only: a no-break space ("9\u00a0July\u00a02211") keeps its words on one line
-      for (const w of para.split(/[ \t\r]+/)) { const test = line ? line + ' ' + w : w; if (line && ctx.measureText(test).width > maxW) { lines.push(line); line = w; } else line = test; }
+      let line = '', space = false, glue = '';
+      for (const tk of para.match(TOKEN) || []) {
+        if (tk === '\u00A0') { glue = '\u00A0'; continue; }
+        if (/^[^\S\u00A0]+$/.test(tk)) { space = true; continue; }
+        const sep = glue || ((line && space && !(CJK.test(line.slice(-1)) && CJK.test(tk))) ? ' ' : '');
+        const test = line + sep + tk;
+        if (line && ctx.measureText(test).width > maxW) {
+          if (NO_LEAD.test(tk)) line = test;
+          else { lines.push(line); line = tk; }
+        } else line = test;
+        space = false; glue = '';
+      }
       lines.push(line);
     }
     if (wrapCache.size > 600) wrapCache.clear();
@@ -153,7 +166,7 @@
     if (!r || r.disabled || typeof r.act !== 'function') return false;
     B.pressedId = r.id; B.pressT = B.t;
     play(r.sound || (r.esc ? 'back' : 'key'));
-    try { r.act(how); } catch (e) { OD.errors && OD.errors.push('bridge action: ' + (e && e.stack || e)); }
+    try { r.act(how); } catch (e) { OD.errors && OD.errors.push('舰桥操作：' + (e && e.stack || e)); }
     return true;
   }
 
@@ -350,7 +363,7 @@
     try {
       if (OD.UI && typeof OD.UI.drawHull === 'function') OD.UI.drawHull(ctx, ship, cx, cy, L, view, extra);
       else if (artOk(ship)) OD.ShipArt.draw(ctx, artId(ship), OD.Render.artOpts(ship, null, Object.assign({ x: cx, y: cy, size: L, view }, extra)));
-    } catch (e) { if (OD.Render) OD.Render.lastError = 'bridge hull: ' + (e && e.message); }
+    } catch (e) { if (OD.Render) OD.Render.lastError = '舰桥舰体：' + (e && e.message); }
     B.hullL = L;
     return { L, view };
   }
@@ -393,7 +406,7 @@
     const rowY = (ln, r) => ln === 'up' ? box.y + px(11) + (rows - 1 - r) * STEP : box.y + box.h - px(4) - (rows - 1 - r) * STEP;
     // where a leader leaves the picture for its lane
     const edgeUp = box.y + lane - px(6), edgeDown = box.y + box.h - lane + px(6);
-    const items = parts.slice(0, o.max || 12).map((p) => ({ label: p.label, text: p.text, px: cx + p.x, py: cy + p.y, w: measure(p.label, f) + px(7) }));
+    const items = parts.slice(0, o.max || 12).map((p) => ({ label: p.zh || p.label, text: p.text, px: cx + p.x, py: cy + p.y, w: measure(p.zh || p.label, f) + px(7) }));
     items.sort((a, b) => Math.abs(b.px - cx) - Math.abs(a.px - cx));
     const memoKey = (ship.id || ship.name || '') + '|' + (typeof artId(ship) === 'object' ? 'design' : artId(ship)) + '|' + (typeof view === 'object' ? 'orbit' : view) + '|' + rows;
     let memo = calloutMemo.get(memoKey);
@@ -556,11 +569,11 @@
   function header(mode) {
     const y = FR.y + 6, h = B.phone ? 44 : 28;
     ctx.fillStyle = C.accent; ctx.fillRect(FR.x + 14, y + h / 2 - 3, 6, 6);
-    text(up('Bridge · ' + mode), FR.x + 28, y + h / 2 + px(4.5), F.d(px(11.5)), C.accent, 'left', '0.22em');
+    text(up('舰桥 · ' + mode), FR.x + 28, y + h / 2 + px(4.5), F.d(px(11.5)), C.accent, 'left', '0.22em');
     const clock = 'T+' + U.fmt.clock(B.t - B.bootT);
     const keys = [];
-    if (OD.Sound) { const on = !!(OD.Sound.enabled == null ? true : OD.Sound.enabled); keys.push({ id: 'hdr:snd', label: 'SND ' + (on ? '●' : '○'), aria: 'Sound ' + (on ? 'on: switch off' : 'off: switch on'), act: () => { try { OD.Sound.setEnabled(!on); if (!on) OD.Sound.unlock && OD.Sound.unlock(); } catch (e) { /* optional */ } } }); }
-    keys.push({ id: 'hdr:aa', label: 'AA', aria: 'Text size: ' + (OD.UI.textSize === 'large' ? 'large, switch to normal' : 'normal, switch to large'), act: () => { const nx = OD.UI.textSize === 'large' ? 'normal' : 'large'; OD.UI.setTextSize(nx, true); B.S = nx === 'large' ? 1.15 : 1; wrapCache.clear(); } });
+    if (OD.Sound) { const on = !!(OD.Sound.enabled == null ? true : OD.Sound.enabled); keys.push({ id: 'hdr:snd', label: 'SND ' + (on ? '●' : '○'), aria: '声音' + (on ? '开：点击关闭' : '关：点击打开'), act: () => { try { OD.Sound.setEnabled(!on); if (!on) OD.Sound.unlock && OD.Sound.unlock(); } catch (e) { /* optional */ } } }); }
+    keys.push({ id: 'hdr:aa', label: 'AA', aria: '字号：' + (OD.UI.textSize === 'large' ? '大号，切换为标准' : '标准，切换为大号'), act: () => { const nx = OD.UI.textSize === 'large' ? 'normal' : 'large'; OD.UI.setTextSize(nx, true); B.S = nx === 'large' ? 1.15 : 1; wrapCache.clear(); } });
     let kx = FR.x + FR.w - 12;
     for (let i = keys.length - 1; i >= 0; i--) { const f = F.d(px(11)); const w = Math.ceil(measure(keys[i].label, f, '0.1em') + px(22)); kx -= w; key(kx, y + (h - (B.phone ? 44 : 24)) / 2, Object.assign({ w, h: B.phone ? 44 : 24, focusable: false }, keys[i])); kx -= 6; }
     if (!B.phone || B.W > 520) text(clock, B.phone ? kx - 8 : B.W / 2, y + h / 2 + px(4.5), F.m(px(12)), C.ink2, B.phone ? 'right' : 'center');
@@ -639,20 +652,20 @@
 
   SCREENS.menu = function (m) {
     const PX = FR.x + (B.phone ? 12 : 56), PW = B.phone ? FR.w - 24 : 520;
-    m._panelRight = PX + PW; scrim('beside', PX + PW); frame(); header('Main console');
+    m._panelRight = PX + PW; scrim('beside', PX + PW); frame(); header('主控台');
     if (!B.phone && m.hull) sideHull(m.hull.spec, m.hull.caption || []);
     let y = beginFlow() + (B.phone ? px(8) : px(34));
-    y = eyebrow(PX, y + px(8), m.eyebrow || 'Jovian system · 2211');
-    y = title(['Orbital', 'Declaration'], PX - 2, y - px(4), B.phone ? px(46) : px(68), C.ink, 0.1) + px(6);
+    y = eyebrow(PX, y + px(8), m.eyebrow || '木星系统 · 2211');
+    y = title(['轨道', '宣言'], PX - 2, y - px(4), B.phone ? px(46) : px(68), C.ink, 0.1) + px(6);
     y = paragraph(m.sub || '', PX, y, Math.min(PW, 520), { size: B.phone ? 13.5 : 15 }) + px(10);
     hair(PX, y, PX + PW, C.line2);
     m.entries.forEach((e, i) => { y = entry(PX, y, PW, { id: 'menu:' + i, n: i + 1, label: e.label, sub: e.sub, primary: e.primary, act: e.act, clip: [CT, CB] }); });
     y += px(14);
     // settings: text size, panel default, sound
     const items = [];
-    if (m.settings.text) items.push({ id: 'set:text', label: 'Text', options: [{ id: 'normal', label: 'Normal' }, { id: 'large', label: 'Large' }], value: m.settings.text.value(), set: m.settings.text.set });
-    if (m.settings.detail) items.push({ id: 'set:detail', label: 'Panel', options: [{ id: 'essentials', label: 'Essentials' }, { id: 'full', label: 'Full' }], value: m.settings.detail.value(), set: m.settings.detail.set });
-    if (m.settings.sound) items.push({ id: 'set:sound', label: 'Sound', options: [{ id: 'on', label: 'On' }, { id: 'off', label: 'Off' }], value: m.settings.sound.value() ? 'on' : 'off', set: (v) => m.settings.sound.set(v === 'on') });
+    if (m.settings.text) items.push({ id: 'set:text', label: '字号', options: [{ id: 'normal', label: '标准' }, { id: 'large', label: '大号' }], value: m.settings.text.value(), set: m.settings.text.set });
+    if (m.settings.detail) items.push({ id: 'set:detail', label: '面板', options: [{ id: 'essentials', label: '精简' }, { id: 'full', label: '完整' }], value: m.settings.detail.value(), set: m.settings.detail.set });
+    if (m.settings.sound) items.push({ id: 'set:sound', label: '声音', options: [{ id: 'on', label: '开' }, { id: 'off', label: '关' }], value: m.settings.sound.value() ? 'on' : 'off', set: (v) => m.settings.sound.set(v === 'on') });
     let sx = PX, rowH = 0;
     for (const it of items) {
       const est = measure(up(it.label), F.d(px(11)), '0.18em') + px(14) + it.options.reduce((a, o) => a + measure(o.label, F.s(px(12.5), 500)) + px(22), 0);
@@ -714,7 +727,7 @@
     const c = chs[lit], sc = story[lit] || {};
     let ry = y + pad;
     if (c) {
-      const state = c.locked ? 'locked' : c.done ? 'played' : 'to play';
+      const state = c.locked ? '未解锁' : c.done ? '已通关' : '可进入';
       // no-break spaces hold a figure to its unit and a date together, so a narrow readout never ends a line
       // on "181" or "9 July"
       const where = String(sc.location || '').replace(/(\d) (?=\d|km\b)/g, '$1\u00a0') + (sc.date ? ' · ' + String(sc.date).replace(/ /g, '\u00a0') : '');
@@ -722,14 +735,14 @@
       const tf = F.d(B.phone ? px(18) : px(21), 700), rw = Math.max(measure(up(c.title), tf, '0.05em'), ...lines.map((l) => measure(l, F.s(px(12.5)))));
       const rh = px(58) + lines.length * px(17);
       ctx.fillStyle = 'rgba(4,7,12,0.8)'; ctx.fillRect(x + pad - px(6), ry - px(4), rw + px(12), rh);
-      text(up('Chapter ' + String(c.n).padStart(2, '0') + ' · ' + state), x + pad, ry + px(10), F.d(px(11)), c.done ? C.good : c.locked ? C.dim : C.accent, 'left', '0.2em');
+      text(up('第 ' + String(c.n).padStart(2, '0') + ' 章 · ' + state), x + pad, ry + px(10), F.d(px(11)), c.done ? C.good : c.locked ? C.dim : C.accent, 'left', '0.2em');
       text(up(c.title), x + pad, ry + px(34), tf, C.ink, 'left', '0.05em');
       lines.forEach((l, i) => text(l, x + pad, ry + px(54) + i * px(17), F.s(px(12.5)), C.ink2));
       taken.push(box(x + pad - px(6), ry - px(4), x + pad + rw + px(6), ry + rh));
       ry += rh;
     }
     // legend: top right on a wide chart, under the readout on a narrow one. A locked chapter's key is dashed.
-    const legend = [['played', C.good, false], ['to play', C.ink2, false], ['locked', C.dim, true]];
+    const legend = [['已通关', C.good, false], ['可进入', C.ink2, false], ['未解锁', C.dim, true]];
     const lf = F.d(px(10)), mk = px(9);
     const swatch = (sx, sy, col, dashed) => { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1; if (dashed) ctx.setLineDash([2, 2]); ctx.strokeRect(Math.round(sx) + 0.5, Math.round(sy) + 0.5, mk, mk); ctx.restore(); };
     if (wide) {
@@ -745,7 +758,7 @@
     // otherwise it takes lines of its own above the bar, whole clauses to a line when the whole does not fit.
     // The moons' figures are orbit radii, from Jupiter's centre; a chapter's is its altitude, from the cloud tops.
     const kmText = (a) => U.fmt.num(a) + ' km';
-    const cap = 'To scale. Moons at their distance from Jupiter\'s centre, chapters at their altitude. Moons drawn larger.', cf = F.m(px(10)), bf = F.m(px(10));
+    const cap = '按比例绘制。卫星按到木星中心的距离排，章节按所在高度排。卫星画得更大。', cf = F.m(px(10)), bf = F.m(px(10));
     const capW = measure(cap, cf), barLblW = measure(kmText(500000), bf), CAPL = px(14);
     const besideBar = (r) => capW <= w - 2 * pad - 500000 * r / MOONS[MOONS.length - 1].a - px(8) - barLblW - px(20);
     const capLines = () => {
@@ -876,7 +889,7 @@
     // measured from Jupiter's centre, where a chapter's altitude is measured from the cloud tops.
     const mf = F.d(px(10.5)), rf = F.m(px(9.5));
     for (const d of dots) {
-      const nm = up(d.mn.name), rt = 'orbit ' + kmText(d.mn.a), nw = measure(nm, mf, '0.16em'), rw = measure(rt, rf);
+      const nm = up(d.mn.name), rt = '轨道 ' + kmText(d.mn.a), nw = measure(nm, mf, '0.16em'), rw = measure(rt, rf);
       const bw = Math.max(nw, rw) + 2, bh = px(24);
       const r = place(d.p.x, d.p.y, bw, bh, px(5), d.mn.ang, 0, d.mn);
       const right = r.x1 <= d.p.x + 1, lx = right ? r.x1 : r.x0, al = right ? 'right' : 'left';
@@ -913,7 +926,7 @@
     const rail = B.phone ? reserveRail(m.keys, PX, PW) : null;
     let y = beginFlow() + px(24);
     y = eyebrow(PX, y + px(8), m.eyebrow || 'Story');
-    y = title([m.title || 'Eight chapters'], PX - 1, y - px(4), B.phone ? px(34) : px(44), C.ink) + px(4);
+    y = title([m.title || '八章'], PX - 1, y - px(4), B.phone ? px(34) : px(44), C.ink) + px(4);
     y = paragraph(m.sub || '', PX, y, Math.min(PW, 720), { size: B.phone ? 13.5 : 14.5 }) + px(8);
     hair(PX, y, PX + PW, C.line2);
     const cols = B.phone || chart ? 1 : 2, cw = (PW - (cols - 1) * 28) / cols, y0 = y;
@@ -978,12 +991,12 @@
     const top = beginFlow();
     let y = top + px(20) + (B.phone ? 0 : sitPad);
     const y0 = y;
-    y = eyebrow(PX, y + px(8), m.eyebrow || 'The war');
-    y = title([m.title || 'The situation'], PX - 1, y - px(4), B.phone ? px(34) : px(46), C.ink) + px(2);
+    y = eyebrow(PX, y + px(8), m.eyebrow || '战况');
+    y = title([m.title || '局势'], PX - 1, y - px(4), B.phone ? px(34) : px(46), C.ink) + px(2);
     if (m.meta) { text(up(m.meta), PX, y + px(12), F.m(px(12)), C.dim, 'left', '0.06em'); y += px(30); }
     const sides = () => {
       if (!(m.sides && m.sides.length)) return;
-      y = h3(PX, y + px(6), PW, m.sidesTitle || 'The two sides');
+      y = h3(PX, y + px(6), PW, m.sidesTitle || '双方');
       for (const sd of m.sides) {
         text(up(sd.name), PX, y + px(13), F.d(px(13.5)), facColor(sd.faction), 'left', '0.1em'); y += px(19);
         y = paragraph(sd.text, PX + px(12), y, PW - px(12), { size: 13.5, color: C.ink2, gap: px(6) });
@@ -1013,7 +1026,7 @@
       sides();
     }
     if (m.sofar && m.sofar.length) {
-      y = h3(PX, y + px(4), PW, m.sofarTitle || 'The war so far');
+      y = h3(PX, y + px(4), PW, m.sofarTitle || '战况');
       for (const r of m.sofar) {
         text(String(r.n), PX, y + px(13), F.m(px(12)), r.outcome === 'victory' ? C.accent : C.crit);
         const lines = wrap(r.text, F.s(px(13.5)), PW - px(24));
@@ -1033,36 +1046,36 @@
 
   SCREENS.hangar = function (m) {
     const PX = FR.x + (B.phone ? 12 : 44), PW = FR.w - 2 * (PX - FR.x);
-    scrim('dark'); frame(); header('Hangar');
+    scrim('dark'); frame(); header('机库');
     const specs = m.ships || [];
     const sel = clamp(m.sel || 0, 0, Math.max(0, specs.length - 1));
     const spec = specs[sel], ship = shipFor(spec), cls = spec ? OD.Ships.CLASSES[spec.cls] || {} : {};
     const rail = reserveRail(m.keys, PX, PW);
     let y = beginFlow() + px(16);
-    y = eyebrow(PX, y + px(8), m.eyebrow || 'Pre-launch');
-    y = title([m.title || 'Hangar'], PX - 1, y - px(4), B.phone ? px(32) : px(40), C.ink);
-    const listEntry = (i, x, yy, w) => { const s = specs[i], c = OD.Ships.CLASSES[s.cls] || {}; return entry(x, yy, w, { id: 'hg:' + i, n: i + 1, label: s.name, sub: (c.name || s.cls) + (s._refit ? ' · refit' : ''), selected: i === sel, act: () => m.onSelect(i), clip: [CT, CB], h: B.phone ? px(50) : EH }); };
+    y = eyebrow(PX, y + px(8), m.eyebrow || '出击前');
+    y = title([m.title || '机库'], PX - 1, y - px(4), B.phone ? px(32) : px(40), C.ink);
+    const listEntry = (i, x, yy, w) => { const s = specs[i], c = OD.Ships.CLASSES[s.cls] || {}; return entry(x, yy, w, { id: 'hg:' + i, n: i + 1, label: s.name, sub: (c.name || s.cls) + (s._refit ? ' · 改装' : ''), selected: i === sel, act: () => m.onSelect(i), clip: [CT, CB], h: B.phone ? px(50) : EH }); };
     const numbers = (x, yy, w) => {
       if (!ship) return yy;
-      yy = h3(x, yy, w, 'Key numbers');
+      yy = h3(x, yy, w, '关键数字');
       const g = ship.accelNominal ? ship.accelNominal() / 9.80665 : 0;
-      yy = kv(x, yy, w, 'Delta-v (full tanks)', U.fmt.dv(ship.deltaVFull ? ship.deltaVFull() : ship.deltaV()));
-      if (ship.propMass < ship.fullPropMass * 0.995) yy = kv(x, yy, w, 'Delta-v aboard', U.fmt.dv(ship.deltaV()), C.warn);
-      yy = kv(x, yy, w, 'Acceleration', U.fmt.num(g, 2) + ' g · ' + U.fmt.num(ship.accelNominal(), 2) + ' m/s²');
-      yy = kv(x, yy, w, 'Armour nose · flank · tail', ship.armour.nose + ' · ' + ship.armour.flank + ' · ' + ship.armour.tail + ' cm');
-      yy = kv(x, yy, w, 'Radiators', U.fmt.si(ship.radiatorArea, 'm²') + ' · ' + U.fmt.si(ship.radiatorPower ? OD.P.radiatorPower(ship.radiatorArea, ship.radiatorTemp) : 0, 'W'));
-      yy = kv(x, yy, w, 'Heat sink', U.fmt.si(ship.sinkCapacity, 'J'));
+      yy = kv(x, yy, w, '速度增量（满箱）', U.fmt.dv(ship.deltaVFull ? ship.deltaVFull() : ship.deltaV()));
+      if (ship.propMass < ship.fullPropMass * 0.995) yy = kv(x, yy, w, '当前速度增量', U.fmt.dv(ship.deltaV()), C.warn);
+      yy = kv(x, yy, w, '加速度', U.fmt.num(g, 2) + ' g · ' + U.fmt.num(ship.accelNominal(), 2) + ' m/s²');
+      yy = kv(x, yy, w, '装甲 舰首 · 舷侧 · 舰尾', ship.armour.nose + ' · ' + ship.armour.flank + ' · ' + ship.armour.tail + ' cm');
+      yy = kv(x, yy, w, '散热板', U.fmt.si(ship.radiatorArea, 'm²') + ' · ' + U.fmt.si(ship.radiatorPower ? OD.P.radiatorPower(ship.radiatorArea, ship.radiatorTemp) : 0, 'W'));
+      yy = kv(x, yy, w, '热沉', U.fmt.si(ship.sinkCapacity, 'J'));
       // The people aboard (v13): the pool the player deploys, from the crew module when it is loaded.
       if (ship.crew && ship.crew.total > 0) {
         const c = ship.crew, n = (c.parties || []).length;
         const xp = Math.max(0, Math.min(3, Math.round(c.xp || 0)));
         // two rows: the heads and parties, then the experience and what it buys (one row ran over its key)
-        yy = kv(x, yy, w, 'Crew', c.total + ' · ' + n + (n === 1 ? ' party' : ' parties') + (c.wounded > 0 ? ' · ' + c.wounded + ' wounded' : ''), c.wounded > 0 ? C.warn : undefined);
-        yy = kv(x, yy, w, 'Experience', xp + ' of 3' + (xp > 0 ? ' · repairs ' + (xp * 15) + ' % faster' : ''));
+        yy = kv(x, yy, w, '船员', c.total + ' · ' + n + ' 组' + (c.wounded > 0 ? ' · ' + c.wounded + ' 人受伤' : ''), c.wounded > 0 ? C.warn : undefined);
+        yy = kv(x, yy, w, '经验', xp + ' / 3' + (xp > 0 ? ' · 修理快 ' + (xp * 15) + ' %' : ''));
       }
-      if (ship.hull < 0.999) yy = kv(x, yy, w, 'Hull integrity', Math.round(ship.hull * 100) + ' %', ship.hull < 0.5 ? C.crit : C.warn);
-      text('Mounts', x, yy + px(14), F.s(px(13)), C.dim); yy += px(20);
-      const names = ship.mounts.length ? ship.mounts.map((mt) => mt.name) : ['nothing fitted'];
+      if (ship.hull < 0.999) yy = kv(x, yy, w, '舰体完整度', Math.round(ship.hull * 100) + ' %', ship.hull < 0.5 ? C.crit : C.warn);
+      text('炮位', x, yy + px(14), F.s(px(13)), C.dim); yy += px(20);
+      const names = ship.mounts.length ? ship.mounts.map((mt) => mt.name) : ['未安装'];
       yy = paragraph(names.join(' · '), x, yy, w, { font: F.m(px(11.5)), lh: 16, color: C.ink, gap: px(6) });
       if (cls.blurb) yy = paragraph(cls.blurb, x, yy + px(2), w, { size: 12.5, color: C.dim });
       return yy;
@@ -1075,7 +1088,7 @@
         const box = { x: PX, y: y + px(6), w: PW, h: 320 };
         labelledHull(ship, box, { rows: 3, max: 10 });
         y = box.y + box.h;
-        text(up((cls.name || spec.cls) + ' · ' + (cls.length || ship.length) + ' m'), PX + PW / 2, y + px(14), F.m(px(10.5)), C.dim, 'center', '0.08em'); y += px(24);
+        text(up((cls.name || spec.cls) + ' · ' + (cls.length || ship.length) + ' 米'), PX + PW / 2, y + px(14), F.m(px(10.5)), C.dim, 'center', '0.08em'); y += px(24);
       }
       y = numbers(PX, y, PW) + px(10);
       if (m.note) y = paragraph(m.note, PX, y, PW, { size: 12.5, color: C.dim });
@@ -1084,7 +1097,7 @@
     } else {
       const LW = Math.min(300, PW * 0.24), RW = Math.min(330, PW * 0.26), gap = 28;
       const LX = PX, RX = PX + PW - RW, MX = LX + LW + gap, MW = RX - gap - MX;
-      let ly = h3(LX, y + px(6), LW, 'Your ships');
+      let ly = h3(LX, y + px(6), LW, '我方舰船');
       for (let i = 0; i < specs.length; i++) ly = listEntry(i, LX, ly, LW);
       let ry = numbers(RX, y + px(6), RW);
       if (m.note) ry = paragraph(m.note, RX, ry + px(4), RW, { size: 12.5, color: C.dim });
@@ -1093,7 +1106,7 @@
         // rows of part labels above it and four below.
         const box = { x: MX, y: y + px(4), w: MW, h: Math.max(240, CB - y - px(40)) }, cx = box.x + box.w / 2;
         labelledHull(ship, box, { rows: 5, max: 14 });
-        text(up((cls.name || spec.cls) + ' · ' + (cls.length || ship.length) + ' m · ' + (OD.Ships.FACTIONS[ship.faction] || {}).name), cx, box.y + box.h + px(16), F.m(px(11)), C.dim, 'center', '0.08em');
+        text(up((cls.name || spec.cls) + ' · ' + (cls.length || ship.length) + ' 米 · ' + (OD.Ships.FACTIONS[ship.faction] || {}).name), cx, box.y + box.h + px(16), F.m(px(11)), C.dim, 'center', '0.08em');
         hair(box.x, box.y + box.h + px(26), box.x + box.w, C.line);
       }
       endFlow(Math.max(ly, ry));
@@ -1103,15 +1116,15 @@
 
   SCREENS.inspect = function (m) {
     const PX = FR.x + (B.phone ? 12 : 44), PW = FR.w - 2 * (PX - FR.x);
-    scrim('dark'); frame(); header('Hull view');
+    scrim('dark'); frame(); header('舰体视图');
     const ship = shipFor(m.ship); const cls = ship ? OD.Ships.CLASSES[ship.cls] || {} : {};
     const view = m.view || 'three-quarter';
     const rail = reserveRail(m.keys, PX, PW);
     let y = beginFlow() + px(12);
-    y = eyebrow(PX, y + px(8), m.eyebrow || 'Inspect');
+    y = eyebrow(PX, y + px(8), m.eyebrow || '检视');
     y = title([m.title || (ship ? ship.name : '')], PX - 1, y - px(4), B.phone ? px(30) : px(38), C.ink);
     if (m.sub) y = paragraph(m.sub, PX, y, Math.min(PW, 760), { size: 13.5, color: C.ink2 });
-    const s = seg(PX, y, { id: 'insp:view', label: 'View', options: [{ id: 'side', label: 'Side' }, { id: 'top', label: 'Top' }, { id: 'three-quarter', label: 'Three-quarter' }, { id: 'orbit', label: 'Orbit' }], value: view, set: (v) => { m.view = v; }, clip: [CT, CB] });
+    const s = seg(PX, y, { id: 'insp:view', label: '视角', options: [{ id: 'side', label: '侧视' }, { id: 'top', label: '俯视' }, { id: 'three-quarter', label: '斜视' }, { id: 'orbit', label: '环绕' }], value: view, set: (v) => { m.view = v; }, clip: [CT, CB] });
     y += s.h + px(10);
     if (ship) {
       const box = { x: PX, y, w: PW, h: Math.max(160, CB - y - px(10)) };
@@ -1126,9 +1139,9 @@
       const bw = bar / mPer, bx = box.x + 8, by = box.y + box.h - 14;
       ctx.strokeStyle = 'rgba(224,232,240,0.7)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(bx, by + 0.5); ctx.lineTo(bx + bw, by + 0.5); ctx.moveTo(bx + 0.5, by - 4); ctx.lineTo(bx + 0.5, by + 4); ctx.moveTo(bx + bw + 0.5, by - 4); ctx.lineTo(bx + bw + 0.5, by + 4); ctx.stroke();
       text(bar + ' m', bx, by - 8, F.m(px(11)), 'rgba(224,232,240,0.8)');
-      text(up(view === 'orbit' ? 'orbit view' : view + ' · nose right'), box.x + box.w - 8, box.y + box.h - 8, F.m(px(10.5)), C.dim, 'right', '0.06em');
+      text(up(view === 'orbit' ? '轨道视角' : ({side:'侧视',top:'俯视',threequarter:'斜视'}[view] || view) + ' · 舰首朝右'), box.x + box.w - 8, box.y + box.h - 8, F.m(px(10.5)), C.dim, 'right', '0.06em');
       y = box.y + box.h;
-      if (parts.length && B.phone) y = paragraph(parts.map((p) => p.label + (p.text ? ': ' + p.text : '')).join('  ·  '), PX, y + px(4), PW, { size: 12, color: C.dim });
+      if (parts.length && B.phone) y = paragraph(parts.map((p) => (p.zh || p.label) + (p.text ? '：' + p.text : '')).join('  ·  '), PX, y + px(4), PW, { size: 12, color: C.dim });
     }
     endFlow(y);
     if (rail) rail.draw();
@@ -1191,7 +1204,7 @@
     // the class a stepper row names: 'sk:<side>:<class>', and its − and + keys
     const hotOf = (id) => { const mm = /^sk:(JC|ISA):([^:]+)/.exec(id || ''); return mm ? { fac: mm[1], cls: mm[2] } : null; };
     const hot = hotOf(B.hover) || hotOf(B.focusId);
-    let yy = h3(x, y, w, 'Fleets to scale');
+    let yy = h3(x, y, w, '舰队按比例');
     const capH = px(22), foot = strip ? px(26) : px(30), gapB = px(12);
     const areaH = Math.max(24, (y + h - foot - yy - 2 * capH - gapB) / 2);
     const gap = B.phone ? px(6) : px(10);
@@ -1223,7 +1236,7 @@
       if (right) text(right, x + w, yy + px(14), F.m(px(10.5)), rightCol, 'right');
       yy += capH;
       const pk = packs && packs[i];
-      if (!n) text('No ships', x + w / 2, yy + areaH / 2 + px(4), F.m(px(11)), C.warn, 'center');
+      if (!n) text('没有舰船', x + w / 2, yy + areaH / 2 + px(4), F.m(px(11)), C.warn, 'center');
       else if (pk) {
         const oy = yy + (areaH - pk.h) / 2, ox = sd.flip ? x + w - pk.w : x;
         const placed = [];   // each hull's box on the screen, in reading order
@@ -1235,7 +1248,7 @@
           ctx.save();
           if (sd.flip) { ctx.translate(2 * bx + p.pw, 0); ctx.scale(-1, 1); }
           try { OD.UI.drawHull(ctx, p.it.ship, bx + p.it.b.ox * L, by + p.it.b.oy * L, L, 'side', { cache: true, quality: L > 160 ? 'auto' : 'low', plume: false, light: { az: sd.flip ? -130 : -50, el: 35 } }); }
-          catch (e) { if (OD.Render) OD.Render.lastError = 'bridge fleet: ' + (e && e.message); }
+          catch (e) { if (OD.Render) OD.Render.lastError = '舰桥舰队：' + (e && e.message); }
           ctx.restore();
         }
         const capY = (q) => oy + pk.rows[q.p.row].y + pk.rows[q.p.row].h + cap - px(3.5);
@@ -1299,7 +1312,7 @@
       ctx.strokeStyle = 'rgba(224,232,240,0.7)'; ctx.lineWidth = 1; ctx.beginPath();
       ctx.moveTo(bx, by + 0.5); ctx.lineTo(bx + bl, by + 0.5); ctx.moveTo(bx + 0.5, by - 4); ctx.lineTo(bx + 0.5, by + 4); ctx.moveTo(bx + bl + 0.5, by - 4); ctx.lineTo(bx + bl + 0.5, by + 4); ctx.stroke();
       text(bar + ' m', bx + bl + px(8), by + px(4), F.m(px(10.5)), 'rgba(224,232,240,0.8)');
-      text('Hull lengths to scale', x + w, by + px(4), F.m(px(10)), C.dim, 'right');
+      text('舰体长度按比例', x + w, by + px(4), F.m(px(10)), C.dim, 'right');
     }
     return y + h;
   }
@@ -1313,21 +1326,21 @@
     const st = m.state;
     const rail = reserveRail(m.keys, PX, board ? FW : PW);
     let y = beginFlow() + px(16);
-    y = eyebrow(PX, y + px(8), 'Skirmish');
-    y = title([m.title || 'Set the board'], PX - 1, y - px(4), B.phone ? px(32) : px(40), C.ink) + px(2);
+    y = eyebrow(PX, y + px(8), '遭遇战');
+    y = title([m.title || '布置战场'], PX - 1, y - px(4), B.phone ? px(32) : px(40), C.ink) + px(2);
     y = paragraph(m.sub || '', PX, y, Math.min(PW, 760), { size: B.phone ? 13 : 14, color: C.ink2 }) + px(4);
     const yBoard = y;
     const enemy = st.player === 'JC' ? 'ISA' : 'JC';
     const optW = B.phone ? PW : Math.min(PW, 520);
-    const s1 = seg(PX, y, { id: 'sk:side', label: 'Your side', options: m.sides, value: st.player, set: (v) => { st.player = v; }, clip: [CT, CB], maxW: optW });
+    const s1 = seg(PX, y, { id: 'sk:side', label: '你的阵营', options: m.sides, value: st.player, set: (v) => { st.player = v; }, clip: [CT, CB], maxW: optW });
     y += s1.h + px(12);
     const envIdx = Math.max(0, m.envs.findIndex((e) => e.id === st.env));
     const rangeIdx = m.ranges.reduce((best, r, i) => Math.abs(r - st.range) < Math.abs(m.ranges[best] - st.range) ? i : best, 0);
     // the two option rows share one value column, as wide as the longer label leaves on a phone
     const bw = B.phone ? 44 : 34, lf = F.d(px(14));
-    const optVW = Math.max(px(110), Math.min(px(170), optW - bw * 2 - px(36) - Math.max(measure('Where', lf, '0.06em'), measure('Opening range', lf, '0.06em'))));
-    y = stepper(PX, y, optW, { id: 'sk:env', label: 'Where', valueW: optVW, value: m.envs[envIdx].label, dec: () => { st.env = m.envs[(envIdx + m.envs.length - 1) % m.envs.length].id; }, inc: () => { st.env = m.envs[(envIdx + 1) % m.envs.length].id; }, big: true, clip: [CT, CB] });
-    y = stepper(PX, y, optW, { id: 'sk:range', label: 'Opening range', short: 'Range', valueW: optVW, value: U.fmt.dist(st.range * 1000), dec: () => { st.range = m.ranges[Math.max(0, rangeIdx - 1)]; }, inc: () => { st.range = m.ranges[Math.min(m.ranges.length - 1, rangeIdx + 1)]; }, big: true, clip: [CT, CB] });
+    const optVW = Math.max(px(110), Math.min(px(170), optW - bw * 2 - px(36) - Math.max(measure('地点', lf, '0.06em'), measure('初始距离', lf, '0.06em'))));
+    y = stepper(PX, y, optW, { id: 'sk:env', label: '地点', valueW: optVW, value: m.envs[envIdx].label, dec: () => { st.env = m.envs[(envIdx + m.envs.length - 1) % m.envs.length].id; }, inc: () => { st.env = m.envs[(envIdx + 1) % m.envs.length].id; }, big: true, clip: [CT, CB] });
+    y = stepper(PX, y, optW, { id: 'sk:range', label: '初始距离', short: '距离', valueW: optVW, value: U.fmt.dist(st.range * 1000), dec: () => { st.range = m.ranges[Math.max(0, rangeIdx - 1)]; }, inc: () => { st.range = m.ranges[Math.min(m.ranges.length - 1, rangeIdx + 1)]; }, big: true, clip: [CT, CB] });
     y += px(16);
     // a phone shows both fleets in a short strip above the steppers, so each press shows on the board
     if (B.phone) y = fleetBoard(m, PX, y - px(4), PW, px(180), { strip: true }) + px(14);
@@ -1337,13 +1350,13 @@
       text(up(label), x, yy + px(12), F.d(px(12)), facColor(fac), 'left', '0.18em'); const lw = measure(up(label), F.d(px(12)), '0.18em'); hair(x + lw + 10, yy + px(8), x + w, C.line2); yy += px(22);
       for (const c of m.classes) {
         const n = counts[c.id] || 0;
-        yy = stepper(x, yy, w, { id: 'sk:' + fac + ':' + c.id, label: c.name, short: short(c.name), sub: c.custom ? 'yard design' : '', value: String(n), zero: n === 0, dec: () => { counts[c.id] = Math.max(0, n - 1); }, inc: () => { counts[c.id] = Math.min(6, n + 1); }, clip: [CT, CB] });
+        yy = stepper(x, yy, w, { id: 'sk:' + fac + ':' + c.id, label: c.name, short: short(c.name), sub: c.custom ? '船坞设计' : '', value: String(n), zero: n === 0, dec: () => { counts[c.id] = Math.max(0, n - 1); }, inc: () => { counts[c.id] = Math.min(6, n + 1); }, clip: [CT, CB] });
       }
       const total = m.classes.reduce((a, c) => a + (counts[c.id] || 0), 0);
-      text(total + (total === 1 ? ' ship' : ' ships'), x + w, yy + px(14), F.m(px(11)), total ? C.dim : C.warn, 'right'); return yy + px(22);
+      text(total + ' 艘', x + w, yy + px(14), F.m(px(11)), total ? C.dim : C.warn, 'right'); return yy + px(22);
     };
-    const yA = sideCol(PX, y, cw, 'Your ships · ' + (OD.Ships.FACTIONS[st.player] || {}).name, st.player, st.playerShips);
-    const yB = sideCol(cols === 1 ? PX : PX + cw + 40, cols === 1 ? yA + px(8) : y, cw, 'Enemy ships · ' + (OD.Ships.FACTIONS[enemy] || {}).name, enemy, st.enemyShips);
+    const yA = sideCol(PX, y, cw, '我方舰船 · ' + (OD.Ships.FACTIONS[st.player] || {}).name, st.player, st.playerShips);
+    const yB = sideCol(cols === 1 ? PX : PX + cw + 40, cols === 1 ? yA + px(8) : y, cw, '敌方舰船 · ' + (OD.Ships.FACTIONS[enemy] || {}).name, enemy, st.enemyShips);
     y = Math.max(yA, yB) + px(8);
     if (board) {
       const bx = PX + PW + px(48), bw2 = FR.x + FR.w - px(56) - bx;
@@ -1419,7 +1432,7 @@
     });
     y = (col > 0 ? yy + px(34) : yy) + px(10);
     if (m.reports && m.reports.length) {
-      y = h3(PX, y, PW, 'Damage report');
+      y = h3(PX, y, PW, '损伤报告');
       for (const r of m.reports) {
         text(r.name, PX, y + px(13), F.d(px(14)), r.lost ? C.crit : C.ink, 'left', '0.04em');
         const nw = measure(r.name, F.d(px(14)), '0.04em');
@@ -1454,7 +1467,7 @@
     ctx.save();
     ctx.textBaseline = 'alphabetic';
     const fn = SCREENS[B.current];
-    try { if (fn) fn(B.model); } catch (e) { OD.errors && OD.errors.push('bridge draw: ' + (e && e.stack || e)); }
+    try { if (fn) fn(B.model); } catch (e) { OD.errors && OD.errors.push('舰桥绘制：' + (e && e.stack || e)); }
     sweep();
     ctx.restore();
     // keep the focus on something that still exists
@@ -1543,7 +1556,7 @@
     const focused = document.activeElement && root.contains(document.activeElement) ? document.activeElement.dataset.bid : null;
     const grp = document.createElement('div');
     grp.id = B.current === 'menu' ? 'menu' : 'bridge-' + B.current;
-    grp.setAttribute('role', 'group'); grp.setAttribute('aria-label', 'Bridge console: ' + B.current);
+    grp.setAttribute('role', 'group'); grp.setAttribute('aria-label', '舰桥控制台：' + B.current);
     for (const r of list) {
       const b = document.createElement('button'); b.type = 'button'; b.dataset.bid = r.id; b.textContent = r.aria || ((r.n != null ? r.n + '. ' : '') + (r.label || '') + (r.sub ? ' — ' + r.sub : '')); if (r.disabled) b.disabled = true;
       b.addEventListener('click', () => { const cur = B.hits.find((x) => x.id === r.id); if (cur) { B.focusId = cur.id; B.focusByKey = true; activate(cur, 'mirror'); } });
@@ -1556,7 +1569,7 @@
 
   // ---------------------------------------------------------------- open / close
   function open(name, model) {
-    if (!SCREENS[name]) throw new Error('Unknown bridge screen ' + name);
+    if (!SCREENS[name]) throw new Error('未知的舰桥画面 ' + name);
     const wasPress = B.t - B.pressT < 0.3;
     B.current = name; B.model = model || {}; B.active = true;
     B.openedAt = performance.now() / 1000; B.t = B.openedAt;
