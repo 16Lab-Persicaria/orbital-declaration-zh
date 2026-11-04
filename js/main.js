@@ -877,14 +877,14 @@
       return s.id;
     },
 
-    // Time warp drops to 1× just before the selected ship flips, starts braking or arrives, so the moment is seen.
+    // Time warp drops to 1× just before the selected ship starts braking, arrives or is about to hit ground, so the moment is seen.
     slowForEvents() {
       if (this.warp <= 1 || !OD.Guide || !OD.UI.selected) return;
       const ship = this.sim.byId(OD.UI.selected); if (!ship) return;
       const p = OD.Guide.plan(this.sim, ship);
       if (!p.active) return;
       const target = p.order.target ? this.sim.byId(p.order.target) : null;
-      const events = [['flip', p.flip, 'Flip. The nose swings round, and from here the drive brakes instead of pushing.'], ['brake', p.brake, 'Braking tail-first' + (target ? ' toward ' + target.name : '') + '.'], ['arrive', p.arrive, 'Arriving' + (target ? '. Matching speed with ' + target.name : '') + '.'], ['crash', p.crash, 'On this track she reaches the surface. Burn to raise it.']];
+      const events = [['brake', p.brake, 'Braking tail-first' + (target ? ' toward ' + target.name : '') + '.'], ['arrive', p.arrive, 'Arriving' + (target ? '. Matching speed with ' + target.name : '') + '.'], ['crash', p.crash, 'On this track she reaches the surface. Burn to raise it.']];
       for (const [name, ev, text] of events) {
         if (!ev) continue;
         const eta = OD.Guide.eta(this.sim, p, ev);
@@ -892,7 +892,6 @@
         const key = ship.id + ':' + name + ':' + Math.round((this.sim.time + eta) / 30);
         if (this._slowed[key]) continue;
         this._slowed[key] = true;
-        if (name === 'brake' && Object.keys(this._slowed).some((k) => k.startsWith(ship.id + ':flip:') && Math.abs(+k.split(':')[2] - Math.round((this.sim.time + eta) / 30)) <= 2)) continue;
         this.pullWarp(1, 6000);
         OD.UI.toast(text, 4500);
         return;
